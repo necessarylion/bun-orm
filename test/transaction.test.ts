@@ -163,12 +163,86 @@ describe('Transaction Tests', () => {
     expect(parseFloat(result[1].balance)).toBe(250.00);
   });
 
-  it('should throw error for manual transaction control', async () => {
+  it('should rollback on failed transaction with get-update-fail pattern', async () => {
+    // Clear test data first
+    await db.raw('DELETE FROM transaction_test');
+
+    // 1. Get initial query - insert a test record
+    const initialRecord = await db.insert({ name: 'Test User', balance: 100.00 })
+      .into('transaction_test')
+      .returning(['id', 'name', 'balance'])
+      .execute();
+
+    expect(initialRecord).toHaveLength(1);
+    expect(initialRecord[0].name).toBe('Test User');
+    expect(parseFloat(initialRecord[0].balance)).toBe(100.00);
+
+    const userId = initialRecord[0].id;
+
+    // Verify the record exists
+    const beforeTransaction = await db.select()
+      .from('transaction_test')
+      .where('id', '=', userId)
+      .first();
+
+    expect(beforeTransaction).toBeDefined();
+    expect(beforeTransaction.name).toBe('Test User');
+    expect(parseFloat(beforeTransaction.balance)).toBe(100.00);
+
+    let transactionFailed = false;
+    let errorMessage = '';
+
     try {
-      await db.beginTransaction();
-      throw new Error('Should have thrown an error');
+      // 2. Run transaction query to update the record
+      await db.transaction(async (trx: Transaction) => {
+        // Update the balance
+        await trx.update({ balance: 200.00 })
+          .table('transaction_test')
+          .where('id', '=', userId)
+          .execute();
+
+        // Verify the update within transaction
+        const withinTransaction = await trx.select()
+          .from('transaction_test')
+          .where('id', '=', userId)
+          .first();
+
+        expect(withinTransaction).toBeDefined();
+        expect(withinTransaction.name).toBe('Test User');
+        expect(parseFloat(withinTransaction.balance)).toBe(200.00);
+
+        // 3. Run another query that fails with error
+        // This will cause the entire transaction to rollback
+        await trx.raw(
+          'INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)'
+        );
+      });
     } catch (error: any) {
-      expect(error.message).toContain('Manual transaction control is not supported');
+      transactionFailed = true;
+      errorMessage = error.message;
     }
+
+    // Verify that the transaction failed
+    expect(transactionFailed).toBe(true);
+    expect(errorMessage).toContain('null value');
+
+    // 4. Check if query is rolled back - the balance should be back to original value
+    const afterTransaction = await db.select()
+      .from('transaction_test')
+      .where('id', '=', userId)
+      .first();
+
+    expect(afterTransaction).toBeDefined();
+    expect(afterTransaction.name).toBe('Test User');
+    // The balance should be rolled back to the original value (100.00), not the updated value (200.00)
+    expect(parseFloat(afterTransaction.balance)).toBe(100.00);
+
+    // Verify no additional records were created (the failed insert should be rolled back)
+    const allRecords = await db.select()
+      .from('transaction_test')
+      .where('name', '=', 'Test User')
+      .get();
+
+    expect(allRecords).toHaveLength(1); // Only the original record should exist
   });
 }); 
