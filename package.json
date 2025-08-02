@@ -1,0 +1,37 @@
+{
+  "name": "bun-orm",
+  "version": "1.0.0",
+  "description": "A PostgreSQL query builder for Bun with DDD principles",
+  "module": "index.ts",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./query-builder": "./src/query-builder/index.ts",
+    "./connection": "./src/connection/index.ts"
+  },
+  "scripts": {
+    "dev": "bun run --watch index.ts",
+    "test": "bun test test/",
+    "test:watch": "bun test --watch test/",
+    "test:coverage": "bun test --coverage test/",
+    "build": "bun build index.ts --outdir dist --target node"
+  },
+  "keywords": [
+    "bun",
+    "postgresql",
+    "query-builder",
+    "orm",
+    "ddd",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
