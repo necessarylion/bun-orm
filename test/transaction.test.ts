@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
-import { spark, Transaction } from '../index';
+import { spark, Spark } from '../index';
+import type { Transaction } from '../src/types';
 
 describe('Transaction Tests', () => {
-  let db: any;
+  let db: Spark;
 
   beforeAll(async () => {
     // Initialize database connection
