@@ -47,7 +47,7 @@ export class DeleteQueryBuilder extends BaseQueryBuilder implements DeleteQueryB
     return await this.executeQuery<T>(query.sql, query.params);
   }
 
-  public raw(): { sql: string; params: any[] } {
+  public override raw(): { sql: string; params: any[] } {
     return this.buildQuery();
   }
 
