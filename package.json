@@ -1,7 +1,7 @@
 {
   "name": "spark",
   "version": "1.0.0",
-  "description": "A PostgreSQL query builder for Bun (Spark)",
+  "description": "(Spark) A query builder for Bun",
   "module": "index.ts",
   "type": "module",
   "main": "index.ts",
