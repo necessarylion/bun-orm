@@ -20,7 +20,7 @@ export class SQLHelper {
     const params: any[] = [];
 
     for (let i = 0; i < entries.length; i++) {
-      const [key, value] = entries[i];
+      const [key, value] = entries[i] as [string, any];
       setParts.push(`${this.escapeIdentifier(key)} = $${i + 1}`);
       params.push(value);
     }
@@ -41,7 +41,7 @@ export class SQLHelper {
 
     for (let i = 0; i < conditions.length; i++) {
       const condition = conditions[i];
-      const { column, operator, value } = condition;
+      const { column, operator, value } = condition as { column: string; operator: string; value?: any };
       
       if (operator === 'IS NULL' || operator === 'IS NOT NULL') {
         whereParts.push(`${this.escapeIdentifier(column)} ${operator}`);
@@ -92,7 +92,7 @@ export class SQLHelper {
       throw new Error('No data provided for insert');
     }
 
-    const columns = Object.keys(data[0]);
+    const columns = Object.keys(data[0] || {});
     const placeholders: string[] = [];
     const params: any[] = [];
 
