@@ -1,6 +1,7 @@
 // Main exports
 export { spark, Spark } from './src/core/spark';
 export { createConnection, getConnection, DatabaseConnection } from './src/core/connection';
+export { Transaction } from './src/core/transaction';
 
 // Query builders
 export { QueryBuilder } from './src/query-builders/query-builder';
@@ -24,5 +25,7 @@ export type {
   QueryBuilderChain,
   InsertQueryBuilderChain,
   UpdateQueryBuilderChain,
-  DeleteQueryBuilderChain
+  DeleteQueryBuilderChain,
+  Transaction,
+  TransactionCallback
 } from './src/types';

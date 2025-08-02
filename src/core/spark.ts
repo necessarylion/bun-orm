@@ -3,7 +3,8 @@ import { QueryBuilder } from '../query-builders/query-builder';
 import { InsertQueryBuilder } from '../query-builders/insert-query-builder';
 import { UpdateQueryBuilder } from '../query-builders/update-query-builder';
 import { DeleteQueryBuilder } from '../query-builders/delete-query-builder';
-import type { ConnectionConfig } from '../types';
+import { Transaction } from './transaction';
+import type { ConnectionConfig, TransactionCallback } from '../types';
 
 export class Spark {
   private static instance: Spark;
@@ -100,6 +101,27 @@ export class Spark {
   public async close(): Promise<void> {
     const connection = getConnection();
     await connection.close();
+  }
+
+  // Transaction support
+  public async transaction<T = any>(callback: TransactionCallback<T>): Promise<T> {
+    const connection = getConnection();
+    const sql = connection.getSQL();
+    
+    // Use Bun's callback-based transaction API
+    return await sql.begin(async (tx: any) => {
+      // Create transaction instance with the transaction context
+      const trx = new Transaction(tx);
+      
+      // Execute the callback with transaction context
+      return await callback(trx);
+    });
+  }
+
+  public async beginTransaction(): Promise<Transaction> {
+    // For manual transactions, we'll use a different approach
+    // This is a simplified version - in a real implementation you might want to use a different pattern
+    throw new Error('Manual transaction control is not supported in this version. Use db.transaction(callback) instead.');
   }
 }
 

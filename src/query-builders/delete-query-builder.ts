@@ -6,6 +6,10 @@ export class DeleteQueryBuilder extends BaseQueryBuilder implements DeleteQueryB
   private tableName: string = '';
   private returningColumns: string[] = [];
 
+  constructor(transactionContext?: any) {
+    super(transactionContext);
+  }
+
   public from(table: string): DeleteQueryBuilderChain {
     this.tableName = SQLHelper.sanitizeTableName(table);
     return this;

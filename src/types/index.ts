@@ -90,4 +90,18 @@ export type DeleteQueryBuilderChain = {
   returning: (columns?: string | string[]) => DeleteQueryBuilderChain;
   execute: <T = any>() => Promise<T[]>;
   raw: () => { sql: string; params: any[] };
+};
+
+export type TransactionCallback<T = any> = (trx: Transaction) => Promise<T>;
+
+export type Transaction = {
+  select: (columns?: SelectColumn | SelectColumn[]) => QueryBuilderChain;
+  from: (table: string, alias?: string) => QueryBuilderChain;
+  table: (table: string, alias?: string) => QueryBuilderChain;
+  insert: (data?: Record<string, any> | Record<string, any>[]) => InsertQueryBuilderChain;
+  update: (data?: Record<string, any>) => UpdateQueryBuilderChain;
+  delete: () => DeleteQueryBuilderChain;
+  raw: (sql: string, params?: any[]) => Promise<any[]>;
+  commit: () => Promise<void>;
+  rollback: () => Promise<void>;
 }; 

@@ -314,6 +314,118 @@ console.log(query.sql);    // "SELECT name, email FROM users WHERE active = ?"
 console.log(query.params); // [true]
 ```
 
+### Transactions
+
+Bun ORM provides comprehensive transaction support with automatic rollback on errors and manual transaction control.
+
+#### Automatic Transaction (Recommended)
+
+```typescript
+// Simple transaction with automatic commit/rollback
+const result = await db.transaction(async (trx) => {
+  // Create a user
+  const user = await trx.insert({ name: 'John Doe', email: 'john@example.com' })
+    .into('users')
+    .returning(['id', 'name'])
+    .execute();
+
+  // Create a profile for the user
+  await trx.insert({ user_id: user[0].id, bio: 'Software Developer' })
+    .into('profiles')
+    .execute();
+
+  // Return the created user
+  return user[0];
+});
+
+// If any operation fails, the entire transaction is rolled back
+console.log('User created:', result.name);
+```
+
+#### Manual Transaction Control
+
+```typescript
+// Start a transaction
+const trx = await db.beginTransaction();
+
+try {
+  // Perform operations
+  await trx.insert({ name: 'Jane Smith', email: 'jane@example.com' })
+    .into('users')
+    .execute();
+
+  await trx.update({ status: 'active' })
+    .table('users')
+    .where('email', '=', 'jane@example.com')
+    .execute();
+
+  // Commit the transaction
+  await trx.commit();
+  console.log('Transaction committed successfully');
+} catch (error) {
+  // Rollback on error
+  await trx.rollback();
+  console.error('Transaction rolled back:', error);
+}
+```
+
+#### Complex Transaction Example
+
+```typescript
+// Bank transfer example
+const transferResult = await db.transaction(async (trx) => {
+  // Deduct from sender account
+  await trx.update({ balance: 900.00 })
+    .table('accounts')
+    .where('id', '=', senderId)
+    .execute();
+
+  // Add to receiver account
+  await trx.update({ balance: 1100.00 })
+    .table('accounts')
+    .where('id', '=', receiverId)
+    .execute();
+
+  // Record the transaction
+  await trx.insert({
+    from_account_id: senderId,
+    to_account_id: receiverId,
+    amount: 100.00,
+    created_at: new Date()
+  }).into('transactions').execute();
+
+  // Return updated balances
+  return await trx.select(['id', 'balance'])
+    .from('accounts')
+    .whereIn('id', [senderId, receiverId])
+    .get();
+});
+
+console.log('Transfer completed:', transferResult);
+```
+
+#### Raw SQL in Transactions
+
+```typescript
+const result = await db.transaction(async (trx) => {
+  // Use raw SQL within transaction
+  await trx.raw(
+    'INSERT INTO users (name, email) VALUES (?, ?)',
+    ['Alice Johnson', 'alice@example.com']
+  );
+
+  // Use raw SQL for complex queries
+  const users = await trx.raw(`
+    SELECT u.name, p.bio 
+    FROM users u 
+    LEFT JOIN profiles p ON u.id = p.user_id 
+    WHERE u.created_at > ?
+  `, [new Date('2024-01-01')]);
+
+  return users;
+});
+```
+
 ### Utility Methods
 
 ```typescript
@@ -350,6 +462,9 @@ bun test --coverage
 ```bash
 # Run the basic usage example
 bun run examples/basic-usage.ts
+
+# Run the transaction examples
+bun run examples/transactions.ts
 ```
 
 ## Database Setup
@@ -374,7 +489,7 @@ bun run examples/basic-usage.ts
 | Query Builder | ✅ | ✅ |
 | Migrations | ❌ | ✅ |
 | Schema Builder | Basic | Full |
-| Transactions | ❌ | ✅ |
+| Transactions | ✅ | ✅ |
 
 ## Contributing
 
@@ -391,7 +506,7 @@ MIT License - see LICENSE file for details.
 
 ## Roadmap
 
-- [ ] Transaction support
+- [x] Transaction support
 - [ ] Migration system
 - [ ] Schema builder
 - [ ] Connection pooling

@@ -7,6 +7,10 @@ export class InsertQueryBuilder extends BaseQueryBuilder implements InsertQueryB
   private insertData: Record<string, any>[] = [];
   private returningColumns: string[] = [];
 
+  constructor(transactionContext?: any) {
+    super(transactionContext);
+  }
+
   public into(table: string): InsertQueryBuilderChain {
     this.tableName = SQLHelper.sanitizeTableName(table);
     return this;

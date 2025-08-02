@@ -7,6 +7,10 @@ export class UpdateQueryBuilder extends BaseQueryBuilder implements UpdateQueryB
   private updateData: Record<string, any> = {};
   private returningColumns: string[] = [];
 
+  constructor(transactionContext?: any) {
+    super(transactionContext);
+  }
+
   public table(table: string): UpdateQueryBuilderChain {
     this.tableName = SQLHelper.sanitizeTableName(table);
     return this;

@@ -7,6 +7,10 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderChain 
   private fromTable: string = '';
   private fromAlias: string = '';
 
+  constructor(transactionContext?: any) {
+    super(transactionContext);
+  }
+
   public select(columns?: SelectColumn | SelectColumn[]): QueryBuilderChain {
     if (!columns) {
       this.selectColumns = ['*'];

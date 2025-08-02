@@ -4,6 +4,7 @@ import type { WhereCondition, JoinCondition, OrderByCondition, GroupByCondition 
 
 export abstract class BaseQueryBuilder {
   protected sql: any;
+  protected transactionContext: any;
   protected whereConditions: WhereCondition[] = [];
   protected joins: JoinCondition[] = [];
   protected orderByConditions: OrderByCondition[] = [];
@@ -13,8 +14,9 @@ export abstract class BaseQueryBuilder {
   protected offsetValue: number | null = null;
   protected distinctFlag: boolean = false;
 
-  constructor() {
+  constructor(transactionContext?: any) {
     this.sql = getConnection().getSQL();
+    this.transactionContext = transactionContext;
   }
 
   protected addWhereCondition(column: string, operator: '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN' | 'IS NULL' | 'IS NOT NULL', value?: any): void {
@@ -66,9 +68,14 @@ export abstract class BaseQueryBuilder {
 
   protected async executeQuery<T = any>(query: string, params: any[] = []): Promise<T[]> {
     try {
-      // Use Bun's SQL template literal for safe parameter binding
-      const result = await this.sql.unsafe(query, params);
-      return result;
+      // Use transaction context if available, otherwise use regular SQL
+      if (this.transactionContext) {
+        const result = await this.transactionContext.unsafe(query, params);
+        return result;
+      } else {
+        const result = await this.sql.unsafe(query, params);
+        return result;
+      }
     } catch (error) {
       console.error('Query execution error:', error);
       throw error;
@@ -83,5 +90,10 @@ export abstract class BaseQueryBuilder {
 
   public raw(): { sql: string; params: any[] } {
     throw new Error('raw() method must be implemented by subclasses');
+  }
+
+  // Set transaction context (used internally)
+  public setTransactionContext(context: any): void {
+    this.transactionContext = context;
   }
 } 
