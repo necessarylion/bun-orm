@@ -1,7 +1,7 @@
 {
-  "name": "bun-orm",
+  "name": "spark",
   "version": "1.0.0",
-  "description": "A PostgreSQL query builder for Bun",
+  "description": "A PostgreSQL query builder for Bun (Spark)",
   "module": "index.ts",
   "type": "module",
   "main": "index.ts",
@@ -15,7 +15,6 @@
     "postgresql",
     "query-builder",
     "orm",
-    "ddd",
     "typescript"
   ],
   "author": "Your Name",
