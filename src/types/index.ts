@@ -27,17 +27,17 @@ export type SelectColumn = string | { [key: string]: string };
 
 export type QueryResult<T = any> = T[];
 
-export type QueryBuilderChain = {
+export type QueryBuilderInterface = {
   // Table operations
-  table: (table: string, alias?: string) => QueryBuilderChain;
-  from: (table: string, alias?: string) => QueryBuilderChain;
-  into: (table: string) => QueryBuilderChain;
+  table: (table: string, alias?: string) => QueryBuilderInterface;
+  from: (table: string, alias?: string) => QueryBuilderInterface;
+  into: (table: string) => QueryBuilderInterface;
   
   // Query mode
-  query: () => QueryBuilderChain;
+  query: () => QueryBuilderInterface;
   
   // Select operations
-  select: (columns?: SelectColumn | SelectColumn[]) => QueryBuilderChain;
+  select: (columns?: SelectColumn | SelectColumn[]) => QueryBuilderInterface;
   
   // Insert operations
   insert: <T = any>(data: Record<string, any> | Record<string, any>[]) => Promise<T[]>;
@@ -49,30 +49,30 @@ export type QueryBuilderChain = {
   delete: <T = any>() => Promise<T[]>;
   
   // Where conditions
-  where: (column: string, operator: string, value?: any) => QueryBuilderChain;
-  whereIn: (column: string, values: any[]) => QueryBuilderChain;
-  whereNotIn: (column: string, values: any[]) => QueryBuilderChain;
-  whereNull: (column: string) => QueryBuilderChain;
-  whereNotNull: (column: string) => QueryBuilderChain;
+  where: (column: string, operator: string, value?: any) => QueryBuilderInterface;
+  whereIn: (column: string, values: any[]) => QueryBuilderInterface;
+  whereNotIn: (column: string, values: any[]) => QueryBuilderInterface;
+  whereNull: (column: string) => QueryBuilderInterface;
+  whereNotNull: (column: string) => QueryBuilderInterface;
   
   // Join operations
-  join: (table: string, on: string, alias?: string) => QueryBuilderChain;
-  leftJoin: (table: string, on: string, alias?: string) => QueryBuilderChain;
-  rightJoin: (table: string, on: string, alias?: string) => QueryBuilderChain;
-  fullJoin: (table: string, on: string, alias?: string) => QueryBuilderChain;
+  join: (table: string, on: string, alias?: string) => QueryBuilderInterface;
+  leftJoin: (table: string, on: string, alias?: string) => QueryBuilderInterface;
+  rightJoin: (table: string, on: string, alias?: string) => QueryBuilderInterface;
+  fullJoin: (table: string, on: string, alias?: string) => QueryBuilderInterface;
   
   // Order and grouping
-  orderBy: (column: string, direction?: 'ASC' | 'DESC') => QueryBuilderChain;
-  groupBy: (column: string) => QueryBuilderChain;
-  having: (condition: string) => QueryBuilderChain;
+  orderBy: (column: string, direction?: 'ASC' | 'DESC') => QueryBuilderInterface;
+  groupBy: (column: string) => QueryBuilderInterface;
+  having: (condition: string) => QueryBuilderInterface;
   
   // Pagination
-  limit: (count: number) => QueryBuilderChain;
-  offset: (count: number) => QueryBuilderChain;
-  distinct: () => QueryBuilderChain;
+  limit: (count: number) => QueryBuilderInterface;
+  offset: (count: number) => QueryBuilderInterface;
+  distinct: () => QueryBuilderInterface;
   
   // Returning
-  returning: (columns?: string | string[]) => QueryBuilderChain;
+  returning: (columns?: string | string[]) => QueryBuilderInterface;
   
   // Execution methods
   count: (column?: string) => Promise<number>;
@@ -82,19 +82,19 @@ export type QueryBuilderChain = {
 };
 
 // Legacy types for backward compatibility
-export type InsertQueryBuilderChain = QueryBuilderChain;
-export type UpdateQueryBuilderChain = QueryBuilderChain;
-export type DeleteQueryBuilderChain = QueryBuilderChain;
+export type InsertQueryBuilderInterface = QueryBuilderInterface;
+export type UpdateQueryBuilderInterface = QueryBuilderInterface;
+export type DeleteQueryBuilderInterface = QueryBuilderInterface;
 
 export type TransactionCallback<T = any> = (trx: Transaction) => Promise<T>;
 
 export type Transaction = {
-  select: (columns?: SelectColumn | SelectColumn[]) => QueryBuilderChain;
-  from: (table: string, alias?: string) => QueryBuilderChain;
-  table: (table: string, alias?: string) => QueryBuilderChain;
-  insert: (data?: Record<string, any> | Record<string, any>[]) => QueryBuilderChain;
-  update: (data?: Record<string, any>) => QueryBuilderChain;
-  delete: () => QueryBuilderChain;
+  select: (columns?: SelectColumn | SelectColumn[]) => QueryBuilderInterface;
+  from: (table: string, alias?: string) => QueryBuilderInterface;
+  table: (table: string, alias?: string) => QueryBuilderInterface;
+  insert: (data?: Record<string, any> | Record<string, any>[]) => QueryBuilderInterface;
+  update: (data?: Record<string, any>) => QueryBuilderInterface;
+  delete: () => QueryBuilderInterface;
   raw: (sql: string, params?: any[]) => Promise<any[]>;
   commit: () => Promise<void>;
   rollback: () => Promise<void>;

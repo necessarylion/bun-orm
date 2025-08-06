@@ -19,10 +19,10 @@ export type {
   GroupByCondition,
   SelectColumn,
   QueryResult,
-  QueryBuilderChain,
-  InsertQueryBuilderChain,
-  UpdateQueryBuilderChain,
-  DeleteQueryBuilderChain,
+  QueryBuilderInterface,
+  InsertQueryBuilderInterface,
+  UpdateQueryBuilderInterface,
+  DeleteQueryBuilderInterface,
   Transaction,
   TransactionCallback
 } from './src/types';
