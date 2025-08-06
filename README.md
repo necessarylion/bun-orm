@@ -318,6 +318,40 @@ export DB_USER=postgres
 export DB_PASSWORD=postgres
 ```
 
+### Available Scripts
+
+```bash
+# Development
+bun run dev              # Start development server with watch mode
+bun run build            # Build the project
+bun run type-check       # Run TypeScript type checking
+
+# Testing
+bun run test             # Run all tests
+bun run test:coverage    # Run tests with coverage
+
+# Code Quality
+bun run lint             # Run linting
+bun run lint:fix         # Fix linting issues
+bun run format           # Format code with Biome
+```
+
+### CI/CD
+
+This project uses GitHub Actions for continuous integration:
+
+- **Test Workflow** (`.github/workflows/test.yml`): Runs tests on push and pull requests
+- **Lint Workflow** (`.github/workflows/lint.yml`): Checks code formatting and linting
+- **Publish Workflow** (`.github/workflows/publish.yml`): Publishes to NPM on releases
+
+The CI pipeline:
+1. Sets up Bun runtime
+2. Starts PostgreSQL service container
+3. Installs dependencies
+4. Runs tests with database integration
+5. Checks code quality (linting, formatting, type checking)
+6. Publishes to NPM when a new release is created
+
 ## License
 
 MIT

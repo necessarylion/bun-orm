@@ -1,0 +1,71 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: bun_orm
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install
+
+    - name: Wait for PostgreSQL
+      run: |
+        echo "Waiting for PostgreSQL to be ready..."
+        while ! pg_isready -h localhost -p 5432 -U postgres; do
+          sleep 1
+        done
+        echo "PostgreSQL is ready!"
+
+    - name: Create test database
+      run: |
+        PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -c "CREATE DATABASE bun_orm;"
+      env:
+        PGPASSWORD: postgres
+
+    - name: Run tests
+      run: bun test
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: bun_orm
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+
+    - name: Run tests with coverage (if available)
+      run: bun run test:coverage
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: bun_orm
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+      continue-on-error: true 

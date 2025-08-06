@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
-import { spark, Spark } from '../index'
+import { spark, type Spark } from '../index'
 import type { Transaction } from '../src/types'
 
 describe('Transaction Tests', () => {

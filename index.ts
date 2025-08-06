@@ -27,6 +27,5 @@ export type {
   InsertQueryBuilderInterface,
   UpdateQueryBuilderInterface,
   DeleteQueryBuilderInterface,
-  Transaction,
   TransactionCallback,
 } from './src/types'

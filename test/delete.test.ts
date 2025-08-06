@@ -77,7 +77,7 @@ describe('DELETE Query Builder', () => {
 
     expect(result).toBeDefined()
     expect(result.length).toBe(3)
-    expect(result.map((user) => user.id)).toEqual([1, 2, 3])
+    expect(result.map((user) => user.id).sort()).toEqual([1, 2, 3].sort())
 
     // Verify the records were deleted
     const deletedUsers = await db

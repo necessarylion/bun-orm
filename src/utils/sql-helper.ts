@@ -1,5 +1,3 @@
-import { sql } from 'bun'
-
 export class SQLHelper {
   /**
    * Escapes a SQL identifier (table name, column name, etc.)
@@ -17,7 +15,7 @@ export class SQLHelper {
    * @returns {string} Comma-separated list of escaped column names
    */
   static buildColumnList(columns: string[]): string {
-    return columns.map((col) => this.escapeIdentifier(col)).join(', ')
+    return columns.map((col) => SQLHelper.escapeIdentifier(col)).join(', ')
   }
 
   /**
@@ -44,7 +42,7 @@ export class SQLHelper {
 
     for (let i = 0; i < entries.length; i++) {
       const [key, value] = entries[i] as [string, any]
-      setParts.push(`${this.escapeIdentifier(key)} = $${i + 1}`)
+      setParts.push(`${SQLHelper.escapeIdentifier(key)} = $${i + 1}`)
       params.push(value)
     }
 
@@ -78,20 +76,20 @@ export class SQLHelper {
       }
 
       if (operator === 'IS NULL' || operator === 'IS NOT NULL') {
-        whereParts.push(`${this.escapeIdentifier(column)} ${operator}`)
+        whereParts.push(`${SQLHelper.escapeIdentifier(column)} ${operator}`)
       } else if (operator === 'IN' || operator === 'NOT IN') {
         if (Array.isArray(value)) {
           const placeholders = value
             .map((_, j) => `$${params.length + j + 1}`)
             .join(', ')
           whereParts.push(
-            `${this.escapeIdentifier(column)} ${operator} (${placeholders})`
+            `${SQLHelper.escapeIdentifier(column)} ${operator} (${placeholders})`
           )
           params.push(...value)
         }
       } else {
         whereParts.push(
-          `${this.escapeIdentifier(column)} ${operator} $${params.length + 1}`
+          `${SQLHelper.escapeIdentifier(column)} ${operator} $${params.length + 1}`
         )
         params.push(value)
       }
@@ -114,8 +112,8 @@ export class SQLHelper {
     return joins
       .map((join) => {
         const tablePart = join.alias
-          ? `${this.escapeIdentifier(join.table)} AS ${this.escapeIdentifier(join.alias)}`
-          : this.escapeIdentifier(join.table)
+          ? `${SQLHelper.escapeIdentifier(join.table)} AS ${SQLHelper.escapeIdentifier(join.alias)}`
+          : SQLHelper.escapeIdentifier(join.table)
         return `${join.type} JOIN ${tablePart} ON ${join.on}`
       })
       .join(' ')
@@ -131,7 +129,8 @@ export class SQLHelper {
   ): string {
     return orders
       .map(
-        (order) => `${this.escapeIdentifier(order.column)} ${order.direction}`
+        (order) =>
+          `${SQLHelper.escapeIdentifier(order.column)} ${order.direction}`
       )
       .join(', ')
   }
@@ -142,7 +141,7 @@ export class SQLHelper {
    * @returns {string} GROUP BY clause SQL
    */
   static buildGroupByClause(groups: string[]): string {
-    return groups.map((group) => this.escapeIdentifier(group)).join(', ')
+    return groups.map((group) => SQLHelper.escapeIdentifier(group)).join(', ')
   }
 
   /**
@@ -183,7 +182,7 @@ export class SQLHelper {
     }
 
     return {
-      columns: this.buildColumnList(columns),
+      columns: SQLHelper.buildColumnList(columns),
       placeholders: placeholders.join(', '),
       params,
     }

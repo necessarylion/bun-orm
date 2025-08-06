@@ -156,9 +156,25 @@ export class QueryBuilder
     value?: any
   ): QueryBuilderInterface {
     // Check if second parameter is an operator or a value
-    const operators = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'ILIKE', 'IN', 'NOT IN', 'IS NULL', 'IS NOT NULL']
-    
-    if (typeof operatorOrValue === 'string' && operators.includes(operatorOrValue)) {
+    const operators = [
+      '=',
+      '!=',
+      '>',
+      '<',
+      '>=',
+      '<=',
+      'LIKE',
+      'ILIKE',
+      'IN',
+      'NOT IN',
+      'IS NULL',
+      'IS NOT NULL',
+    ]
+
+    if (
+      typeof operatorOrValue === 'string' &&
+      operators.includes(operatorOrValue)
+    ) {
       // where('id', '=', 2) syntax
       this.addWhereCondition(column, operatorOrValue as any, value)
     } else {
