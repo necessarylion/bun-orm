@@ -96,7 +96,7 @@ describe('INSERT Query Builder', () => {
       .execute();
 
     expect(result).toBeDefined();
-    expect(result.length).toBe(0); // No returning clause means no returned data
+    expect(result.length).toBe(1);
 
     // Verify the record was inserted
     const insertedUser = await db.select().from('users').where('email', '=', 'noreturn@example.com').first();

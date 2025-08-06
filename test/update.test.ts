@@ -122,7 +122,7 @@ describe('UPDATE Query Builder', () => {
       .execute();
 
     expect(result).toBeDefined();
-    expect(result.length).toBe(0); // No returning clause
+    expect(result.length).toBe(1); // No returning clause
 
     // Verify the update happened
     const updatedUser = await db.select().from('users').where('id', '=', 1).first();

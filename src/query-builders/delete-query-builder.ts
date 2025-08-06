@@ -4,7 +4,7 @@ import type { DeleteQueryBuilderChain } from '../types';
 
 export class DeleteQueryBuilder extends BaseQueryBuilder implements DeleteQueryBuilderChain {
   private tableName: string = '';
-  private returningColumns: string[] = [];
+  private returningColumns: string[] = ['*'];
 
   /**
    * Creates a new DeleteQueryBuilder instance

@@ -5,7 +5,7 @@ import type { UpdateQueryBuilderChain } from '../types';
 export class UpdateQueryBuilder extends BaseQueryBuilder implements UpdateQueryBuilderChain {
   private tableName: string = '';
   private updateData: Record<string, any> = {};
-  private returningColumns: string[] = [];
+  private returningColumns: string[] = ['*'];
 
   /**
    * Creates a new UpdateQueryBuilder instance

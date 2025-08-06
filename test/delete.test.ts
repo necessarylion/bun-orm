@@ -138,7 +138,7 @@ describe('DELETE Query Builder', () => {
       .execute();
 
     expect(result).toBeDefined();
-    expect(result.length).toBe(0); // No returning clause
+    expect(result.length).toBe(1);
 
     // Verify the record was deleted
     const deletedUser = await db.select().from('users').where('id', '=', 1).first();

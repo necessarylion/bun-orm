@@ -5,7 +5,7 @@ import type { InsertQueryBuilderChain } from '../types';
 export class InsertQueryBuilder extends BaseQueryBuilder implements InsertQueryBuilderChain {
   private tableName: string = '';
   private insertData: Record<string, any>[] = [];
-  private returningColumns: string[] = [];
+  private returningColumns: string[] = ['*'];
 
   /**
    * Creates a new InsertQueryBuilder instance
