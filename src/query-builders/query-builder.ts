@@ -15,14 +15,6 @@ export class QueryBuilder
   private queryMode: 'select' | 'insert' | 'update' | 'delete' = 'select'
 
   /**
-   * Creates a new QueryBuilder instance
-   * @param {any} [transactionContext] - Optional transaction context
-   */
-  constructor(transactionContext?: any) {
-    super(transactionContext)
-  }
-
-  /**
    * Sets the table for all operations
    * @param {string} table - Table name
    * @param {string} [alias] - Optional table alias (for select queries)

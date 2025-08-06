@@ -117,21 +117,6 @@ export class Spark {
     return connection.getSQL().unsafe(sql, params)
   }
 
-  // Schema operations
-  /**
-   * Creates a new table (simplified implementation)
-   * @param {string} tableName - Name of the table to create
-   * @param {(table: any) => void} callback - Table definition callback
-   * @returns {Promise<void>}
-   */
-  public async createTable(
-    tableName: string,
-    callback: (table: any) => void
-  ): Promise<void> {
-    // This is a simplified version - in a full implementation you'd want a schema builder
-    console.warn('createTable is not fully implemented in this version')
-  }
-
   /**
    * Drops a table if it exists
    * @param {string} tableName - Name of the table to drop
