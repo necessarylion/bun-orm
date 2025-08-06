@@ -1,11 +1,16 @@
 import { BaseQueryBuilder } from './base-query-builder'
 import { SQLHelper } from '../utils/sql-helper'
-import type { QueryBuilderInterface, SelectColumn, WhereOperator } from '../types'
+import type {
+  QueryBuilderInterface,
+  SelectColumn,
+  WhereOperator,
+} from '../types'
 
 export class QueryBuilder
   extends BaseQueryBuilder
   implements QueryBuilderInterface
 {
+  private alreadyRemovedStar: boolean = false
   private selectColumns: string[] = ['*']
   private fromTable: string = ''
   private fromAlias: string = ''
@@ -69,8 +74,14 @@ export class QueryBuilder
       return this
     }
 
+    // remove * from selectColumns but only one time
+    if (!this.alreadyRemovedStar) {
+      this.selectColumns = this.selectColumns.filter((col) => col !== '*')
+      this.alreadyRemovedStar = true
+    }
+
     if (Array.isArray(columns)) {
-      this.selectColumns = columns.map((col) => {
+      const newColumns = columns.map((col) => {
         if (typeof col === 'string') {
           return col
         } else {
@@ -79,14 +90,16 @@ export class QueryBuilder
           return `${SQLHelper.escapeIdentifier(column)} AS ${SQLHelper.escapeIdentifier(alias)}`
         }
       })
+      this.selectColumns.push(...newColumns)
     } else if (typeof columns === 'string') {
-      this.selectColumns = [columns]
+      this.selectColumns.push(columns)
     } else {
       // Handle object format
-      this.selectColumns = Object.entries(columns).map(
+      const newColumns = Object.entries(columns).map(
         ([alias, column]) =>
           `${SQLHelper.escapeIdentifier(column)} AS ${SQLHelper.escapeIdentifier(alias)}`
       )
+      this.selectColumns.push(...newColumns)
     }
 
     return this

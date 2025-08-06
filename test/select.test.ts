@@ -301,4 +301,18 @@ describe('SELECT Query Builder', () => {
     expect(users.some((user) => user.name === 'John Doe')).toBe(true)
     expect(users.some((user) => user.name === 'Bob Johnson')).toBe(true)
   })
+
+  it('should support multiple select columns', async () => {
+    const users = await db
+      .select('name')
+      .select({ my_email: 'email' })
+      .from('users')
+      .where('name', 'LIKE', '%John%')
+      .get()
+
+    expect(users).toBeDefined()
+    expect(users.length).toBe(2) // John Doe and Bob Johnson
+    expect(users.some((user) => user.name === 'John Doe')).toBe(true)
+    expect(users.some((user) => user.my_email === 'bob@example.com')).toBe(true)
+  })
 })
