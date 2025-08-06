@@ -21,7 +21,7 @@ jobs:
       run: bun install
 
     - name: Setup NPM registry
-      run: bunx npm-registry-auth-cli setup --registry=https://registry.npmjs.org --token=${{ secrets.NPM_TOKEN }}
+      run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
 
     - name: Publish to NPM
       run: bun publish
