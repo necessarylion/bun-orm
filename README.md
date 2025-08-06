@@ -54,12 +54,19 @@ const usersWithAliases = await db
   .from('users')
   .get()
 
-// Filter with WHERE clause
+// Filter with WHERE clause (explicit operator)
 const activeUsers = await db
   .select()
   .from('users')
   .where('active', '=', true)
   .get()
+
+// Filter with WHERE clause (implicit equals operator)
+const user = await db
+  .select()
+  .from('users')
+  .where('id', 1)
+  .first()
 
 // Multiple WHERE conditions
 const users = await db
@@ -257,7 +264,7 @@ interface ConnectionConfig {
 #### SELECT
 - `select(columns?: string[] | Record<string, string>)` - Start a SELECT query
 - `from(table: string)` - Specify the table to query
-- `where(column: string, operator: string, value: any)` - Add WHERE condition
+- `where(column: string, operatorOrValue: string | any, value?: any)` - Add WHERE condition (supports both `where('id', '=', 2)` and `where('id', 2)` syntax)
 - `whereIn(column: string, values: any[])` - Add WHERE IN condition
 - `whereNotIn(column: string, values: any[])` - Add WHERE NOT IN condition
 - `whereNull(column: string)` - Add WHERE NULL condition

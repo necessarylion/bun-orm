@@ -264,4 +264,53 @@ describe('SELECT Query Builder', () => {
     expect(query.sql).toContain('FROM')
     expect(query.sql).toContain('WHERE')
   })
+
+  it('should support where with implicit equals operator', async () => {
+    const user = await db
+      .select()
+      .from('users')
+      .where('id', 1)
+      .first()
+
+    expect(user).toBeDefined()
+    expect(user.id).toBe(1)
+    expect(user.name).toBe('John Doe')
+  })
+
+  it('should support where with explicit equals operator', async () => {
+    const user = await db
+      .select()
+      .from('users')
+      .where('id', '=', 1)
+      .first()
+
+    expect(user).toBeDefined()
+    expect(user.id).toBe(1)
+    expect(user.name).toBe('John Doe')
+  })
+
+  it('should support where with other operators', async () => {
+    const users = await db
+      .select()
+      .from('users')
+      .where('age', '>', 25)
+      .get()
+
+    expect(users).toBeDefined()
+    expect(users.length).toBe(3)
+    expect(users.every((user) => user.age > 25)).toBe(true)
+  })
+
+  it('should support where with LIKE operator', async () => {
+    const users = await db
+      .select()
+      .from('users')
+      .where('name', 'LIKE', '%John%')
+      .get()
+
+    expect(users).toBeDefined()
+    expect(users.length).toBe(2) // John Doe and Bob Johnson
+    expect(users.some(user => user.name === 'John Doe')).toBe(true)
+    expect(users.some(user => user.name === 'Bob Johnson')).toBe(true)
+  })
 })

@@ -65,7 +65,7 @@ export type QueryBuilderInterface = {
   // Where conditions
   where: (
     column: string,
-    operator: string,
+    operatorOrValue: string | any,
     value?: any
   ) => QueryBuilderInterface
   whereIn: (column: string, values: any[]) => QueryBuilderInterface

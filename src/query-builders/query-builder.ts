@@ -142,17 +142,29 @@ export class QueryBuilder
 
   /**
    * Adds a WHERE condition to the query
+   * Supports both syntaxes:
+   * - where('id', '=', 2) - with explicit operator
+   * - where('id', 2) - defaults to '=' operator
    * @param {string} column - Column name
-   * @param {string} operator - Comparison operator
-   * @param {any} [value] - Value to compare against
+   * @param {string | any} operatorOrValue - Comparison operator or value
+   * @param {any} [value] - Value to compare against (when operator is provided)
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public where(
     column: string,
-    operator: string,
+    operatorOrValue: string | any,
     value?: any
   ): QueryBuilderInterface {
-    this.addWhereCondition(column, operator as any, value)
+    // Check if second parameter is an operator or a value
+    const operators = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'ILIKE', 'IN', 'NOT IN', 'IS NULL', 'IS NOT NULL']
+    
+    if (typeof operatorOrValue === 'string' && operators.includes(operatorOrValue)) {
+      // where('id', '=', 2) syntax
+      this.addWhereCondition(column, operatorOrValue as any, value)
+    } else {
+      // where('id', 2) syntax - default to '=' operator
+      this.addWhereCondition(column, '=', operatorOrValue)
+    }
     return this
   }
 
