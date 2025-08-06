@@ -14,8 +14,7 @@
     "lint:fix": "biome lint . --write",
     "format": "biome format . --write",
     "type-check": "tsc --noEmit",
-    "build": "tsc",
-    "prepublishOnly": "bun run test && bun run type-check"
+    "build": "tsc"
   },
   "keywords": [
     "bun",
