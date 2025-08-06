@@ -1,8 +1,5 @@
 import { getConnection } from './connection';
 import { QueryBuilder } from '../query-builders/query-builder';
-import { InsertQueryBuilder } from '../query-builders/insert-query-builder';
-import { UpdateQueryBuilder } from '../query-builders/update-query-builder';
-import { DeleteQueryBuilder } from '../query-builders/delete-query-builder';
 import type { SelectColumn, Transaction as TransactionType } from '../types';
 
 export class Transaction implements TransactionType {
@@ -50,41 +47,41 @@ export class Transaction implements TransactionType {
    * @returns {QueryBuilder} Query builder instance
    */
   public table(table: string, alias?: string): QueryBuilder {
-    return new QueryBuilder(this.transactionContext).from(table, alias);
+    return new QueryBuilder(this.transactionContext).table(table, alias);
   }
 
   /**
    * Creates an INSERT query builder within the transaction
    * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
-   * @returns {InsertQueryBuilder} Insert query builder instance
+   * @returns {QueryBuilder} Query builder instance
    */
-  public insert(data?: Record<string, any> | Record<string, any>[]): InsertQueryBuilder {
-    const insertBuilder = new InsertQueryBuilder(this.transactionContext);
+  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder {
+    const queryBuilder = new QueryBuilder(this.transactionContext);
     if (data) {
-      insertBuilder.values(data);
+      queryBuilder.insert(data);
     }
-    return insertBuilder;
+    return queryBuilder;
   }
 
   /**
    * Creates an UPDATE query builder within the transaction
    * @param {Record<string, any>} [data] - Data to update
-   * @returns {UpdateQueryBuilder} Update query builder instance
+   * @returns {QueryBuilder} Query builder instance
    */
-  public update(data?: Record<string, any>): UpdateQueryBuilder {
-    const updateBuilder = new UpdateQueryBuilder(this.transactionContext);
+  public update(data?: Record<string, any>): QueryBuilder {
+    const queryBuilder = new QueryBuilder(this.transactionContext);
     if (data) {
-      updateBuilder.set(data);
+      queryBuilder.update(data);
     }
-    return updateBuilder;
+    return queryBuilder;
   }
 
   /**
    * Creates a DELETE query builder within the transaction
-   * @returns {DeleteQueryBuilder} Delete query builder instance
+   * @returns {QueryBuilder} Query builder instance
    */
-  public delete(): DeleteQueryBuilder {
-    return new DeleteQueryBuilder(this.transactionContext);
+  public delete(): QueryBuilder {
+    return new QueryBuilder(this.transactionContext);
   }
 
   /**

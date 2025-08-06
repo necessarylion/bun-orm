@@ -88,7 +88,7 @@ describe('SELECT Query Builder', () => {
 
   it('should filter with WHERE NULL clause', async () => {
     // Insert a user with null age
-    await db.insert({ name: 'Null Age User', email: 'null@example.com', age: null }).into('users').execute();
+    await db.table('users').insert({ name: 'Null Age User', email: 'null@example.com', age: null });
     
     const users = await db.select()
       .from('users')
@@ -182,10 +182,10 @@ describe('SELECT Query Builder', () => {
 
   it('should get distinct results', async () => {
     // Insert duplicate names
-    await db.insert([
+    await db.table('users').insert([
       { name: 'John Doe', email: 'john2@example.com', age: 40 },
       { name: 'John Doe', email: 'john3@example.com', age: 45 }
-    ]).into('users').execute();
+    ]);
     
     const distinctNames = await db.select('name')
       .from('users')

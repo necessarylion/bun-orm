@@ -83,35 +83,35 @@ export async function cleanupTestData() {
 // Insert test data
 export async function insertTestData() {
   // Insert users
-  await db.insert([
+  await db.table('users').insert([
     { name: 'John Doe', email: 'john@example.com', age: 30, active: true },
     { name: 'Jane Smith', email: 'jane@example.com', age: 25, active: true },
     { name: 'Bob Johnson', email: 'bob@example.com', age: 35, active: false },
     { name: 'Alice Brown', email: 'alice@example.com', age: 28, active: true }
-  ]).into('users').execute();
+  ]);
 
   // Insert categories
-  await db.insert([
+  await db.table('categories').insert([
     { name: 'Technology', description: 'Tech related posts' },
     { name: 'Travel', description: 'Travel related posts' },
     { name: 'Food', description: 'Food related posts' }
-  ]).into('categories').execute();
+  ]);
 
   // Insert posts
-  await db.insert([
+  await db.table('posts').insert([
     { user_id: 1, title: 'Getting Started with Bun', content: 'Bun is a fast JavaScript runtime...', published: true },
     { user_id: 1, title: 'PostgreSQL with Bun', content: 'Learn how to use PostgreSQL...', published: true },
     { user_id: 2, title: 'Travel to Japan', content: 'My amazing trip to Japan...', published: false },
     { user_id: 3, title: 'Best Pizza Places', content: 'Top pizza restaurants in the city...', published: true }
-  ]).into('posts').execute();
+  ]);
 
   // Insert post categories
-  await db.insert([
+  await db.table('post_categories').insert([
     { post_id: 1, category_id: 1 },
     { post_id: 2, category_id: 1 },
     { post_id: 3, category_id: 2 },
     { post_id: 4, category_id: 3 }
-  ]).into('post_categories').execute();
+  ]);
 }
 
 export { db }; 

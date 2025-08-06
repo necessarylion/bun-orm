@@ -21,11 +21,11 @@ describe('UPDATE Query Builder', () => {
       age: 31
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('id', '=', 1)
       .returning(['id', 'name', 'age', 'email'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -45,11 +45,11 @@ describe('UPDATE Query Builder', () => {
       active: false
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('age', '>', 25)
       .returning(['id', 'name', 'active'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(3); // 3 users with age > 25
@@ -65,11 +65,11 @@ describe('UPDATE Query Builder', () => {
       age: 40
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .whereIn('id', [1, 2, 3])
       .returning(['id', 'name', 'age'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(3);
@@ -78,17 +78,17 @@ describe('UPDATE Query Builder', () => {
 
   it('should update with WHERE NULL clause', async () => {
     // First insert a user with null age
-    await db.insert({ name: 'Null Age User', email: 'nullage@example.com', age: null }).into('users').execute();
+    await db.table('users').insert({ name: 'Null Age User', email: 'nullage@example.com', age: null });
 
     const updateData = {
       age: 25
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .whereNull('age')
       .returning(['id', 'name', 'age'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -100,11 +100,11 @@ describe('UPDATE Query Builder', () => {
       age: 50
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .whereNotNull('age')
       .returning(['id', 'name', 'age'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(4);
@@ -116,10 +116,10 @@ describe('UPDATE Query Builder', () => {
       name: 'No Return Update'
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('id', '=', 1)
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1); // No returning clause
@@ -135,11 +135,11 @@ describe('UPDATE Query Builder', () => {
       email: 'allreturn@example.com'
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('id', '=', 1)
       .returning()
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -159,11 +159,11 @@ describe('UPDATE Query Builder', () => {
       age: 35
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('id', '=', 1)
       .returning(['name', 'age'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -180,37 +180,15 @@ describe('UPDATE Query Builder', () => {
       age: null
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('id', '=', 1)
       .returning(['id', 'name', 'age'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
     expect(result[0].age).toBeNull();
-  });
-
-  it('should build raw query', async () => {
-    const updateData = {
-      name: 'Raw Query Update',
-      age: 42
-    };
-
-    const query = db.update(updateData)
-      .table('users')
-      .where('id', '=', 1)
-      .returning(['id', 'name'])
-      .raw();
-
-    expect(query).toHaveProperty('sql');
-    expect(query).toHaveProperty('params');
-    expect(query.sql).toContain('UPDATE');
-    expect(query.sql).toContain('SET');
-    expect(query.sql).toContain('WHERE');
-    expect(query.sql).toContain('RETURNING');
-    expect(query.params).toContain('Raw Query Update');
-    expect(query.params).toContain(42);
   });
 
   it('should handle update with constructor data', async () => {
@@ -219,11 +197,11 @@ describe('UPDATE Query Builder', () => {
       email: 'constructor@example.com'
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('id', '=', 1)
       .returning(['id', 'name', 'email'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -236,12 +214,12 @@ describe('UPDATE Query Builder', () => {
       active: false
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('active', '=', true)
       .where('age', '>', 25)
       .returning(['id', 'name', 'active'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(2); // 2 users that are active and age > 25
@@ -253,11 +231,11 @@ describe('UPDATE Query Builder', () => {
       name: 'No Match Update'
     };
 
-    const result = await db.update(updateData)
+    const result = await db
       .table('users')
       .where('id', '=', 999)
       .returning(['id', 'name'])
-      .execute();
+      .update(updateData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(0);

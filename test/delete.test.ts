@@ -17,14 +17,12 @@ describe('DELETE Query Builder', () => {
 
   it('should delete a single record', async () => {
     // First delete all post_categories, then posts for user 1
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').where('user_id', '=', 1).execute();
+    await db.table('post_categories').delete();
+    await db.table('posts').where('user_id', '=', 1).delete();
     
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .where('id', '=', 1)
-      .returning(['id', 'name', 'email'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -42,14 +40,12 @@ describe('DELETE Query Builder', () => {
 
   it('should delete multiple records', async () => {
     // First delete all post_categories, then posts for inactive users
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').where('user_id', '=', 3).execute(); // Bob Johnson is user 3
+    await db.table('post_categories').delete();
+    await db.table('posts').where('user_id', '=', 3).delete(); // Bob Johnson is user 3
     
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .where('active', '=', false)
-      .returning(['id', 'name', 'active'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1); // Only Bob Johnson is inactive
@@ -66,14 +62,12 @@ describe('DELETE Query Builder', () => {
 
   it('should delete with WHERE IN clause', async () => {
     // First delete all post_categories, then posts for these users
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').whereIn('user_id', [1, 2, 3]).execute();
+    await db.table('post_categories').delete();
+    await db.table('posts').whereIn('user_id', [1, 2, 3]).delete();
     
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .whereIn('id', [1, 2, 3])
-      .returning(['id', 'name'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(3);
@@ -91,13 +85,11 @@ describe('DELETE Query Builder', () => {
 
   it('should delete with WHERE NULL clause', async () => {
     // First insert a user with null age
-    await db.insert({ name: 'Null Age User', email: 'nullage@example.com', age: null }).into('users').execute();
+    await db.table('users').insert({ name: 'Null Age User', email: 'nullage@example.com', age: null });
 
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .whereNull('age')
-      .returning(['id', 'name', 'age'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -110,14 +102,12 @@ describe('DELETE Query Builder', () => {
 
   it('should delete with WHERE NOT NULL clause', async () => {
     // First delete all post_categories and posts
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').execute();
+    await db.table('post_categories').delete();
+    await db.table('posts').delete();
     
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .whereNotNull('age')
-      .returning(['id', 'name', 'age'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(4);
@@ -129,13 +119,12 @@ describe('DELETE Query Builder', () => {
 
   it('should delete without returning clause', async () => {
     // First delete all post_categories and posts for user 1
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').where('user_id', '=', 1).execute();
+    await db.table('post_categories').delete();
+    await db.table('posts').where('user_id', '=', 1).delete();
     
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .where('id', '=', 1)
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -147,14 +136,13 @@ describe('DELETE Query Builder', () => {
 
   it('should delete with all returning columns', async () => {
     // First delete all post_categories and posts for user 1
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').where('user_id', '=', 1).execute();
+    await db.table('post_categories').delete();
+    await db.table('posts').where('user_id', '=', 1).delete();
     
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .where('id', '=', 1)
       .returning()
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -170,14 +158,13 @@ describe('DELETE Query Builder', () => {
 
   it('should delete with specific returning columns', async () => {
     // First delete all post_categories and posts for user 1
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').where('user_id', '=', 1).execute();
+    await db.table('post_categories').delete();
+    await db.table('posts').where('user_id', '=', 1).delete();
     
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .where('id', '=', 1)
       .returning(['id', 'name'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -206,15 +193,13 @@ describe('DELETE Query Builder', () => {
 
   it('should delete with multiple conditions', async () => {
     // First delete all post_categories, then posts for users that match the conditions
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').whereIn('user_id', [1, 4]).execute(); // Users 1 and 4 are active and age > 25
+    await db.table('post_categories').delete();
+    await db.table('posts').whereIn('user_id', [1, 4]).delete(); // Users 1 and 4 are active and age > 25
     
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .where('active', '=', true)
       .where('age', '>', 25)
-      .returning(['id', 'name', 'active', 'age'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(2); // 2 users that are active and age > 25
@@ -230,11 +215,9 @@ describe('DELETE Query Builder', () => {
   });
 
   it('should not delete when no records match', async () => {
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .where('id', '=', 999)
-      .returning(['id', 'name'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(0);
@@ -246,13 +229,11 @@ describe('DELETE Query Builder', () => {
 
   it('should delete all records when no WHERE clause', async () => {
     // First delete all post_categories, then all posts
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').execute();
+    await db.table('post_categories').delete();
+    await db.table('posts').delete();
     
-    const result = await db.delete()
-      .from('users')
-      .returning(['id', 'name'])
-      .execute();
+    const result = await db.table('users')
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(4);
@@ -264,15 +245,13 @@ describe('DELETE Query Builder', () => {
 
   it('should handle cascading deletes', async () => {
     // First delete all post_categories and posts for user 1
-    await db.delete().from('post_categories').execute();
-    await db.delete().from('posts').where('user_id', '=', 1).execute();
+    await db.table('post_categories').delete();
+    await db.table('posts').where('user_id', '=', 1).delete();
     
     // Delete a user who had posts
-    const result = await db.delete()
-      .from('users')
+    const result = await db.table('users')
       .where('id', '=', 1)
-      .returning(['id', 'name'])
-      .execute();
+      .delete();
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);

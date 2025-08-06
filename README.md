@@ -11,6 +11,7 @@ A PostgreSQL query builder for Bun, inspired by Knex.js but built specifically f
 - 🎯 **TypeScript Support**: Full type safety and IntelliSense
 - 🧪 **Comprehensive Testing**: Extensive test suite with real PostgreSQL
 - ⚡ **Zero Dependencies**: No external dependencies required
+- 🔗 **Unified QueryBuilder**: Single QueryBuilder class for all operations
 
 ## Installation
 
@@ -53,6 +54,8 @@ const db = spark({
 
 ### 3. Start building queries
 
+#### Traditional API (Legacy)
+
 ```typescript
 // SELECT queries
 const users = await db.select()
@@ -83,6 +86,39 @@ const deletedUser = await db.delete()
   .execute();
 ```
 
+#### Unified QueryBuilder API (Recommended)
+
+```typescript
+import { QueryBuilder } from 'bun-orm';
+
+const qb = new QueryBuilder();
+
+// SELECT queries
+const users = await qb.table('users').query()
+  .where('active', '=', true)
+  .orderBy('name', 'ASC')
+  .get();
+
+// INSERT queries
+const newUser = await qb.table('users').insert({
+  name: 'John Doe',
+  email: 'john@example.com',
+  age: 30
+}).returning(['id', 'name']).execute();
+
+// UPDATE queries
+const updatedUser = await qb.table('users')
+  .where('id', '=', 1)
+  .update({ age: 31 })
+  .returning(['id', 'name', 'age'])
+  .execute();
+
+// DELETE queries
+const deletedUser = await qb.table('users')
+  .where('id', '=', 1)
+  .delete();
+```
+
 ## API Reference
 
 ### Connection
@@ -105,7 +141,146 @@ interface ConnectionConfig {
 }
 ```
 
-### SELECT Queries
+### Unified QueryBuilder API
+
+The unified QueryBuilder provides a single interface for all database operations with a consistent API.
+
+#### Basic Operations
+
+```typescript
+import { QueryBuilder } from 'bun-orm';
+
+const qb = new QueryBuilder();
+
+// Set table for all operations
+qb.table('users');
+
+// SELECT: table(table).query().where(...).get()
+const users = await qb.table('users').query()
+  .where('active', '=', true)
+  .get();
+
+// INSERT: table(table).insert({ ...data })
+const newUser = await qb.table('users').insert({
+  name: 'John Doe',
+  email: 'john@example.com'
+}).execute();
+
+// UPDATE: table(table).where(...).update({ ...data })
+const updatedUser = await qb.table('users')
+  .where('id', '=', 1)
+  .update({ name: 'John Updated' })
+  .execute();
+
+// DELETE: table(table).where(...).delete()
+const deletedUser = await qb.table('users')
+  .where('id', '=', 1)
+  .delete();
+```
+
+#### SELECT Queries
+
+```typescript
+// Basic SELECT
+const users = await qb.table('users').query().get();
+
+// Select specific columns
+const users = await qb.table('users').query()
+  .select(['name', 'email'])
+  .get();
+
+// Select with WHERE
+const activeUsers = await qb.table('users').query()
+  .where('active', '=', true)
+  .get();
+
+// Multiple WHERE conditions
+const users = await qb.table('users').query()
+  .where('active', '=', true)
+  .where('age', '>', 25)
+  .get();
+
+// WHERE IN
+const users = await qb.table('users').query()
+  .whereIn('id', [1, 2, 3])
+  .get();
+
+// JOIN
+const postsWithUsers = await qb.table('posts').query()
+  .select(['posts.title', 'users.name as author'])
+  .join('users', 'posts.user_id = users.id')
+  .get();
+
+// ORDER BY, LIMIT, OFFSET
+const users = await qb.table('users').query()
+  .orderBy('name', 'ASC')
+  .limit(10)
+  .offset(20)
+  .get();
+
+// Count
+const count = await qb.table('users').query()
+  .where('active', '=', true)
+  .count();
+
+// First result
+const firstUser = await qb.table('users').query()
+  .orderBy('id', 'ASC')
+  .first();
+```
+
+#### INSERT Queries
+
+```typescript
+// Single record
+const newUser = await qb.table('users').insert({
+  name: 'John Doe',
+  email: 'john@example.com',
+  age: 30
+}).returning(['id', 'name']).execute();
+
+// Multiple records
+const newUsers = await qb.table('users').insert([
+  { name: 'Jane Smith', email: 'jane@example.com' },
+  { name: 'Bob Johnson', email: 'bob@example.com' }
+]).returning(['id', 'name']).execute();
+```
+
+#### UPDATE Queries
+
+```typescript
+// Single record
+const updatedUser = await qb.table('users')
+  .where('id', '=', 1)
+  .update({ name: 'John Updated', age: 31 })
+  .returning(['id', 'name', 'age'])
+  .execute();
+
+// Multiple records
+const updatedUsers = await qb.table('users')
+  .where('age', '>', 30)
+  .update({ active: false })
+  .returning(['id', 'name', 'active'])
+  .execute();
+```
+
+#### DELETE Queries
+
+```typescript
+// Single record
+const deletedUser = await qb.table('users')
+  .where('id', '=', 1)
+  .delete();
+
+// Multiple records
+const deletedUsers = await qb.table('users')
+  .where('active', '=', false)
+  .delete();
+```
+
+### Traditional API (Legacy)
+
+#### SELECT Queries
 
 #### Basic SELECT
 
@@ -463,6 +638,9 @@ bun test --coverage
 # Run the basic usage example
 bun run examples/basic-usage.ts
 
+# Run the unified query builder example
+bun run examples/unified-query-builder.ts
+
 # Run the transaction examples
 bun run examples/transactions.ts
 ```
@@ -487,6 +665,7 @@ bun run examples/transactions.ts
 | Dependencies | Zero | Multiple |
 | TypeScript | Full support | Full support |
 | Query Builder | ✅ | ✅ |
+| Unified API | ✅ | ❌ |
 | Migrations | ❌ | ✅ |
 | Schema Builder | Basic | Full |
 | Transactions | ✅ | ✅ |
@@ -507,6 +686,7 @@ MIT License - see LICENSE file for details.
 ## Roadmap
 
 - [x] Transaction support
+- [x] Unified QueryBuilder API
 - [ ] Migration system
 - [ ] Schema builder
 - [ ] Connection pooling

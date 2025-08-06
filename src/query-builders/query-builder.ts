@@ -6,6 +6,10 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderChain 
   private selectColumns: string[] = ['*'];
   private fromTable: string = '';
   private fromAlias: string = '';
+  private insertData: Record<string, any>[] = [];
+  private updateData: Record<string, any> = {};
+  private returningColumns: string[] = ['*'];
+  private queryMode: 'select' | 'insert' | 'update' | 'delete' = 'select';
 
   /**
    * Creates a new QueryBuilder instance
@@ -16,11 +20,53 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderChain 
   }
 
   /**
+   * Sets the table for all operations
+   * @param {string} table - Table name
+   * @param {string} [alias] - Optional table alias (for select queries)
+   * @returns {QueryBuilder} Query builder instance
+   */
+  public table(table: string, alias?: string): QueryBuilder {
+    this.fromTable = SQLHelper.sanitizeTableName(table);
+    this.fromAlias = alias ? SQLHelper.sanitizeTableName(alias) : '';
+    return this;
+  }
+
+  /**
+   * Sets the table to query from (alias for table method)
+   * @param {string} table - Table name
+   * @param {string} [alias] - Optional table alias
+   * @returns {QueryBuilder} Query builder instance
+   */
+  public from(table: string, alias?: string): QueryBuilder {
+    return this.table(table, alias);
+  }
+
+  /**
+   * Sets the table to insert into (alias for table method)
+   * @param {string} table - Table name
+   * @returns {QueryBuilder} Query builder instance
+   */
+  public into(table: string): QueryBuilder {
+    return this.table(table);
+  }
+
+  /**
+   * Initiates a SELECT query
+   * @returns {QueryBuilder} Query builder instance
+   */
+  public query(): QueryBuilder {
+    this.queryMode = 'select';
+    return this;
+  }
+
+  /**
    * Sets the columns to select in the query
    * @param {SelectColumn | SelectColumn[]} [columns] - Columns to select (defaults to '*')
    * @returns {QueryBuilderChain} Query builder chain for method chaining
    */
   public select(columns?: SelectColumn | SelectColumn[]): QueryBuilderChain {
+    this.queryMode = 'select';
+    
     if (!columns) {
       this.selectColumns = ['*'];
       return this;
@@ -49,15 +95,41 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderChain 
   }
 
   /**
-   * Sets the table to query from
-   * @param {string} table - Table name
-   * @param {string} [alias] - Optional table alias
-   * @returns {QueryBuilder} Query builder instance
+   * Sets the data to insert and executes the INSERT operation
+   * @param {Record<string, any> | Record<string, any>[]} data - Data to insert (single object or array of objects)
+   * @returns {Promise<T[]>} Inserted records (if returning is specified)
    */
-  public from(table: string, alias?: string): QueryBuilder {
-    this.fromTable = SQLHelper.sanitizeTableName(table);
-    this.fromAlias = alias ? SQLHelper.sanitizeTableName(alias) : '';
-    return this;
+  public async insert<T = any>(data: Record<string, any> | Record<string, any>[]): Promise<T[]> {
+    this.queryMode = 'insert';
+    if (Array.isArray(data)) {
+      this.insertData = data;
+    } else {
+      this.insertData = [data];
+    }
+    const query = this.buildQuery();
+    return await this.executeQuery<T>(query.sql, query.params);
+  }
+
+  /**
+   * Sets the data to update and executes the UPDATE operation
+   * @param {Record<string, any>} data - Data to update
+   * @returns {Promise<T[]>} Updated records (if returning is specified)
+   */
+  public async update<T = any>(data: Record<string, any>): Promise<T[]> {
+    this.queryMode = 'update';
+    this.updateData = data;
+    const query = this.buildQuery();
+    return await this.executeQuery<T>(query.sql, query.params);
+  }
+
+  /**
+   * Executes a DELETE operation
+   * @returns {Promise<T[]>} Deleted records (if returning is specified)
+   */
+  public async delete<T = any>(): Promise<T[]> {
+    this.queryMode = 'delete';
+    const query = this.buildQuery();
+    return await this.executeQuery<T>(query.sql, query.params);
   }
 
   /**
@@ -223,6 +295,22 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderChain 
   }
 
   /**
+   * Sets the columns to return after insert/update/delete
+   * @param {string | string[]} [columns] - Columns to return (defaults to '*')
+   * @returns {QueryBuilder} Query builder instance
+   */
+  public returning(columns?: string | string[]): QueryBuilder {
+    if (!columns) {
+      this.returningColumns = ['*'];
+    } else if (Array.isArray(columns)) {
+      this.returningColumns = columns;
+    } else {
+      this.returningColumns = [columns];
+    }
+    return this;
+  }
+
+  /**
    * Executes a COUNT query
    * @param {string} [column='*'] - Column to count
    * @returns {Promise<number>} Count result
@@ -276,13 +364,32 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderChain 
   }
 
   /**
-   * Builds the complete SQL query
+   * Builds the complete SQL query based on the current mode
    * @returns {{ sql: string; params: any[] }} SQL query and parameters
-   * @throws {Error} When FROM clause is missing
+   * @throws {Error} When required parameters are missing
    */
   private buildQuery(): { sql: string; params: any[] } {
+    switch (this.queryMode) {
+      case 'select':
+        return this.buildSelectQuery();
+      case 'insert':
+        return this.buildInsertQuery();
+      case 'update':
+        return this.buildUpdateQuery();
+      case 'delete':
+        return this.buildDeleteQuery();
+      default:
+        throw new Error('Invalid query mode');
+    }
+  }
+
+  /**
+   * Builds a SELECT query
+   * @returns {{ sql: string; params: any[] }} SQL query and parameters
+   */
+  private buildSelectQuery(): { sql: string; params: any[] } {
     if (!this.fromTable) {
-      throw new Error('FROM clause is required');
+      throw new Error('Table name is required. Use .table() method.');
     }
 
     const distinctClause = this.buildDistinctClause();
@@ -319,6 +426,121 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderChain 
     }
     
     sql += limitOffsetClause;
+
+    return {
+      sql,
+      params: whereClause.params
+    };
+  }
+
+  /**
+   * Builds an INSERT query
+   * @returns {{ sql: string; params: any[] }} SQL query and parameters
+   */
+  private buildInsertQuery(): { sql: string; params: any[] } {
+    if (!this.fromTable) {
+      throw new Error('Table name is required. Use .table() method.');
+    }
+
+    if (this.insertData.length === 0) {
+      throw new Error('No data provided for insert. Use .insert() method.');
+    }
+
+    const { columns, placeholders, params } = SQLHelper.buildInsertValues(this.insertData);
+    const tableClause = SQLHelper.escapeIdentifier(this.fromTable);
+    const returningClause = this.returningColumns.length > 0 
+      ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+      : '';
+
+    const sql = `INSERT INTO ${tableClause} (${columns}) VALUES ${placeholders}${returningClause}`;
+
+    return { sql, params };
+  }
+
+  /**
+   * Builds an UPDATE query
+   * @returns {{ sql: string; params: any[] }} SQL query and parameters
+   */
+  private buildUpdateQuery(): { sql: string; params: any[] } {
+    if (!this.fromTable) {
+      throw new Error('Table name is required. Use .table() method.');
+    }
+
+    if (Object.keys(this.updateData).length === 0) {
+      throw new Error('No data provided for update. Use .update() method.');
+    }
+
+    const tableClause = SQLHelper.escapeIdentifier(this.fromTable);
+    const { sql: setClause, params: setParams } = SQLHelper.buildSetClause(this.updateData);
+    const whereClause = this.buildWhereClause();
+    const returningClause = this.returningColumns.length > 0 
+      ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+      : '';
+
+    let sql = `UPDATE ${tableClause} SET ${setClause}`;
+    
+    if (whereClause.sql) {
+      sql += ` WHERE ${whereClause.sql}`;
+    }
+    
+    sql += returningClause;
+
+    // Need to adjust the parameter numbers in the WHERE clause
+    let finalSql = sql;
+    const finalParams = [...setParams];
+    
+    if (whereClause.sql) {
+      // Replace parameter placeholders in WHERE clause to account for SET parameters
+      let whereSql = whereClause.sql;
+      const whereParams = [...whereClause.params];
+      
+      // Sort the replacements by parameter number (descending) to avoid conflicts
+      const replacements: Array<{ old: string; new: string; index: number }> = [];
+      for (let i = 0; i < whereParams.length; i++) {
+        const oldPlaceholder = `$${i + 1}`;
+        const newPlaceholder = `$${setParams.length + i + 1}`;
+        replacements.push({ old: oldPlaceholder, new: newPlaceholder, index: i });
+      }
+      
+      // Sort by index descending to replace from highest to lowest
+      replacements.sort((a, b) => b.index - a.index);
+      
+      for (const replacement of replacements) {
+        whereSql = whereSql.replace(new RegExp(`\\${replacement.old}(?!\\d)`, 'g'), replacement.new);
+      }
+      
+      finalSql = finalSql.replace(whereClause.sql, whereSql);
+      finalParams.push(...whereParams);
+    }
+
+    return {
+      sql: finalSql,
+      params: finalParams
+    };
+  }
+
+  /**
+   * Builds a DELETE query
+   * @returns {{ sql: string; params: any[] }} SQL query and parameters
+   */
+  private buildDeleteQuery(): { sql: string; params: any[] } {
+    if (!this.fromTable) {
+      throw new Error('Table name is required. Use .table() method.');
+    }
+
+    const tableClause = SQLHelper.escapeIdentifier(this.fromTable);
+    const whereClause = this.buildWhereClause();
+    const returningClause = this.returningColumns.length > 0 
+      ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+      : '';
+
+    let sql = `DELETE FROM ${tableClause}`;
+    
+    if (whereClause.sql) {
+      sql += ` WHERE ${whereClause.sql}`;
+    }
+    
+    sql += returningClause;
 
     return {
       sql,

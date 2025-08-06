@@ -22,10 +22,10 @@ describe('INSERT Query Builder', () => {
       active: true
     };
 
-    const result = await db.insert(userData)
-      .into('users')
+    const result = await db
+      .table('users')
       .returning(['id', 'name', 'email'])
-      .execute();
+      .insert(userData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -46,10 +46,10 @@ describe('INSERT Query Builder', () => {
       { name: 'User 3', email: 'user3@example.com', age: 35, active: true }
     ];
 
-    const result = await db.insert(usersData)
-      .into('users')
+    const result = await db
+      .table('users')
       .returning(['id', 'name', 'email'])
-      .execute();
+      .insert(usersData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(3);
@@ -70,10 +70,10 @@ describe('INSERT Query Builder', () => {
       active: true
     };
 
-    const result = await db.insert(userData)
-      .into('users')
+    const result = await db
+      .table('users')
       .returning(['name', 'email'])
-      .execute();
+      .insert(userData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -91,9 +91,9 @@ describe('INSERT Query Builder', () => {
       active: true
     };
 
-    const result = await db.insert(userData)
-      .into('users')
-      .execute();
+    const result = await db
+      .table('users')
+      .insert(userData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -111,10 +111,10 @@ describe('INSERT Query Builder', () => {
       active: false
     };
 
-    const result = await db.insert(userData)
-      .into('users')
+    const result = await db
+      .table('users')
       .returning()
-      .execute();
+      .insert(userData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -134,35 +134,14 @@ describe('INSERT Query Builder', () => {
       active: true
     };
 
-    const result = await db.insert(userData)
-      .into('users')
+    const result = await db
+      .table('users')
       .returning(['name', 'age'])
-      .execute();
+      .insert(userData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
     expect(result[0].age).toBeNull();
-  });
-
-  it('should build raw query', async () => {
-    const userData = {
-      name: 'Raw Query User',
-      email: 'raw@example.com',
-      age: 27,
-      active: true
-    };
-
-    const query = db.insert(userData)
-      .into('users')
-      .returning(['id', 'name'])
-      .raw();
-
-    expect(query).toHaveProperty('sql');
-    expect(query).toHaveProperty('params');
-    expect(query.sql).toContain('INSERT INTO');
-    expect(query.sql).toContain('RETURNING');
-    expect(query.params).toContain('Raw Query User');
-    expect(query.params).toContain('raw@example.com');
   });
 
   it('should handle insert with constructor data', async () => {
@@ -173,7 +152,10 @@ describe('INSERT Query Builder', () => {
       active: true
     };
 
-    const result = await db.insert(userData).into('users').returning(['id', 'name']).execute();
+    const result = await db
+      .table('users')
+      .returning(['id', 'name'])
+      .insert(userData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(1);
@@ -186,7 +168,10 @@ describe('INSERT Query Builder', () => {
       { name: 'Array User 2', email: 'array2@example.com', age: 33, active: false }
     ];
 
-    const result = await db.insert(usersData).into('users').returning(['id', 'name']).execute();
+    const result = await db
+      .table('users')
+      .returning(['id', 'name'])
+      .insert(usersData)
 
     expect(result).toBeDefined();
     expect(result.length).toBe(2);

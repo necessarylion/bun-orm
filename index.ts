@@ -5,9 +5,6 @@ export { Transaction } from './src/core/transaction';
 
 // Query builders
 export { QueryBuilder } from './src/query-builders/query-builder';
-export { InsertQueryBuilder } from './src/query-builders/insert-query-builder';
-export { UpdateQueryBuilder } from './src/query-builders/update-query-builder';
-export { DeleteQueryBuilder } from './src/query-builders/delete-query-builder';
 export { BaseQueryBuilder } from './src/query-builders/base-query-builder';
 
 // Utilities

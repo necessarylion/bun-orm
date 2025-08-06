@@ -41,15 +41,15 @@ describe('Transaction Tests', () => {
   it('should commit a successful transaction', async () => {
     const result = await db.transaction(async (trx: Transaction) => {
       // Insert data
-      await trx.insert({ name: 'John Doe', balance: 100.00 })
-        .into('transaction_test')
-        .execute();
+      await trx
+        .table('transaction_test')
+        .insert({ name: 'John Doe', balance: 100.00 })
 
       // Update data
-      await trx.update({ balance: 150.00 })
+      await trx
         .table('transaction_test')
         .where('name', '=', 'John Doe')
-        .execute();
+        .update({ balance: 150.00 })
 
       // Return the final result
       return await trx.select()
@@ -83,9 +83,9 @@ describe('Transaction Tests', () => {
     try {
       await db.transaction(async (trx: Transaction) => {
         // Insert first record
-        await trx.insert({ name: 'Jane Smith', balance: 200.00 })
-          .into('transaction_test')
-          .execute();
+        await trx
+          .table('transaction_test')
+          .insert({ name: 'Jane Smith', balance: 200.00 })
 
         // This should fail and cause rollback - try to insert with null name (violates NOT NULL constraint)
         await trx.raw(
@@ -127,26 +127,26 @@ describe('Transaction Tests', () => {
   it('should handle nested operations in transaction', async () => {
     const result = await db.transaction(async (trx: Transaction) => {
       // Multiple operations
-      const user1 = await trx.insert({ name: 'Henry Adams', balance: 100.00 })
-        .into('transaction_test')
+      const user1 = await trx
+        .table('transaction_test')
         .returning(['id', 'name', 'balance'])
-        .execute();
+        .insert({ name: 'Henry Adams', balance: 100.00 })
 
-      const user2 = await trx.insert({ name: 'Ivy Chen', balance: 200.00 })
-        .into('transaction_test')
+      const user2 = await trx
+        .table('transaction_test')
         .returning(['id', 'name', 'balance'])
-        .execute();
+        .insert({ name: 'Ivy Chen', balance: 200.00 })
 
       // Update both users
-      await trx.update({ balance: 150.00 })
+      await trx
         .table('transaction_test')
         .where('id', '=', user1[0].id)
-        .execute();
+        .update({ balance: 150.00 })
 
-      await trx.update({ balance: 250.00 })
+      await trx
         .table('transaction_test')
         .where('id', '=', user2[0].id)
-        .execute();
+        .update({ balance: 250.00 })
 
       // Return both updated users
       return await trx.select()
@@ -168,10 +168,9 @@ describe('Transaction Tests', () => {
     await db.raw('DELETE FROM transaction_test');
 
     // 1. Get initial query - insert a test record
-    const initialRecord = await db.insert({ name: 'Test User', balance: 100.00 })
-      .into('transaction_test')
+    const initialRecord = await db.table('transaction_test')
       .returning(['id', 'name', 'balance'])
-      .execute();
+      .insert({ name: 'Test User', balance: 100.00 });
 
     expect(initialRecord).toHaveLength(1);
     expect(initialRecord[0].name).toBe('Test User');
@@ -196,10 +195,10 @@ describe('Transaction Tests', () => {
       // 2. Run transaction query to update the record
       await db.transaction(async (trx: Transaction) => {
         // Update the balance
-        await trx.update({ balance: 200.00 })
+        await trx
           .table('transaction_test')
           .where('id', '=', userId)
-          .execute();
+          .update({ balance: 200.00 })
 
         // Verify the update within transaction
         const withinTransaction = await trx.select()

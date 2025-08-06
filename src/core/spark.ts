@@ -1,8 +1,5 @@
 import { createConnection, getConnection } from './connection';
 import { QueryBuilder } from '../query-builders/query-builder';
-import { InsertQueryBuilder } from '../query-builders/insert-query-builder';
-import { UpdateQueryBuilder } from '../query-builders/update-query-builder';
-import { DeleteQueryBuilder } from '../query-builders/delete-query-builder';
 import { Transaction } from './transaction';
 import type { ConnectionConfig, TransactionCallback } from '../types';
 
@@ -63,44 +60,47 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public table(table: string, alias?: string): QueryBuilder {
-    return new QueryBuilder().from(table, alias);
+    return new QueryBuilder().table(table, alias);
   }
 
   // INSERT queries
   /**
    * Creates an INSERT query builder
    * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
-   * @returns {InsertQueryBuilder} Insert query builder instance
+   * @returns {QueryBuilder} Query builder instance
    */
-  public insert(data?: Record<string, any> | Record<string, any>[]): InsertQueryBuilder {
-    const insertBuilder = new InsertQueryBuilder();
+  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder {
+    const queryBuilder = new QueryBuilder();
     if (data) {
-      insertBuilder.values(data);
+      queryBuilder.insert(data);
     }
-    return insertBuilder;
+    return queryBuilder;
   }
 
   // UPDATE queries
   /**
    * Creates an UPDATE query builder
    * @param {Record<string, any>} [data] - Data to update
-   * @returns {UpdateQueryBuilder} Update query builder instance
+   * @returns {QueryBuilder} Query builder instance
    */
-  public update(data?: Record<string, any>): UpdateQueryBuilder {
-    const updateBuilder = new UpdateQueryBuilder();
+  public update(data?: Record<string, any>): QueryBuilder {
+    const queryBuilder = new QueryBuilder();
     if (data) {
-      updateBuilder.set(data);
+      queryBuilder.update(data);
     }
-    return updateBuilder;
+    return queryBuilder;
   }
 
   // DELETE queries
   /**
    * Creates a DELETE query builder
-   * @returns {DeleteQueryBuilder} Delete query builder instance
+   * @returns {QueryBuilder} Query builder instance
    */
-  public delete(): DeleteQueryBuilder {
-    return new DeleteQueryBuilder();
+  public delete(): QueryBuilder {
+    const queryBuilder = new QueryBuilder();
+    // Set the query mode to delete so it works with the unified API
+    (queryBuilder as any).queryMode = 'delete';
+    return queryBuilder;
   }
 
   // Raw SQL
@@ -217,8 +217,5 @@ export function spark(config?: ConnectionConfig): Spark {
   return Spark.getInstance();
 }
 
-// Export individual query builders for direct use
-export { QueryBuilder } from '../query-builders/query-builder';
-export { InsertQueryBuilder } from '../query-builders/insert-query-builder';
-export { UpdateQueryBuilder } from '../query-builders/update-query-builder';
-export { DeleteQueryBuilder } from '../query-builders/delete-query-builder'; 
+// Export the unified QueryBuilder for direct use
+export { QueryBuilder } from '../query-builders/query-builder'; 
