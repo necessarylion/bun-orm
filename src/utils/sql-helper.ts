@@ -1,4 +1,4 @@
-import { sql } from 'bun';
+import { sql } from 'bun'
 
 export class SQLHelper {
   /**
@@ -8,7 +8,7 @@ export class SQLHelper {
    */
   static escapeIdentifier(identifier: string): string {
     // Simple identifier escaping - in production you might want more robust escaping
-    return `"${identifier.replace(/"/g, '""')}"`;
+    return `"${identifier.replace(/"/g, '""')}"`
   }
 
   /**
@@ -17,7 +17,7 @@ export class SQLHelper {
    * @returns {string} Comma-separated list of escaped column names
    */
   static buildColumnList(columns: string[]): string {
-    return columns.map(col => this.escapeIdentifier(col)).join(', ');
+    return columns.map((col) => this.escapeIdentifier(col)).join(', ')
   }
 
   /**
@@ -26,7 +26,7 @@ export class SQLHelper {
    * @returns {string} Comma-separated list of parameter placeholders ($1, $2, etc.)
    */
   static buildValuePlaceholders(count: number): string {
-    return Array.from({ length: count }, (_, i) => `$${i + 1}`).join(', ');
+    return Array.from({ length: count }, (_, i) => `$${i + 1}`).join(', ')
   }
 
   /**
@@ -34,21 +34,24 @@ export class SQLHelper {
    * @param {Record<string, any>} data - Object containing column-value pairs
    * @returns {{ sql: string; params: any[] }} SET clause SQL and parameters
    */
-  static buildSetClause(data: Record<string, any>): { sql: string; params: any[] } {
-    const entries = Object.entries(data);
-    const setParts: string[] = [];
-    const params: any[] = [];
+  static buildSetClause(data: Record<string, any>): {
+    sql: string
+    params: any[]
+  } {
+    const entries = Object.entries(data)
+    const setParts: string[] = []
+    const params: any[] = []
 
     for (let i = 0; i < entries.length; i++) {
-      const [key, value] = entries[i] as [string, any];
-      setParts.push(`${this.escapeIdentifier(key)} = $${i + 1}`);
-      params.push(value);
+      const [key, value] = entries[i] as [string, any]
+      setParts.push(`${this.escapeIdentifier(key)} = $${i + 1}`)
+      params.push(value)
     }
 
     return {
       sql: setParts.join(', '),
-      params
-    };
+      params,
+    }
   }
 
   /**
@@ -56,36 +59,48 @@ export class SQLHelper {
    * @param {Array<{ column: string; operator: string; value?: any }>} conditions - Array of WHERE conditions
    * @returns {{ sql: string; params: any[] }} WHERE clause SQL and parameters
    */
-  static buildWhereConditions(conditions: Array<{ column: string; operator: string; value?: any }>): { sql: string; params: any[] } {
+  static buildWhereConditions(
+    conditions: Array<{ column: string; operator: string; value?: any }>
+  ): { sql: string; params: any[] } {
     if (conditions.length === 0) {
-      return { sql: '', params: [] };
+      return { sql: '', params: [] }
     }
 
-    const whereParts: string[] = [];
-    const params: any[] = [];
+    const whereParts: string[] = []
+    const params: any[] = []
 
     for (let i = 0; i < conditions.length; i++) {
-      const condition = conditions[i];
-      const { column, operator, value } = condition as { column: string; operator: string; value?: any };
-      
+      const condition = conditions[i]
+      const { column, operator, value } = condition as {
+        column: string
+        operator: string
+        value?: any
+      }
+
       if (operator === 'IS NULL' || operator === 'IS NOT NULL') {
-        whereParts.push(`${this.escapeIdentifier(column)} ${operator}`);
+        whereParts.push(`${this.escapeIdentifier(column)} ${operator}`)
       } else if (operator === 'IN' || operator === 'NOT IN') {
         if (Array.isArray(value)) {
-          const placeholders = value.map((_, j) => `$${params.length + j + 1}`).join(', ');
-          whereParts.push(`${this.escapeIdentifier(column)} ${operator} (${placeholders})`);
-          params.push(...value);
+          const placeholders = value
+            .map((_, j) => `$${params.length + j + 1}`)
+            .join(', ')
+          whereParts.push(
+            `${this.escapeIdentifier(column)} ${operator} (${placeholders})`
+          )
+          params.push(...value)
         }
       } else {
-        whereParts.push(`${this.escapeIdentifier(column)} ${operator} $${params.length + 1}`);
-        params.push(value);
+        whereParts.push(
+          `${this.escapeIdentifier(column)} ${operator} $${params.length + 1}`
+        )
+        params.push(value)
       }
     }
 
     return {
       sql: whereParts.join(' AND '),
-      params
-    };
+      params,
+    }
   }
 
   /**
@@ -93,13 +108,17 @@ export class SQLHelper {
    * @param {Array<{ type: string; table: string; on: string; alias?: string }>} joins - Array of join conditions
    * @returns {string} JOIN clause SQL
    */
-  static buildJoinClause(joins: Array<{ type: string; table: string; on: string; alias?: string }>): string {
-    return joins.map(join => {
-      const tablePart = join.alias 
-        ? `${this.escapeIdentifier(join.table)} AS ${this.escapeIdentifier(join.alias)}`
-        : this.escapeIdentifier(join.table);
-      return `${join.type} JOIN ${tablePart} ON ${join.on}`;
-    }).join(' ');
+  static buildJoinClause(
+    joins: Array<{ type: string; table: string; on: string; alias?: string }>
+  ): string {
+    return joins
+      .map((join) => {
+        const tablePart = join.alias
+          ? `${this.escapeIdentifier(join.table)} AS ${this.escapeIdentifier(join.alias)}`
+          : this.escapeIdentifier(join.table)
+        return `${join.type} JOIN ${tablePart} ON ${join.on}`
+      })
+      .join(' ')
   }
 
   /**
@@ -107,10 +126,14 @@ export class SQLHelper {
    * @param {Array<{ column: string; direction: string }>} orders - Array of order conditions
    * @returns {string} ORDER BY clause SQL
    */
-  static buildOrderByClause(orders: Array<{ column: string; direction: string }>): string {
-    return orders.map(order => 
-      `${this.escapeIdentifier(order.column)} ${order.direction}`
-    ).join(', ');
+  static buildOrderByClause(
+    orders: Array<{ column: string; direction: string }>
+  ): string {
+    return orders
+      .map(
+        (order) => `${this.escapeIdentifier(order.column)} ${order.direction}`
+      )
+      .join(', ')
   }
 
   /**
@@ -119,7 +142,7 @@ export class SQLHelper {
    * @returns {string} GROUP BY clause SQL
    */
   static buildGroupByClause(groups: string[]): string {
-    return groups.map(group => this.escapeIdentifier(group)).join(', ');
+    return groups.map((group) => this.escapeIdentifier(group)).join(', ')
   }
 
   /**
@@ -129,7 +152,7 @@ export class SQLHelper {
    */
   static sanitizeTableName(table: string): string {
     // Remove any potentially dangerous characters
-    return table.replace(/[^a-zA-Z0-9_]/g, '');
+    return table.replace(/[^a-zA-Z0-9_]/g, '')
   }
 
   /**
@@ -138,25 +161,31 @@ export class SQLHelper {
    * @returns {{ columns: string; placeholders: string; params: any[] }} INSERT clause components
    * @throws {Error} When no data is provided
    */
-  static buildInsertValues(data: Record<string, any>[]): { columns: string; placeholders: string; params: any[] } {
+  static buildInsertValues(data: Record<string, any>[]): {
+    columns: string
+    placeholders: string
+    params: any[]
+  } {
     if (data.length === 0) {
-      throw new Error('No data provided for insert');
+      throw new Error('No data provided for insert')
     }
 
-    const columns = Object.keys(data[0] || {});
-    const placeholders: string[] = [];
-    const params: any[] = [];
+    const columns = Object.keys(data[0] || {})
+    const placeholders: string[] = []
+    const params: any[] = []
 
     for (const row of data) {
-      const rowPlaceholders = columns.map((_, i) => `$${params.length + i + 1}`).join(', ');
-      placeholders.push(`(${rowPlaceholders})`);
-      params.push(...columns.map(col => row[col]));
+      const rowPlaceholders = columns
+        .map((_, i) => `$${params.length + i + 1}`)
+        .join(', ')
+      placeholders.push(`(${rowPlaceholders})`)
+      params.push(...columns.map((col) => row[col]))
     }
 
     return {
       columns: this.buildColumnList(columns),
       placeholders: placeholders.join(', '),
-      params
-    };
+      params,
+    }
   }
-} 
+}

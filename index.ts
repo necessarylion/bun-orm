@@ -1,14 +1,18 @@
 // Main exports
-export { spark, Spark } from './src/core/spark';
-export { createConnection, getConnection, DatabaseConnection } from './src/core/connection';
-export { Transaction } from './src/core/transaction';
+export { spark, Spark } from './src/core/spark'
+export {
+  createConnection,
+  getConnection,
+  DatabaseConnection,
+} from './src/core/connection'
+export { Transaction } from './src/core/transaction'
 
 // Query builders
-export { QueryBuilder } from './src/query-builders/query-builder';
-export { BaseQueryBuilder } from './src/query-builders/base-query-builder';
+export { QueryBuilder } from './src/query-builders/query-builder'
+export { BaseQueryBuilder } from './src/query-builders/base-query-builder'
 
 // Utilities
-export { SQLHelper } from './src/utils/sql-helper';
+export { SQLHelper } from './src/utils/sql-helper'
 
 // Types
 export type {
@@ -24,5 +28,5 @@ export type {
   UpdateQueryBuilderInterface,
   DeleteQueryBuilderInterface,
   Transaction,
-  TransactionCallback
-} from './src/types';
+  TransactionCallback,
+} from './src/types'

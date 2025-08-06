@@ -1,22 +1,25 @@
-import { BaseQueryBuilder } from './base-query-builder';
-import { SQLHelper } from '../utils/sql-helper';
-import type { QueryBuilderInterface, SelectColumn } from '../types';
+import { BaseQueryBuilder } from './base-query-builder'
+import { SQLHelper } from '../utils/sql-helper'
+import type { QueryBuilderInterface, SelectColumn } from '../types'
 
-export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterface {
-  private selectColumns: string[] = ['*'];
-  private fromTable: string = '';
-  private fromAlias: string = '';
-  private insertData: Record<string, any>[] = [];
-  private updateData: Record<string, any> = {};
-  private returningColumns: string[] = ['*'];
-  private queryMode: 'select' | 'insert' | 'update' | 'delete' = 'select';
+export class QueryBuilder
+  extends BaseQueryBuilder
+  implements QueryBuilderInterface
+{
+  private selectColumns: string[] = ['*']
+  private fromTable: string = ''
+  private fromAlias: string = ''
+  private insertData: Record<string, any>[] = []
+  private updateData: Record<string, any> = {}
+  private returningColumns: string[] = ['*']
+  private queryMode: 'select' | 'insert' | 'update' | 'delete' = 'select'
 
   /**
    * Creates a new QueryBuilder instance
    * @param {any} [transactionContext] - Optional transaction context
    */
   constructor(transactionContext?: any) {
-    super(transactionContext);
+    super(transactionContext)
   }
 
   /**
@@ -26,9 +29,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilder} Query builder instance
    */
   public table(table: string, alias?: string): QueryBuilder {
-    this.fromTable = SQLHelper.sanitizeTableName(table);
-    this.fromAlias = alias ? SQLHelper.sanitizeTableName(alias) : '';
-    return this;
+    this.fromTable = SQLHelper.sanitizeTableName(table)
+    this.fromAlias = alias ? SQLHelper.sanitizeTableName(alias) : ''
+    return this
   }
 
   /**
@@ -38,7 +41,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilder} Query builder instance
    */
   public from(table: string, alias?: string): QueryBuilder {
-    return this.table(table, alias);
+    return this.table(table, alias)
   }
 
   /**
@@ -47,7 +50,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilder} Query builder instance
    */
   public into(table: string): QueryBuilder {
-    return this.table(table);
+    return this.table(table)
   }
 
   /**
@@ -55,8 +58,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilder} Query builder instance
    */
   public query(): QueryBuilder {
-    this.queryMode = 'select';
-    return this;
+    this.queryMode = 'select'
+    return this
   }
 
   /**
@@ -64,34 +67,37 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {SelectColumn | SelectColumn[]} [columns] - Columns to select (defaults to '*')
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public select(columns?: SelectColumn | SelectColumn[]): QueryBuilderInterface {
-    this.queryMode = 'select';
-    
+  public select(
+    columns?: SelectColumn | SelectColumn[]
+  ): QueryBuilderInterface {
+    this.queryMode = 'select'
+
     if (!columns) {
-      this.selectColumns = ['*'];
-      return this;
+      this.selectColumns = ['*']
+      return this
     }
 
     if (Array.isArray(columns)) {
-      this.selectColumns = columns.map(col => {
+      this.selectColumns = columns.map((col) => {
         if (typeof col === 'string') {
-          return col;
+          return col
         } else {
           // Handle object format like { alias: 'column' }
-          const [alias, column] = Object.entries(col)[0] as [string, string];
-          return `${SQLHelper.escapeIdentifier(column)} AS ${SQLHelper.escapeIdentifier(alias)}`;
+          const [alias, column] = Object.entries(col)[0] as [string, string]
+          return `${SQLHelper.escapeIdentifier(column)} AS ${SQLHelper.escapeIdentifier(alias)}`
         }
-      });
+      })
     } else if (typeof columns === 'string') {
-      this.selectColumns = [columns];
+      this.selectColumns = [columns]
     } else {
       // Handle object format
-      this.selectColumns = Object.entries(columns).map(([alias, column]) => 
-        `${SQLHelper.escapeIdentifier(column)} AS ${SQLHelper.escapeIdentifier(alias)}`
-      );
+      this.selectColumns = Object.entries(columns).map(
+        ([alias, column]) =>
+          `${SQLHelper.escapeIdentifier(column)} AS ${SQLHelper.escapeIdentifier(alias)}`
+      )
     }
 
-    return this;
+    return this
   }
 
   /**
@@ -99,15 +105,17 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {Record<string, any> | Record<string, any>[]} data - Data to insert (single object or array of objects)
    * @returns {Promise<T[]>} Inserted records (if returning is specified)
    */
-  public async insert<T = any>(data: Record<string, any> | Record<string, any>[]): Promise<T[]> {
-    this.queryMode = 'insert';
+  public async insert<T = any>(
+    data: Record<string, any> | Record<string, any>[]
+  ): Promise<T[]> {
+    this.queryMode = 'insert'
     if (Array.isArray(data)) {
-      this.insertData = data;
+      this.insertData = data
     } else {
-      this.insertData = [data];
+      this.insertData = [data]
     }
-    const query = this.buildQuery();
-    return await this.executeQuery<T>(query.sql, query.params);
+    const query = this.buildQuery()
+    return await this.executeQuery<T>(query.sql, query.params)
   }
 
   /**
@@ -116,10 +124,10 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {Promise<T[]>} Updated records (if returning is specified)
    */
   public async update<T = any>(data: Record<string, any>): Promise<T[]> {
-    this.queryMode = 'update';
-    this.updateData = data;
-    const query = this.buildQuery();
-    return await this.executeQuery<T>(query.sql, query.params);
+    this.queryMode = 'update'
+    this.updateData = data
+    const query = this.buildQuery()
+    return await this.executeQuery<T>(query.sql, query.params)
   }
 
   /**
@@ -127,9 +135,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {Promise<T[]>} Deleted records (if returning is specified)
    */
   public async delete<T = any>(): Promise<T[]> {
-    this.queryMode = 'delete';
-    const query = this.buildQuery();
-    return await this.executeQuery<T>(query.sql, query.params);
+    this.queryMode = 'delete'
+    const query = this.buildQuery()
+    return await this.executeQuery<T>(query.sql, query.params)
   }
 
   /**
@@ -139,9 +147,13 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {any} [value] - Value to compare against
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public where(column: string, operator: string, value?: any): QueryBuilderInterface {
-    this.addWhereCondition(column, operator as any, value);
-    return this;
+  public where(
+    column: string,
+    operator: string,
+    value?: any
+  ): QueryBuilderInterface {
+    this.addWhereCondition(column, operator as any, value)
+    return this
   }
 
   /**
@@ -151,8 +163,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public whereIn(column: string, values: any[]): QueryBuilderInterface {
-    this.addWhereCondition(column, 'IN', values);
-    return this;
+    this.addWhereCondition(column, 'IN', values)
+    return this
   }
 
   /**
@@ -162,8 +174,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public whereNotIn(column: string, values: any[]): QueryBuilderInterface {
-    this.addWhereCondition(column, 'NOT IN', values);
-    return this;
+    this.addWhereCondition(column, 'NOT IN', values)
+    return this
   }
 
   /**
@@ -172,8 +184,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public whereNull(column: string): QueryBuilderInterface {
-    this.addWhereCondition(column, 'IS NULL');
-    return this;
+    this.addWhereCondition(column, 'IS NULL')
+    return this
   }
 
   /**
@@ -182,8 +194,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public whereNotNull(column: string): QueryBuilderInterface {
-    this.addWhereCondition(column, 'IS NOT NULL');
-    return this;
+    this.addWhereCondition(column, 'IS NOT NULL')
+    return this
   }
 
   /**
@@ -193,9 +205,13 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public join(table: string, on: string, alias?: string): QueryBuilderInterface {
-    this.addJoin('INNER', table, on, alias);
-    return this;
+  public join(
+    table: string,
+    on: string,
+    alias?: string
+  ): QueryBuilderInterface {
+    this.addJoin('INNER', table, on, alias)
+    return this
   }
 
   /**
@@ -205,9 +221,13 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public leftJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
-    this.addJoin('LEFT', table, on, alias);
-    return this;
+  public leftJoin(
+    table: string,
+    on: string,
+    alias?: string
+  ): QueryBuilderInterface {
+    this.addJoin('LEFT', table, on, alias)
+    return this
   }
 
   /**
@@ -217,9 +237,13 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public rightJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
-    this.addJoin('RIGHT', table, on, alias);
-    return this;
+  public rightJoin(
+    table: string,
+    on: string,
+    alias?: string
+  ): QueryBuilderInterface {
+    this.addJoin('RIGHT', table, on, alias)
+    return this
   }
 
   /**
@@ -229,9 +253,13 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public fullJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
-    this.addJoin('FULL', table, on, alias);
-    return this;
+  public fullJoin(
+    table: string,
+    on: string,
+    alias?: string
+  ): QueryBuilderInterface {
+    this.addJoin('FULL', table, on, alias)
+    return this
   }
 
   /**
@@ -240,9 +268,12 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {'ASC' | 'DESC'} [direction='ASC'] - Sort direction
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public orderBy(column: string, direction: 'ASC' | 'DESC' = 'ASC'): QueryBuilderInterface {
-    this.addOrderBy(column, direction);
-    return this;
+  public orderBy(
+    column: string,
+    direction: 'ASC' | 'DESC' = 'ASC'
+  ): QueryBuilderInterface {
+    this.addOrderBy(column, direction)
+    return this
   }
 
   /**
@@ -251,8 +282,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public groupBy(column: string): QueryBuilderInterface {
-    this.addGroupBy(column);
-    return this;
+    this.addGroupBy(column)
+    return this
   }
 
   /**
@@ -261,8 +292,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public having(condition: string): QueryBuilderInterface {
-    this.havingCondition = condition;
-    return this;
+    this.havingCondition = condition
+    return this
   }
 
   /**
@@ -271,8 +302,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public limit(count: number): QueryBuilderInterface {
-    this.limitValue = count;
-    return this;
+    this.limitValue = count
+    return this
   }
 
   /**
@@ -281,8 +312,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public offset(count: number): QueryBuilderInterface {
-    this.offsetValue = count;
-    return this;
+    this.offsetValue = count
+    return this
   }
 
   /**
@@ -290,8 +321,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
   public distinct(): QueryBuilderInterface {
-    this.distinctFlag = true;
-    return this;
+    this.distinctFlag = true
+    return this
   }
 
   /**
@@ -301,13 +332,13 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    */
   public returning(columns?: string | string[]): QueryBuilder {
     if (!columns) {
-      this.returningColumns = ['*'];
+      this.returningColumns = ['*']
     } else if (Array.isArray(columns)) {
-      this.returningColumns = columns;
+      this.returningColumns = columns
     } else {
-      this.returningColumns = [columns];
+      this.returningColumns = [columns]
     }
-    return this;
+    return this
   }
 
   /**
@@ -316,17 +347,20 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {Promise<number>} Count result
    */
   public async count(column: string = '*'): Promise<number> {
-    const originalSelect = this.selectColumns;
-    this.selectColumns = [`COUNT(${column}) as count`];
-    
-    const query = this.buildQuery();
-    const result = await this.executeQuery<{ count: string | number }>(query.sql, query.params);
-    
+    const originalSelect = this.selectColumns
+    this.selectColumns = [`COUNT(${column}) as count`]
+
+    const query = this.buildQuery()
+    const result = await this.executeQuery<{ count: string | number }>(
+      query.sql,
+      query.params
+    )
+
     // Restore original select
-    this.selectColumns = originalSelect;
-    
-    const count = result[0]?.count || 0;
-    return typeof count === 'string' ? parseInt(count, 10) : count;
+    this.selectColumns = originalSelect
+
+    const count = result[0]?.count || 0
+    return typeof count === 'string' ? parseInt(count, 10) : count
   }
 
   /**
@@ -334,16 +368,16 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {Promise<T | null>} First result or null if no results
    */
   public async first<T = any>(): Promise<T | null> {
-    const originalLimit = this.limitValue;
-    this.limitValue = 1;
-    
-    const query = this.buildQuery();
-    const result = await this.executeQuery<T>(query.sql, query.params);
-    
+    const originalLimit = this.limitValue
+    this.limitValue = 1
+
+    const query = this.buildQuery()
+    const result = await this.executeQuery<T>(query.sql, query.params)
+
     // Restore original limit
-    this.limitValue = originalLimit;
-    
-    return result[0] || null;
+    this.limitValue = originalLimit
+
+    return result[0] || null
   }
 
   /**
@@ -351,8 +385,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {Promise<T[]>} Array of results
    */
   public async get<T = any>(): Promise<T[]> {
-    const query = this.buildQuery();
-    return await this.executeQuery<T>(query.sql, query.params);
+    const query = this.buildQuery()
+    return await this.executeQuery<T>(query.sql, query.params)
   }
 
   /**
@@ -360,7 +394,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @returns {{ sql: string; params: any[] }} SQL query and parameters
    */
   public override raw(): { sql: string; params: any[] } {
-    return this.buildQuery();
+    return this.buildQuery()
   }
 
   /**
@@ -371,15 +405,15 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   private buildQuery(): { sql: string; params: any[] } {
     switch (this.queryMode) {
       case 'select':
-        return this.buildSelectQuery();
+        return this.buildSelectQuery()
       case 'insert':
-        return this.buildInsertQuery();
+        return this.buildInsertQuery()
       case 'update':
-        return this.buildUpdateQuery();
+        return this.buildUpdateQuery()
       case 'delete':
-        return this.buildDeleteQuery();
+        return this.buildDeleteQuery()
       default:
-        throw new Error('Invalid query mode');
+        throw new Error('Invalid query mode')
     }
   }
 
@@ -389,48 +423,50 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    */
   private buildSelectQuery(): { sql: string; params: any[] } {
     if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.');
+      throw new Error('Table name is required. Use .table() method.')
     }
 
-    const distinctClause = this.buildDistinctClause();
-    const selectClause = this.selectColumns.join(', ');
-    const fromClause = this.fromAlias 
+    const distinctClause = this.buildDistinctClause()
+    const selectClause = this.selectColumns.join(', ')
+    const fromClause = this.fromAlias
       ? `${SQLHelper.escapeIdentifier(this.fromTable)} AS ${SQLHelper.escapeIdentifier(this.fromAlias)}`
-      : SQLHelper.escapeIdentifier(this.fromTable);
-    
-    const joinClause = this.buildJoinClause();
-    const whereClause = this.buildWhereClause();
-    const groupByClause = this.buildGroupByClause();
-    const havingClause = this.havingCondition ? ` HAVING ${this.havingCondition}` : '';
-    const orderByClause = this.buildOrderByClause();
-    const limitOffsetClause = this.buildLimitOffsetClause();
+      : SQLHelper.escapeIdentifier(this.fromTable)
 
-    let sql = `SELECT ${distinctClause}${selectClause} FROM ${fromClause}`;
-    
+    const joinClause = this.buildJoinClause()
+    const whereClause = this.buildWhereClause()
+    const groupByClause = this.buildGroupByClause()
+    const havingClause = this.havingCondition
+      ? ` HAVING ${this.havingCondition}`
+      : ''
+    const orderByClause = this.buildOrderByClause()
+    const limitOffsetClause = this.buildLimitOffsetClause()
+
+    let sql = `SELECT ${distinctClause}${selectClause} FROM ${fromClause}`
+
     if (joinClause) {
-      sql += ` ${joinClause}`;
+      sql += ` ${joinClause}`
     }
-    
+
     if (whereClause.sql) {
-      sql += ` WHERE ${whereClause.sql}`;
+      sql += ` WHERE ${whereClause.sql}`
     }
-    
+
     if (groupByClause) {
-      sql += ` GROUP BY ${groupByClause}`;
+      sql += ` GROUP BY ${groupByClause}`
     }
-    
-    sql += havingClause;
-    
+
+    sql += havingClause
+
     if (orderByClause) {
-      sql += ` ORDER BY ${orderByClause}`;
+      sql += ` ORDER BY ${orderByClause}`
     }
-    
-    sql += limitOffsetClause;
+
+    sql += limitOffsetClause
 
     return {
       sql,
-      params: whereClause.params
-    };
+      params: whereClause.params,
+    }
   }
 
   /**
@@ -439,22 +475,25 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    */
   private buildInsertQuery(): { sql: string; params: any[] } {
     if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.');
+      throw new Error('Table name is required. Use .table() method.')
     }
 
     if (this.insertData.length === 0) {
-      throw new Error('No data provided for insert. Use .insert() method.');
+      throw new Error('No data provided for insert. Use .insert() method.')
     }
 
-    const { columns, placeholders, params } = SQLHelper.buildInsertValues(this.insertData);
-    const tableClause = SQLHelper.escapeIdentifier(this.fromTable);
-    const returningClause = this.returningColumns.length > 0 
-      ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
-      : '';
+    const { columns, placeholders, params } = SQLHelper.buildInsertValues(
+      this.insertData
+    )
+    const tableClause = SQLHelper.escapeIdentifier(this.fromTable)
+    const returningClause =
+      this.returningColumns.length > 0
+        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+        : ''
 
-    const sql = `INSERT INTO ${tableClause} (${columns}) VALUES ${placeholders}${returningClause}`;
+    const sql = `INSERT INTO ${tableClause} (${columns}) VALUES ${placeholders}${returningClause}`
 
-    return { sql, params };
+    return { sql, params }
   }
 
   /**
@@ -463,60 +502,71 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    */
   private buildUpdateQuery(): { sql: string; params: any[] } {
     if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.');
+      throw new Error('Table name is required. Use .table() method.')
     }
 
     if (Object.keys(this.updateData).length === 0) {
-      throw new Error('No data provided for update. Use .update() method.');
+      throw new Error('No data provided for update. Use .update() method.')
     }
 
-    const tableClause = SQLHelper.escapeIdentifier(this.fromTable);
-    const { sql: setClause, params: setParams } = SQLHelper.buildSetClause(this.updateData);
-    const whereClause = this.buildWhereClause();
-    const returningClause = this.returningColumns.length > 0 
-      ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
-      : '';
+    const tableClause = SQLHelper.escapeIdentifier(this.fromTable)
+    const { sql: setClause, params: setParams } = SQLHelper.buildSetClause(
+      this.updateData
+    )
+    const whereClause = this.buildWhereClause()
+    const returningClause =
+      this.returningColumns.length > 0
+        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+        : ''
 
-    let sql = `UPDATE ${tableClause} SET ${setClause}`;
-    
+    let sql = `UPDATE ${tableClause} SET ${setClause}`
+
     if (whereClause.sql) {
-      sql += ` WHERE ${whereClause.sql}`;
+      sql += ` WHERE ${whereClause.sql}`
     }
-    
-    sql += returningClause;
+
+    sql += returningClause
 
     // Need to adjust the parameter numbers in the WHERE clause
-    let finalSql = sql;
-    const finalParams = [...setParams];
-    
+    let finalSql = sql
+    const finalParams = [...setParams]
+
     if (whereClause.sql) {
       // Replace parameter placeholders in WHERE clause to account for SET parameters
-      let whereSql = whereClause.sql;
-      const whereParams = [...whereClause.params];
-      
+      let whereSql = whereClause.sql
+      const whereParams = [...whereClause.params]
+
       // Sort the replacements by parameter number (descending) to avoid conflicts
-      const replacements: Array<{ old: string; new: string; index: number }> = [];
+      const replacements: Array<{ old: string; new: string; index: number }> =
+        []
       for (let i = 0; i < whereParams.length; i++) {
-        const oldPlaceholder = `$${i + 1}`;
-        const newPlaceholder = `$${setParams.length + i + 1}`;
-        replacements.push({ old: oldPlaceholder, new: newPlaceholder, index: i });
+        const oldPlaceholder = `$${i + 1}`
+        const newPlaceholder = `$${setParams.length + i + 1}`
+        replacements.push({
+          old: oldPlaceholder,
+          new: newPlaceholder,
+          index: i,
+        })
       }
-      
+
       // Sort by index descending to replace from highest to lowest
-      replacements.sort((a, b) => b.index - a.index);
-      
+      replacements.sort((a, b) => b.index - a.index)
+
       for (const replacement of replacements) {
-        whereSql = whereSql.replace(new RegExp(`\\${replacement.old}(?!\\d)`, 'g'), replacement.new);
+        whereSql = whereSql.replace(
+          new RegExp(`\\${replacement.old}(?!\\d)`, 'g'),
+          replacement.new
+        )
       }
-      
-      finalSql = finalSql.replace(whereClause.sql, whereSql);
-      finalParams.push(...whereParams);
+
+      finalSql = finalSql.replace(whereClause.sql, whereSql)
+      finalParams.push(...whereParams)
     }
 
     return {
       sql: finalSql,
-      params: finalParams
-    };
+      params: finalParams,
+    }
   }
 
   /**
@@ -525,26 +575,27 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    */
   private buildDeleteQuery(): { sql: string; params: any[] } {
     if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.');
+      throw new Error('Table name is required. Use .table() method.')
     }
 
-    const tableClause = SQLHelper.escapeIdentifier(this.fromTable);
-    const whereClause = this.buildWhereClause();
-    const returningClause = this.returningColumns.length > 0 
-      ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
-      : '';
+    const tableClause = SQLHelper.escapeIdentifier(this.fromTable)
+    const whereClause = this.buildWhereClause()
+    const returningClause =
+      this.returningColumns.length > 0
+        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+        : ''
 
-    let sql = `DELETE FROM ${tableClause}`;
-    
+    let sql = `DELETE FROM ${tableClause}`
+
     if (whereClause.sql) {
-      sql += ` WHERE ${whereClause.sql}`;
+      sql += ` WHERE ${whereClause.sql}`
     }
-    
-    sql += returningClause;
+
+    sql += returningClause
 
     return {
       sql,
-      params: whereClause.params
-    };
+      params: whereClause.params,
+    }
   }
-} 
+}

@@ -1,10 +1,10 @@
-import { createConnection, getConnection } from './connection';
-import { QueryBuilder } from '../query-builders/query-builder';
-import { Transaction } from './transaction';
-import type { ConnectionConfig, TransactionCallback } from '../types';
+import { createConnection, getConnection } from './connection'
+import { QueryBuilder } from '../query-builders/query-builder'
+import { Transaction } from './transaction'
+import type { ConnectionConfig, TransactionCallback } from '../types'
 
 export class Spark {
-  private static instance: Spark;
+  private static instance: Spark
 
   private constructor() {}
 
@@ -14,9 +14,9 @@ export class Spark {
    */
   public static getInstance(): Spark {
     if (!Spark.instance) {
-      Spark.instance = new Spark();
+      Spark.instance = new Spark()
     }
-    return Spark.instance;
+    return Spark.instance
   }
 
   /**
@@ -25,8 +25,8 @@ export class Spark {
    * @returns {Spark} The initialized Spark instance
    */
   public static initialize(config: ConnectionConfig): Spark {
-    createConnection(config);
-    return Spark.getInstance();
+    createConnection(config)
+    return Spark.getInstance()
   }
 
   // SELECT queries
@@ -36,11 +36,11 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance for SELECT operations
    */
   public select(columns?: string | string[]): QueryBuilder {
-    const queryBuilder = new QueryBuilder();
+    const queryBuilder = new QueryBuilder()
     if (columns) {
-      queryBuilder.select(columns);
+      queryBuilder.select(columns)
     }
-    return queryBuilder;
+    return queryBuilder
   }
 
   /**
@@ -50,7 +50,7 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public from(table: string, alias?: string): QueryBuilder {
-    return new QueryBuilder().from(table, alias);
+    return new QueryBuilder().from(table, alias)
   }
 
   /**
@@ -60,7 +60,7 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public table(table: string, alias?: string): QueryBuilder {
-    return new QueryBuilder().table(table, alias);
+    return new QueryBuilder().table(table, alias)
   }
 
   // INSERT queries
@@ -69,12 +69,14 @@ export class Spark {
    * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
    * @returns {QueryBuilder} Query builder instance
    */
-  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder {
-    const queryBuilder = new QueryBuilder();
+  public insert(
+    data?: Record<string, any> | Record<string, any>[]
+  ): QueryBuilder {
+    const queryBuilder = new QueryBuilder()
     if (data) {
-      queryBuilder.insert(data);
+      queryBuilder.insert(data)
     }
-    return queryBuilder;
+    return queryBuilder
   }
 
   // UPDATE queries
@@ -84,11 +86,11 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public update(data?: Record<string, any>): QueryBuilder {
-    const queryBuilder = new QueryBuilder();
+    const queryBuilder = new QueryBuilder()
     if (data) {
-      queryBuilder.update(data);
+      queryBuilder.update(data)
     }
-    return queryBuilder;
+    return queryBuilder
   }
 
   // DELETE queries
@@ -97,10 +99,10 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public delete(): QueryBuilder {
-    const queryBuilder = new QueryBuilder();
+    const queryBuilder = new QueryBuilder()
     // Set the query mode to delete so it works with the unified API
-    (queryBuilder as any).queryMode = 'delete';
-    return queryBuilder;
+    ;(queryBuilder as any).queryMode = 'delete'
+    return queryBuilder
   }
 
   // Raw SQL
@@ -111,8 +113,8 @@ export class Spark {
    * @returns {Promise<any[]>} Query results
    */
   public raw(sql: string, params: any[] = []): Promise<any[]> {
-    const connection = getConnection();
-    return connection.getSQL().unsafe(sql, params);
+    const connection = getConnection()
+    return connection.getSQL().unsafe(sql, params)
   }
 
   // Schema operations
@@ -122,9 +124,12 @@ export class Spark {
    * @param {(table: any) => void} callback - Table definition callback
    * @returns {Promise<void>}
    */
-  public async createTable(tableName: string, callback: (table: any) => void): Promise<void> {
+  public async createTable(
+    tableName: string,
+    callback: (table: any) => void
+  ): Promise<void> {
     // This is a simplified version - in a full implementation you'd want a schema builder
-    console.warn('createTable is not fully implemented in this version');
+    console.warn('createTable is not fully implemented in this version')
   }
 
   /**
@@ -133,8 +138,8 @@ export class Spark {
    * @returns {Promise<void>}
    */
   public async dropTable(tableName: string): Promise<void> {
-    const connection = getConnection();
-    await connection.getSQL().unsafe(`DROP TABLE IF EXISTS "${tableName}"`);
+    const connection = getConnection()
+    await connection.getSQL().unsafe(`DROP TABLE IF EXISTS "${tableName}"`)
   }
 
   /**
@@ -143,15 +148,18 @@ export class Spark {
    * @returns {Promise<boolean>} True if table exists, false otherwise
    */
   public async hasTable(tableName: string): Promise<boolean> {
-    const connection = getConnection();
-    const result = await connection.getSQL().unsafe(`
+    const connection = getConnection()
+    const result = await connection.getSQL().unsafe(
+      `
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
         AND table_name = $1
       ) as exists
-    `, [tableName]);
-    return result[0]?.exists || false;
+    `,
+      [tableName]
+    )
+    return result[0]?.exists || false
   }
 
   // Connection management
@@ -160,8 +168,8 @@ export class Spark {
    * @returns {Promise<boolean>} True if connection is successful, false otherwise
    */
   public async testConnection(): Promise<boolean> {
-    const connection = getConnection();
-    return await connection.testConnection();
+    const connection = getConnection()
+    return await connection.testConnection()
   }
 
   /**
@@ -169,8 +177,8 @@ export class Spark {
    * @returns {Promise<void>}
    */
   public async close(): Promise<void> {
-    const connection = getConnection();
-    await connection.close();
+    const connection = getConnection()
+    await connection.close()
   }
 
   // Transaction support
@@ -179,18 +187,20 @@ export class Spark {
    * @param {TransactionCallback<T>} callback - Transaction callback function
    * @returns {Promise<T>} Result of the transaction callback
    */
-  public async transaction<T = any>(callback: TransactionCallback<T>): Promise<T> {
-    const connection = getConnection();
-    const sql = connection.getSQL();
-    
+  public async transaction<T = any>(
+    callback: TransactionCallback<T>
+  ): Promise<T> {
+    const connection = getConnection()
+    const sql = connection.getSQL()
+
     // Use Bun's callback-based transaction API
     return await sql.begin(async (tx: any) => {
       // Create transaction instance with the transaction context
-      const trx = new Transaction(tx);
-      
+      const trx = new Transaction(tx)
+
       // Execute the callback with transaction context
-      return await callback(trx);
-    });
+      return await callback(trx)
+    })
   }
 
   /**
@@ -201,7 +211,9 @@ export class Spark {
   public async beginTransaction(): Promise<Transaction> {
     // For manual transactions, we'll use a different approach
     // This is a simplified version - in a real implementation you might want to use a different pattern
-    throw new Error('Manual transaction control is not supported in this version. Use db.transaction(callback) instead.');
+    throw new Error(
+      'Manual transaction control is not supported in this version. Use db.transaction(callback) instead.'
+    )
   }
 }
 
@@ -212,10 +224,10 @@ export class Spark {
  */
 export function spark(config?: ConnectionConfig): Spark {
   if (config) {
-    return Spark.initialize(config);
+    return Spark.initialize(config)
   }
-  return Spark.getInstance();
+  return Spark.getInstance()
 }
 
 // Export the unified QueryBuilder for direct use
-export { QueryBuilder } from '../query-builders/query-builder'; 
+export { QueryBuilder } from '../query-builders/query-builder'
