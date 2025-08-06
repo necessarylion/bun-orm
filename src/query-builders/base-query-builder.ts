@@ -8,8 +8,7 @@ import type {
 } from '../types'
 
 export abstract class BaseQueryBuilder {
-  protected sql: any
-  protected transactionContext: any
+  protected sql: Bun.SQL
   protected whereConditions: WhereCondition[] = []
   protected joins: JoinCondition[] = []
   protected orderByConditions: OrderByCondition[] = []
@@ -21,11 +20,10 @@ export abstract class BaseQueryBuilder {
 
   /**
    * Creates a new BaseQueryBuilder instance
-   * @param {any} [transactionContext] - Optional transaction context
+   * @param {Bun.SQL} [transactionContext] - Optional transaction context
    */
-  constructor(transactionContext?: any) {
-    this.sql = getConnection().getSQL()
-    this.transactionContext = transactionContext
+  constructor(transactionContext?: Bun.SQL) {
+    this.sql = transactionContext ?? getConnection().getSQL()
   }
 
   /**
@@ -158,14 +156,8 @@ export abstract class BaseQueryBuilder {
     params: any[] = []
   ): Promise<T[]> {
     try {
-      // Use transaction context if available, otherwise use regular SQL
-      if (this.transactionContext) {
-        const result = await this.transactionContext.unsafe(query, params)
-        return result
-      } else {
-        const result = await this.sql.unsafe(query, params)
-        return result
-      }
+      const result = await this.sql.unsafe(query, params)
+      return result
     } catch (error) {
       console.error('Query execution error:', error)
       throw error
@@ -196,7 +188,7 @@ export abstract class BaseQueryBuilder {
    * Sets the transaction context (used internally)
    * @param {any} context - Transaction context
    */
-  public setTransactionContext(context: any): void {
-    this.transactionContext = context
+  public setTransactionContext(context: Bun.SQL): void {
+    this.sql = context
   }
 }
