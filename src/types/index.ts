@@ -1,14 +1,4 @@
-export type ConnectionConfig = {
-  host: string;
-  port: number;
-  database: string;
-  username: string;
-  password: string;
-  ssl?: boolean;
-  max?: number;
-  idle_timeout?: number;
-  connect_timeout?: number;
-};
+export type ConnectionConfig = Bun.SQL.Options
 
 export type WhereCondition = {
   column: string;

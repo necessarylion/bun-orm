@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
-import { spark } from '../index';
+import { spark, type ConnectionConfig } from '../index';
 
 describe('Database Connection', () => {
   let db: any;
 
   beforeAll(() => {
-    const config = {
+    const config: ConnectionConfig = {
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5433'),
       database: process.env.DB_NAME || 'bun_orm',

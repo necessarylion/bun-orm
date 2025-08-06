@@ -1,14 +1,14 @@
-import { sql } from 'bun';
+import { SQL } from 'bun';
 import type { ConnectionConfig } from '../types';
 
 export class DatabaseConnection {
   private static instance: DatabaseConnection;
-  private sqlInstance: any;
+  private sqlInstance: Bun.SQL;
   private config: ConnectionConfig;
 
   private constructor(config: ConnectionConfig) {
     this.config = config;
-    this.initialize();
+    this.sqlInstance = new SQL(config)
   }
 
   public static getInstance(config?: ConnectionConfig): DatabaseConnection {
@@ -21,25 +21,12 @@ export class DatabaseConnection {
     return DatabaseConnection.instance;
   }
 
-  private initialize(): void {
-    // Bun's SQL automatically uses environment variables
-    // We'll set them programmatically for our connection
-    process.env.PGHOST = this.config.host;
-    process.env.PGPORT = this.config.port.toString();
-    process.env.PGDATABASE = this.config.database;
-    process.env.PGUSER = this.config.username;
-    process.env.PGPASSWORD = this.config.password;
-
-    if (this.config.ssl) {
-      process.env.PGSSLMODE = 'require';
-    }
-
-    // Initialize the SQL instance
-    this.sqlInstance = sql;
+  public getSQL(): Bun.SQL {
+    return this.sqlInstance;
   }
 
-  public getSQL(): any {
-    return this.sqlInstance;
+  public getConfig(): ConnectionConfig {
+    return this.config;
   }
 
   public async testConnection(): Promise<boolean> {
