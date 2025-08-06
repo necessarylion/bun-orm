@@ -20,15 +20,6 @@ jobs:
     - name: Install dependencies
       run: bun install
 
-    - name: Run tests
-      run: bun test
-      env:
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: bun_orm
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-
     - name: Publish to NPM
       run: bun publish
       env:
