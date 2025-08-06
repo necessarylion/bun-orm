@@ -147,9 +147,14 @@ export abstract class BaseQueryBuilder {
 
   /**
    * Executes a query with the given SQL and parameters
-   * @param {string} query - SQL query string
+   * @param {string} query - SQL query string (built safely with parameterized queries)
    * @param {any[]} [params=[]] - Query parameters
    * @returns {Promise<T[]>} Query results
+   * 
+   * Note: This uses sql.unsafe() but is safe because:
+   * - All user values are passed as parameters, not concatenated into SQL
+   * - Table/column names are properly escaped with SQLHelper.escapeIdentifier()
+   * - The SQL is built from controlled, validated input
    */
   protected async executeQuery<T = any>(
     query: string,
