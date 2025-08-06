@@ -14,7 +14,7 @@ export type WhereOperator =
 
 export type WhereCondition = {
   column: string
-  operator: WhereOperator
+  operator: WhereOperator | 'IS NULL' | 'IS NOT NULL'
   value?: any
   values?: any[]
 }
