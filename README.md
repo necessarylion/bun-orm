@@ -5,7 +5,7 @@ A lightweight, type-safe query builder for Bun with PostgreSQL support. Built wi
 ## Features
 
 - 🚀 **Fast**: Built on Bun's high-performance runtime
-- 🔒 **Type-safe**: Full TypeScript support with comprehensive type definitions
+- 🔒 **Type-safe**: Full TypeScript support with comprehensive type definitions and compile-time null/undefined prevention
 - 🎯 **Simple**: Intuitive query builder API
 - 🔄 **Transactions**: Full transaction support with automatic rollback
 - 📊 **PostgreSQL**: Optimized for PostgreSQL with native features
@@ -65,7 +65,7 @@ const activeUsers = await db
 const user = await db
   .select()
   .from('users')
-  .where('id', 1)
+  .where('id', 1) // Type-safe: null/undefined values are prevented at compile time
   .first()
 
 // Multiple WHERE conditions
@@ -245,6 +245,24 @@ await db.raw(`
 `)
 ```
 
+### 5. Type Safety
+
+Bun ORM provides compile-time type safety to prevent common errors:
+
+```typescript
+// ✅ These work correctly
+db.select().from('users').where('id', 1)
+db.select().from('users').where('id', '=', 1)
+db.select().from('users').whereIn('id', [1, 2, 3])
+
+// ❌ These will cause TypeScript compilation errors
+db.select().from('users').where('id', null) // Error: null not assignable
+db.select().from('users').where('id', undefined) // Error: undefined not assignable
+db.select().from('users').whereIn('id', [1, null, 3]) // Error: null not assignable
+```
+
+The library uses `NonNullable<any>` types to ensure that null and undefined values are caught at compile time, preventing runtime errors.
+
 ## API Reference
 
 ### Connection Configuration
@@ -264,9 +282,9 @@ interface ConnectionConfig {
 #### SELECT
 - `select(columns?: string[] | Record<string, string>)` - Start a SELECT query
 - `from(table: string)` - Specify the table to query
-- `where(column: string, operatorOrValue: string | any, value?: any)` - Add WHERE condition (supports both `where('id', '=', 2)` and `where('id', 2)` syntax)
-- `whereIn(column: string, values: any[])` - Add WHERE IN condition
-- `whereNotIn(column: string, values: any[])` - Add WHERE NOT IN condition
+- `where(column: string, operatorOrValue: NonNullable<any>, value?: NonNullable<any>)` - Add WHERE condition (supports both `where('id', '=', 2)` and `where('id', 2)` syntax, prevents null/undefined values)
+- `whereIn(column: string, values: NonNullable<any>[])` - Add WHERE IN condition (prevents null/undefined values)
+- `whereNotIn(column: string, values: NonNullable<any>[])` - Add WHERE NOT IN condition (prevents null/undefined values)
 - `whereNull(column: string)` - Add WHERE NULL condition
 - `whereNotNull(column: string)` - Add WHERE NOT NULL condition
 - `orderBy(column: string, direction?: 'ASC' | 'DESC')` - Add ORDER BY clause

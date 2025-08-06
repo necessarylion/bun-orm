@@ -1,6 +1,6 @@
 import { BaseQueryBuilder } from './base-query-builder'
 import { SQLHelper } from '../utils/sql-helper'
-import type { QueryBuilderInterface, SelectColumn } from '../types'
+import type { QueryBuilderInterface, SelectColumn, WhereOperator } from '../types'
 
 export class QueryBuilder
   extends BaseQueryBuilder
@@ -137,15 +137,17 @@ export class QueryBuilder
    * Supports both syntaxes:
    * - where('id', '=', 2) - with explicit operator
    * - where('id', 2) - defaults to '=' operator
-   * @param {string} column - Column name
-   * @param {string | any} operatorOrValue - Comparison operator or value
-   * @param {any} [value] - Value to compare against (when operator is provided)
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
+  public where(column: string, value: NonNullable<any>): QueryBuilderInterface
   public where(
     column: string,
-    operatorOrValue: string | any,
-    value?: any
+    operator: WhereOperator,
+    value: NonNullable<any>
+  ): QueryBuilderInterface
+  public where(
+    column: string,
+    operatorOrValue: NonNullable<any>,
+    value?: NonNullable<any>
   ): QueryBuilderInterface {
     // Check if second parameter is an operator or a value
     const operators = [
@@ -159,13 +161,11 @@ export class QueryBuilder
       'ILIKE',
       'IN',
       'NOT IN',
-      'IS NULL',
-      'IS NOT NULL',
-    ]
+    ] as const
 
     if (
       typeof operatorOrValue === 'string' &&
-      operators.includes(operatorOrValue)
+      operators.includes(operatorOrValue as any)
     ) {
       // where('id', '=', 2) syntax
       this.addWhereCondition(column, operatorOrValue as any, value)
@@ -179,10 +179,13 @@ export class QueryBuilder
   /**
    * Adds a WHERE IN condition to the query
    * @param {string} column - Column name
-   * @param {any[]} values - Array of values to match against
+   * @param {NonNullable<any>[]} values - Array of values to match against
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public whereIn(column: string, values: any[]): QueryBuilderInterface {
+  public whereIn(
+    column: string,
+    values: NonNullable<any>[]
+  ): QueryBuilderInterface {
     this.addWhereCondition(column, 'IN', values)
     return this
   }
@@ -190,10 +193,13 @@ export class QueryBuilder
   /**
    * Adds a WHERE NOT IN condition to the query
    * @param {string} column - Column name
-   * @param {any[]} values - Array of values to exclude
+   * @param {NonNullable<any>[]} values - Array of values to exclude
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public whereNotIn(column: string, values: any[]): QueryBuilderInterface {
+  public whereNotIn(
+    column: string,
+    values: NonNullable<any>[]
+  ): QueryBuilderInterface {
     this.addWhereCondition(column, 'NOT IN', values)
     return this
   }

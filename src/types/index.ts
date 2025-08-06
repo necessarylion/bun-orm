@@ -1,20 +1,20 @@
 export type ConnectionConfig = Bun.SQL.Options
 
+export type WhereOperator =
+  | '='
+  | '!='
+  | '>'
+  | '<'
+  | '>='
+  | '<='
+  | 'LIKE'
+  | 'ILIKE'
+  | 'IN'
+  | 'NOT IN'
+
 export type WhereCondition = {
   column: string
-  operator:
-    | '='
-    | '!='
-    | '>'
-    | '<'
-    | '>='
-    | '<='
-    | 'LIKE'
-    | 'ILIKE'
-    | 'IN'
-    | 'NOT IN'
-    | 'IS NULL'
-    | 'IS NOT NULL'
+  operator: WhereOperator
   value?: any
   values?: any[]
 }
@@ -65,11 +65,14 @@ export type QueryBuilderInterface = {
   // Where conditions
   where: (
     column: string,
-    operatorOrValue: string | any,
-    value?: any
+    operatorOrValue: NonNullable<any>,
+    value?: NonNullable<any>
   ) => QueryBuilderInterface
-  whereIn: (column: string, values: any[]) => QueryBuilderInterface
-  whereNotIn: (column: string, values: any[]) => QueryBuilderInterface
+  whereIn: (column: string, values: NonNullable<any>[]) => QueryBuilderInterface
+  whereNotIn: (
+    column: string,
+    values: NonNullable<any>[]
+  ) => QueryBuilderInterface
   whereNull: (column: string) => QueryBuilderInterface
   whereNotNull: (column: string) => QueryBuilderInterface
 
