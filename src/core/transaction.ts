@@ -11,12 +11,20 @@ export class Transaction implements TransactionType {
   private isCommitted: boolean = false;
   private isRolledBack: boolean = false;
 
+  /**
+   * Creates a new Transaction instance
+   * @param {any} [transactionContext] - Optional transaction context from Bun SQL
+   */
   constructor(transactionContext?: any) {
     this.sql = getConnection().getSQL();
     this.transactionContext = transactionContext;
   }
 
-  // SELECT queries
+  /**
+   * Creates a SELECT query builder within the transaction
+   * @param {SelectColumn | SelectColumn[]} [columns] - Columns to select (defaults to '*')
+   * @returns {QueryBuilder} Query builder instance for SELECT operations
+   */
   public select(columns?: SelectColumn | SelectColumn[]): QueryBuilder {
     const queryBuilder = new QueryBuilder(this.transactionContext);
     if (columns) {
@@ -25,15 +33,31 @@ export class Transaction implements TransactionType {
     return queryBuilder;
   }
 
+  /**
+   * @description Select from a table
+   * @param {string} table 
+   * @param {string} [alias] 
+   * @returns {QueryBuilder} 
+   */
   public from(table: string, alias?: string): QueryBuilder {
     return new QueryBuilder(this.transactionContext).from(table, alias);
   }
 
+  /**
+   * Creates a query builder with table specification within the transaction
+   * @param {string} table - Table name to query from
+   * @param {string} [alias] - Optional table alias
+   * @returns {QueryBuilder} Query builder instance
+   */
   public table(table: string, alias?: string): QueryBuilder {
     return new QueryBuilder(this.transactionContext).from(table, alias);
   }
 
-  // INSERT queries
+  /**
+   * Creates an INSERT query builder within the transaction
+   * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
+   * @returns {InsertQueryBuilder} Insert query builder instance
+   */
   public insert(data?: Record<string, any> | Record<string, any>[]): InsertQueryBuilder {
     const insertBuilder = new InsertQueryBuilder(this.transactionContext);
     if (data) {
@@ -42,7 +66,11 @@ export class Transaction implements TransactionType {
     return insertBuilder;
   }
 
-  // UPDATE queries
+  /**
+   * Creates an UPDATE query builder within the transaction
+   * @param {Record<string, any>} [data] - Data to update
+   * @returns {UpdateQueryBuilder} Update query builder instance
+   */
   public update(data?: Record<string, any>): UpdateQueryBuilder {
     const updateBuilder = new UpdateQueryBuilder(this.transactionContext);
     if (data) {
@@ -51,12 +79,21 @@ export class Transaction implements TransactionType {
     return updateBuilder;
   }
 
-  // DELETE queries
+  /**
+   * Creates a DELETE query builder within the transaction
+   * @returns {DeleteQueryBuilder} Delete query builder instance
+   */
   public delete(): DeleteQueryBuilder {
     return new DeleteQueryBuilder(this.transactionContext);
   }
 
-  // Raw SQL
+  /**
+   * Executes raw SQL query within the transaction
+   * @param {string} sql - Raw SQL query string
+   * @param {any[]} [params=[]] - Query parameters
+   * @returns {Promise<any[]>} Query results
+   * @throws {Error} When transaction has already been committed or rolled back
+   */
   public async raw(sql: string, params: any[] = []): Promise<any[]> {
     if (this.isCommitted || this.isRolledBack) {
       throw new Error('Transaction has already been committed or rolled back');
@@ -69,7 +106,11 @@ export class Transaction implements TransactionType {
     }
   }
 
-  // Commit the transaction
+  /**
+   * Commits the transaction
+   * @returns {Promise<void>}
+   * @throws {Error} When transaction has already been committed or rolled back
+   */
   public async commit(): Promise<void> {
     if (this.isCommitted) {
       throw new Error('Transaction has already been committed');
@@ -82,7 +123,11 @@ export class Transaction implements TransactionType {
     this.isCommitted = true;
   }
 
-  // Rollback the transaction
+  /**
+   * Rolls back the transaction
+   * @returns {Promise<void>}
+   * @throws {Error} When transaction has already been committed or rolled back
+   */
   public async rollback(): Promise<void> {
     if (this.isCommitted) {
       throw new Error('Transaction has already been committed');
@@ -97,11 +142,19 @@ export class Transaction implements TransactionType {
   }
 
   // Check if transaction is active
+  /**
+   * Checks if the transaction is still active
+   * @returns {boolean} True if transaction is active, false if committed or rolled back
+   */
   public isActive(): boolean {
     return !this.isCommitted && !this.isRolledBack;
   }
 
   // Set transaction context (used internally)
+  /**
+   * Sets the transaction context (used internally)
+   * @param {any} context - Transaction context from Bun SQL
+   */
   public setTransactionContext(context: any): void {
     this.transactionContext = context;
   }

@@ -7,40 +7,82 @@ export class UpdateQueryBuilder extends BaseQueryBuilder implements UpdateQueryB
   private updateData: Record<string, any> = {};
   private returningColumns: string[] = [];
 
+  /**
+   * Creates a new UpdateQueryBuilder instance
+   * @param {any} [transactionContext] - Optional transaction context
+   */
   constructor(transactionContext?: any) {
     super(transactionContext);
   }
 
+  /**
+   * Sets the table to update
+   * @param {string} table - Table name
+   * @returns {UpdateQueryBuilderChain} Update query builder chain for method chaining
+   */
   public table(table: string): UpdateQueryBuilderChain {
     this.tableName = SQLHelper.sanitizeTableName(table);
     return this;
   }
 
+  /**
+   * Sets the data to update
+   * @param {Record<string, any>} data - Data to update
+   * @returns {UpdateQueryBuilderChain} Update query builder chain for method chaining
+   */
   public set(data: Record<string, any>): UpdateQueryBuilderChain {
     this.updateData = data;
     return this;
   }
 
+  /**
+   * Adds a WHERE condition to the query
+   * @param {string} column - Column name
+   * @param {string} operator - Comparison operator
+   * @param {any} [value] - Value to compare against
+   * @returns {UpdateQueryBuilderChain} Update query builder chain for method chaining
+   */
   public where(column: string, operator: string, value?: any): UpdateQueryBuilderChain {
     this.addWhereCondition(column, operator as any, value);
     return this;
   }
 
+  /**
+   * Adds a WHERE IN condition to the query
+   * @param {string} column - Column name
+   * @param {any[]} values - Array of values to match against
+   * @returns {UpdateQueryBuilderChain} Update query builder chain for method chaining
+   */
   public whereIn(column: string, values: any[]): UpdateQueryBuilderChain {
     this.addWhereCondition(column, 'IN', values);
     return this;
   }
 
+  /**
+   * Adds a WHERE IS NULL condition to the query
+   * @param {string} column - Column name
+   * @returns {UpdateQueryBuilderChain} Update query builder chain for method chaining
+   */
   public whereNull(column: string): UpdateQueryBuilderChain {
     this.addWhereCondition(column, 'IS NULL');
     return this;
   }
 
+  /**
+   * Adds a WHERE IS NOT NULL condition to the query
+   * @param {string} column - Column name
+   * @returns {UpdateQueryBuilderChain} Update query builder chain for method chaining
+   */
   public whereNotNull(column: string): UpdateQueryBuilderChain {
     this.addWhereCondition(column, 'IS NOT NULL');
     return this;
   }
 
+  /**
+   * Sets the columns to return after update
+   * @param {string | string[]} [columns] - Columns to return (defaults to '*')
+   * @returns {UpdateQueryBuilderChain} Update query builder chain for method chaining
+   */
   public returning(columns?: string | string[]): UpdateQueryBuilderChain {
     if (!columns) {
       this.returningColumns = ['*'];
@@ -52,15 +94,28 @@ export class UpdateQueryBuilder extends BaseQueryBuilder implements UpdateQueryB
     return this;
   }
 
+  /**
+   * Executes the UPDATE query
+   * @returns {Promise<T[]>} Updated records (if returning is specified)
+   */
   public async execute<T = any>(): Promise<T[]> {
     const query = this.buildQuery();
     return await this.executeQuery<T>(query.sql, query.params);
   }
 
+  /**
+   * Returns the raw SQL query and parameters
+   * @returns {{ sql: string; params: any[] }} SQL query and parameters
+   */
   public override raw(): { sql: string; params: any[] } {
     return this.buildQuery();
   }
 
+  /**
+   * Builds the complete UPDATE SQL query
+   * @returns {{ sql: string; params: any[] }} SQL query and parameters
+   * @throws {Error} When table name or data is missing
+   */
   private buildQuery(): { sql: string; params: any[] } {
     if (!this.tableName) {
       throw new Error('Table name is required. Use .table() method.');
