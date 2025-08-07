@@ -5,6 +5,9 @@ import type {
   JoinCondition,
   OrderByCondition,
   GroupByCondition,
+  FullWhereOperators,
+  JoinType,
+  OrderDirection,
 } from '../types'
 
 export abstract class BaseQueryBuilder {
@@ -30,24 +33,12 @@ export abstract class BaseQueryBuilder {
   /**
    * Adds a WHERE condition to the query
    * @param {string} column - Column name
-   * @param {'=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN' | 'IS NULL' | 'IS NOT NULL'} operator - Comparison operator
+   * @param {FullWhereOperators} operator - Comparison operator
    * @param {any} [value] - Value to compare against
    */
   protected addWhereCondition(
     column: string,
-    operator:
-      | '='
-      | '!='
-      | '>'
-      | '<'
-      | '>='
-      | '<='
-      | 'LIKE'
-      | 'ILIKE'
-      | 'IN'
-      | 'NOT IN'
-      | 'IS NULL'
-      | 'IS NOT NULL',
+    operator: FullWhereOperators,
     value?: any
   ): void {
     this.whereConditions.push({ column, operator, value })
@@ -55,13 +46,13 @@ export abstract class BaseQueryBuilder {
 
   /**
    * Adds a JOIN clause to the query
-   * @param {'INNER' | 'LEFT' | 'RIGHT' | 'FULL'} type - Type of join
+   * @param {JoinType} type - Type of join
    * @param {string} table - Table name to join
    * @param {string} on - Join condition
    * @param {string} [alias] - Optional table alias
    */
   protected addJoin(
-    type: 'INNER' | 'LEFT' | 'RIGHT' | 'FULL',
+    type: JoinType,
     table: string,
     on: string,
     alias?: string
@@ -76,7 +67,7 @@ export abstract class BaseQueryBuilder {
    */
   protected addOrderBy(
     column: string,
-    direction: 'ASC' | 'DESC' = 'ASC'
+    direction: OrderDirection = 'ASC'
   ): void {
     this.orderByConditions.push({ column, direction })
   }

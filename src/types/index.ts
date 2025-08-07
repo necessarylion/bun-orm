@@ -12,23 +12,29 @@ export type WhereOperator =
   | 'IN'
   | 'NOT IN'
 
+export type FullWhereOperators = WhereOperator | 'IS NULL' | 'IS NOT NULL'
+
 export type WhereCondition = {
   column: string
-  operator: WhereOperator | 'IS NULL' | 'IS NOT NULL'
+  operator: FullWhereOperators
   value?: any
   values?: any[]
 }
 
+export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL'
+
 export type JoinCondition = {
-  type: 'INNER' | 'LEFT' | 'RIGHT' | 'FULL'
+  type: JoinType
   table: string
   on: string
   alias?: string
 }
 
+export type OrderDirection = 'asc' | 'desc' | 'ASC' | 'DESC'
+
 export type OrderByCondition = {
   column: string
-  direction: 'ASC' | 'DESC'
+  direction: OrderDirection
 }
 
 export type GroupByCondition = {
