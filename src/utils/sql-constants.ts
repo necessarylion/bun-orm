@@ -1,0 +1,57 @@
+/**
+ * SQL security constants for validation and escaping
+ */
+
+/**
+ * Dangerous SQL patterns that could indicate SQL injection attempts
+ * These patterns are checked against table names, column names, and other identifiers
+ */
+export const DANGEROUS_SQL_PATTERNS = [
+  /--/,           // SQL comments
+  /\/\*/,         // C-style comments
+  /\*\//,         // C-style comments
+  /;/,            // Statement separators
+  /union/i,       // UNION attacks
+  /select/i,      // SELECT statements
+  /insert/i,      // INSERT statements
+  /update/i,      // UPDATE statements
+  /delete/i,      // DELETE statements
+  /drop/i,        // DROP statements
+  /create/i,      // CREATE statements
+  /alter/i,       // ALTER statements
+  /exec/i,        // EXEC statements
+  /execute/i,     // EXECUTE statements
+  /xp_/i,         // Extended stored procedures
+  /sp_/i,         // Stored procedures
+] as const
+
+/**
+ * SQL reserved keywords that should be avoided in identifiers
+ * These are common SQL keywords that could cause issues if used as identifiers
+ */
+export const SQL_RESERVED_KEYWORDS = [
+  'SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE',
+  'ALTER', 'TABLE', 'INDEX', 'VIEW', 'PROCEDURE', 'FUNCTION', 'TRIGGER',
+  'UNION', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'ON', 'AS', 'ORDER',
+  'GROUP', 'BY', 'HAVING', 'DISTINCT', 'TOP', 'LIMIT', 'OFFSET', 'AND',
+  'OR', 'NOT', 'IN', 'EXISTS', 'BETWEEN', 'LIKE', 'IS', 'NULL', 'TRUE',
+  'FALSE', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'IF', 'BEGIN', 'COMMIT',
+  'ROLLBACK', 'TRANSACTION', 'GRANT', 'REVOKE', 'PRIMARY', 'FOREIGN', 'KEY',
+  'CONSTRAINT', 'DEFAULT', 'CHECK', 'UNIQUE', 'REFERENCES', 'CASCADE',
+  'RESTRICT', 'SET', 'VALUES', 'INTO', 'SET', 'COLUMN', 'DATABASE', 'SCHEMA'
+] as const
+
+/**
+ * Maximum allowed length for identifiers to prevent buffer overflow attacks
+ */
+export const MAX_IDENTIFIER_LENGTH = 128
+
+/**
+ * Maximum allowed length for table names
+ */
+export const MAX_TABLE_NAME_LENGTH = 64
+
+/**
+ * Maximum allowed length for column names
+ */
+export const MAX_COLUMN_NAME_LENGTH = 64 
