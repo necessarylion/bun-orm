@@ -25,8 +25,8 @@ export class QueryBuilder
    * @returns {QueryBuilder} Query builder instance
    */
   public table(table: string, alias?: string): QueryBuilder {
-    this.fromTable = this.sqlHelper.sanitizeTableName(table)
-    this.fromAlias = alias ? this.sqlHelper.sanitizeTableName(alias) : ''
+    this.fromTable = table
+    this.fromAlias = alias ? alias : ''
     return this
   }
 
@@ -86,7 +86,7 @@ export class QueryBuilder
         } else {
           // Handle object format like { alias: 'column' }
           const [alias, column] = Object.entries(col)[0] as [string, string]
-          return `${this.sqlHelper.escapeIdentifier(column)} AS ${this.sqlHelper.escapeIdentifier(alias)}`
+          return `${this.sqlHelper.safeEscapeIdentifier(column)} AS ${this.sqlHelper.safeEscapeIdentifier(alias)}`
         }
       })
       this.selectColumns.push(...newColumns)
@@ -96,7 +96,7 @@ export class QueryBuilder
       // Handle object format
       const newColumns = Object.entries(columns).map(
         ([alias, column]) =>
-          `${this.sqlHelper.escapeIdentifier(column)} AS ${this.sqlHelper.escapeIdentifier(alias)}`
+          `${this.sqlHelper.safeEscapeIdentifier(column)} AS ${this.sqlHelper.safeEscapeIdentifier(alias)}`
       )
       this.selectColumns.push(...newColumns)
     }
@@ -467,8 +467,8 @@ export class QueryBuilder
     const distinctClause = this.buildDistinctClause()
     const selectClause = this.selectColumns.join(', ')
     const fromClause = this.fromAlias
-      ? `${this.sqlHelper.escapeIdentifier(this.fromTable)} AS ${this.sqlHelper.escapeIdentifier(this.fromAlias)}`
-      : this.sqlHelper.escapeIdentifier(this.fromTable)
+      ? `${this.sqlHelper.safeEscapeIdentifier(this.fromTable)} AS ${this.sqlHelper.safeEscapeIdentifier(this.fromAlias)}`
+      : this.sqlHelper.safeEscapeIdentifier(this.fromTable)
 
     const joinClause = this.buildJoinClause()
     const whereClause = this.buildWhereClause()
@@ -523,7 +523,7 @@ export class QueryBuilder
     const { columns, placeholders, params } = this.sqlHelper.buildInsertValues(
       this.insertData
     )
-    const tableClause = this.sqlHelper.escapeIdentifier(this.fromTable)
+    const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
     const returningClause =
       this.returningColumns.length > 0
         ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
@@ -547,7 +547,7 @@ export class QueryBuilder
       throw new Error('No data provided for update. Use .update() method.')
     }
 
-    const tableClause = this.sqlHelper.escapeIdentifier(this.fromTable)
+    const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
     const { sql: setClause, params: setParams } = this.sqlHelper.buildSetClause(
       this.updateData
     )
@@ -616,7 +616,7 @@ export class QueryBuilder
       throw new Error('Table name is required. Use .table() method.')
     }
 
-    const tableClause = this.sqlHelper.escapeIdentifier(this.fromTable)
+    const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
     const whereClause = this.buildWhereClause()
     const returningClause =
       this.returningColumns.length > 0

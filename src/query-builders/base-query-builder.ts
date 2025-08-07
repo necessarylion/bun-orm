@@ -154,7 +154,7 @@ export abstract class BaseQueryBuilder {
    *
    * Note: This uses sql.unsafe() but is safe because:
    * - All user values are passed as parameters, not concatenated into SQL
-   * - Table/column names are properly escaped with this.sqlHelper.escapeIdentifier()
+   * - Table/column names are properly escaped with this.sqlHelper.safeEscapeIdentifier()
    * - The SQL is built from controlled, validated input
    */
   protected async executeQuery<T = any>(

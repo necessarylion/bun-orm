@@ -1,8 +1,6 @@
 import {
   DANGEROUS_SQL_PATTERNS,
-  MAX_COLUMN_NAME_LENGTH,
   MAX_IDENTIFIER_LENGTH,
-  MAX_TABLE_NAME_LENGTH,
   SQL_RESERVED_KEYWORDS,
 } from './sql-constants'
 
@@ -25,87 +23,27 @@ export class SQLHelper {
     }
     return SQLHelper.instance
   }
+
   /**
-   * Escapes a SQL identifier (table name, column name, etc.)
+   * Safely escapes an identifier with validation
    * @param {string} identifier - The identifier to escape
    * @returns {string} The escaped identifier
-   * @throws {Error} If identifier is empty or contains only whitespace
+   * @throws {Error} If identifier is invalid
    */
-  escapeIdentifier(identifier: string): string {
-    if (!identifier || identifier.trim().length === 0) {
-      throw new Error('Identifier cannot be empty or whitespace only')
-    }
-
-    // Trim whitespace and escape double quotes
-    const trimmed = identifier.trim()
-
-    // Check length limit
-    if (trimmed.length > MAX_IDENTIFIER_LENGTH) {
-      throw new Error(
-        `Identifier too long. Maximum length is ${MAX_IDENTIFIER_LENGTH} characters`
-      )
-    }
-
-    return `"${trimmed.replace(/"/g, '""')}"`
-  }
-
-  /**
-   * Escapes a SQL string value (for use in queries without parameters)
-   * @param {string} value - The string value to escape
-   * @returns {string} The escaped string value
-   */
-  escapeStringValue(value: string): string {
-    if (value === null || value === undefined) {
-      return 'NULL'
-    }
-
-    // Escape single quotes by doubling them
-    return `'${String(value).replace(/'/g, "''")}'`
-  }
-
-  /**
-   * Escapes a SQL LIKE pattern value
-   * @param {string} pattern - The LIKE pattern to escape
-   * @returns {string} The escaped LIKE pattern
-   */
-  escapeLikePattern(pattern: string): string {
-    if (pattern === null || pattern === undefined) {
-      return 'NULL'
-    }
-
-    // Escape special LIKE characters: %, _, [, ], ^, -
-    const escaped = String(pattern)
-      .replace(/\\/g, '\\\\') // Escape backslashes first
-      .replace(/%/g, '\\%') // Escape %
-      .replace(/_/g, '\\_') // Escape _
-      .replace(/\[/g, '\\[') // Escape [
-      .replace(/\]/g, '\\]') // Escape ]
-      .replace(/\^/g, '\\^') // Escape ^
-      .replace(/-/g, '\\-') // Escape -
-
-    return `'${escaped}'`
-  }
-
-  /**
-   * Validates and sanitizes a table name
-   * @param {string} tableName - The table name to validate
-   * @returns {string} The sanitized table name
-   * @throws {Error} If table name is invalid
-   */
-  validateTableName(tableName: string): string {
+  safeEscapeIdentifier(tableName: string): string {
     if (!tableName || typeof tableName !== 'string') {
       throw new Error('Table name must be a non-empty string')
     }
 
-    const trimmed = tableName.trim()
+    let trimmed = tableName.trim()
     if (trimmed.length === 0) {
       throw new Error('Table name cannot be empty or whitespace only')
     }
 
     // Check length limit
-    if (trimmed.length > MAX_TABLE_NAME_LENGTH) {
+    if (trimmed.length > MAX_IDENTIFIER_LENGTH) {
       throw new Error(
-        `Table name too long. Maximum length is ${MAX_TABLE_NAME_LENGTH} characters`
+        `Table name too long. Maximum length is ${MAX_IDENTIFIER_LENGTH} characters`
       )
     }
 
@@ -124,72 +62,11 @@ export class SQLHelper {
       throw new Error(`Table name cannot be a reserved SQL keyword: ${trimmed}`)
     }
 
-    return trimmed
-  }
+    // Remove any potentially dangerous characters
+    trimmed = trimmed.replace(/[^a-zA-Z0-9_]/g, '')
 
-  /**
-   * Validates and sanitizes a column name
-   * @param {string} columnName - The column name to validate
-   * @returns {string} The sanitized column name
-   * @throws {Error} If column name is invalid
-   */
-  validateColumnName(columnName: string): string {
-    if (!columnName || typeof columnName !== 'string') {
-      throw new Error('Column name must be a non-empty string')
-    }
-
-    const trimmed = columnName.trim()
-    if (trimmed.length === 0) {
-      throw new Error('Column name cannot be empty or whitespace only')
-    }
-
-    // Check length limit
-    if (trimmed.length > MAX_COLUMN_NAME_LENGTH) {
-      throw new Error(
-        `Column name too long. Maximum length is ${MAX_COLUMN_NAME_LENGTH} characters`
-      )
-    }
-
-    // Check for SQL injection patterns
-    for (const pattern of DANGEROUS_SQL_PATTERNS) {
-      if (pattern.test(trimmed)) {
-        throw new Error(
-          `Column name contains potentially dangerous pattern: ${pattern.source}`
-        )
-      }
-    }
-
-    // Check for reserved keywords (case-insensitive)
-    const upperTrimmed = trimmed.toUpperCase()
-    if (SQL_RESERVED_KEYWORDS.includes(upperTrimmed)) {
-      throw new Error(
-        `Column name cannot be a reserved SQL keyword: ${trimmed}`
-      )
-    }
-
-    return trimmed
-  }
-
-  /**
-   * Safely escapes an identifier with validation
-   * @param {string} identifier - The identifier to escape
-   * @returns {string} The escaped identifier
-   * @throws {Error} If identifier is invalid
-   */
-  safeEscapeIdentifier(identifier: string): string {
-    const validated = this.validateColumnName(identifier)
-    return this.escapeIdentifier(validated)
-  }
-
-  /**
-   * Safely escapes a table name with validation
-   * @param {string} tableName - The table name to escape
-   * @returns {string} The escaped table name
-   * @throws {Error} If table name is invalid
-   */
-  safeEscapeTableName(tableName: string): string {
-    const validated = this.validateTableName(tableName)
-    return this.escapeIdentifier(validated)
+    // escape double quotes
+    return `"${trimmed.replace(/"/g, '""')}"`
   }
 
   /**
@@ -295,8 +172,8 @@ export class SQLHelper {
     return joins
       .map((join) => {
         const tablePart = join.alias
-          ? `${this.safeEscapeTableName(join.table)} AS ${this.safeEscapeIdentifier(join.alias)}`
-          : this.safeEscapeTableName(join.table)
+          ? `${this.safeEscapeIdentifier(join.table)} AS ${this.safeEscapeIdentifier(join.alias)}`
+          : this.safeEscapeIdentifier(join.table)
         return `${join.type} JOIN ${tablePart} ON ${join.on}`
       })
       .join(' ')
@@ -325,16 +202,6 @@ export class SQLHelper {
    */
   buildGroupByClause(groups: string[]): string {
     return groups.map((group) => this.safeEscapeIdentifier(group)).join(', ')
-  }
-
-  /**
-   * Sanitizes a table name by removing potentially dangerous characters
-   * @param {string} table - Table name to sanitize
-   * @returns {string} Sanitized table name
-   */
-  sanitizeTableName(table: string): string {
-    // Remove any potentially dangerous characters
-    return table.replace(/[^a-zA-Z0-9_]/g, '')
   }
 
   /**

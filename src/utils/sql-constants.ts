@@ -107,13 +107,3 @@ export const SQL_RESERVED_KEYWORDS = [
  * Maximum allowed length for identifiers to prevent buffer overflow attacks
  */
 export const MAX_IDENTIFIER_LENGTH = 128
-
-/**
- * Maximum allowed length for table names
- */
-export const MAX_TABLE_NAME_LENGTH = 64
-
-/**
- * Maximum allowed length for column names
- */
-export const MAX_COLUMN_NAME_LENGTH = 64
