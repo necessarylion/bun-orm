@@ -71,7 +71,7 @@ export type QueryBuilderInterface = {
   fullJoin: (table: string, on: string, alias?: string) => QueryBuilderInterface
 
   // Order and grouping
-  orderBy: (column: string, direction?: 'ASC' | 'DESC') => QueryBuilderInterface
+  orderBy: (column: string, direction?: OrderDirection) => QueryBuilderInterface
   groupBy: (column: string) => QueryBuilderInterface
   having: (condition: string) => QueryBuilderInterface
 

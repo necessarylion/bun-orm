@@ -1,5 +1,5 @@
 import { BaseQueryBuilder } from './base-query-builder'
-import type { FullWhereOperators, QueryBuilderInterface, SelectColumn, WhereOperator } from '../types'
+import type { FullWhereOperators, OrderDirection, QueryBuilderInterface, SelectColumn, WhereOperator } from '../types'
 import { ALLOWED_WHERE_OPERATORS } from '../utils/sql-constants'
 
 export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterface {
@@ -271,10 +271,10 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds an ORDER BY clause to the query
    * @param {string} column - Column name to order by
-   * @param {'ASC' | 'DESC'} [direction='ASC'] - Sort direction
+   * @param {OrderDirection} [direction='ASC'] - Sort direction
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public orderBy(column: string, direction: 'ASC' | 'DESC' = 'ASC'): QueryBuilderInterface {
+  public orderBy(column: string, direction: OrderDirection = 'ASC'): QueryBuilderInterface {
     this.addOrderBy(column, direction)
     return this
   }

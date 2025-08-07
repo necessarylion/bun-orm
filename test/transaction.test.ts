@@ -126,7 +126,7 @@ describe('Transaction Tests', () => {
         .select()
         .from('transaction_test')
         .whereIn('name', ['Henry Adams', 'Ivy Chen'])
-        .orderBy('name', 'ASC')
+        .orderBy('name', 'asc')
         .get()
     })
 

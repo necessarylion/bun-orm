@@ -64,7 +64,7 @@ export abstract class BaseQueryBuilder {
   /**
    * Adds an ORDER BY clause to the query
    * @param {string} column - Column name to order by
-   * @param {'ASC' | 'DESC'} [direction='ASC'] - Sort direction
+   * @param {OrderDirection} [direction='ASC'] - Sort direction
    */
   protected addOrderBy(column: string, direction: OrderDirection = 'ASC'): void {
     this.orderByConditions.push({ column, direction })
