@@ -1,14 +1,8 @@
 import { BaseQueryBuilder } from './base-query-builder'
-import type {
-  QueryBuilderInterface,
-  SelectColumn,
-  WhereOperator,
-} from '../types'
+import type { FullWhereOperators, QueryBuilderInterface, SelectColumn, WhereOperator } from '../types'
+import { ALLOWED_WHERE_OPERATORS } from '../utils/sql-constants'
 
-export class QueryBuilder
-  extends BaseQueryBuilder
-  implements QueryBuilderInterface
-{
+export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterface {
   private alreadyRemovedStar: boolean = false
   private selectColumns: string[] = ['*']
   private fromTable: string = ''
@@ -63,9 +57,7 @@ export class QueryBuilder
    * @param {SelectColumn | SelectColumn[]} [columns] - Columns to select (defaults to '*')
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public select(
-    columns?: SelectColumn | SelectColumn[]
-  ): QueryBuilderInterface {
+  public select(columns?: SelectColumn | SelectColumn[]): QueryBuilderInterface {
     this.queryMode = 'select'
 
     if (!columns) {
@@ -109,9 +101,7 @@ export class QueryBuilder
    * @param {Record<string, any> | Record<string, any>[]} data - Data to insert (single object or array of objects)
    * @returns {Promise<T[]>} Inserted records (if returning is specified)
    */
-  public async insert<T = any>(
-    data: Record<string, any> | Record<string, any>[]
-  ): Promise<T[]> {
+  public async insert<T = any>(data: Record<string, any> | Record<string, any>[]): Promise<T[]> {
     this.queryMode = 'insert'
     if (Array.isArray(data)) {
       this.insertData = data
@@ -150,41 +140,30 @@ export class QueryBuilder
    * - where('id', '=', 2) - with explicit operator
    * - where('id', 2) - defaults to '=' operator
    */
-  public where(column: string, value: NonNullable<any>): QueryBuilderInterface
-  public where(
-    column: string,
-    operator: WhereOperator,
-    value: NonNullable<any>
-  ): QueryBuilderInterface
-  public where(
-    column: string,
-    operatorOrValue: NonNullable<any>,
-    value?: NonNullable<any>
-  ): QueryBuilderInterface {
-    // Check if second parameter is an operator or a value
-    const operators = [
-      '=',
-      '!=',
-      '>',
-      '<',
-      '>=',
-      '<=',
-      'LIKE',
-      'ILIKE',
-      'IN',
-      'NOT IN',
-    ] as const
-
-    if (
-      typeof operatorOrValue === 'string' &&
-      operators.includes(operatorOrValue as any)
-    ) {
+  public where(column: string, value: any): QueryBuilderInterface
+  public where(column: string, operator: WhereOperator, value: any): QueryBuilderInterface
+  public where(column: string, operatorOrValue: any, value?: NonNullable<any>): QueryBuilderInterface {
+    let operator: FullWhereOperators = '='
+    let conditionValue: any
+    if (typeof operatorOrValue === 'string' && ALLOWED_WHERE_OPERATORS.includes(operatorOrValue)) {
       // where('id', '=', 2) syntax
-      this.addWhereCondition(column, operatorOrValue as any, value)
+      operator = operatorOrValue as FullWhereOperators
+      conditionValue = value
     } else {
       // where('id', 2) syntax - default to '=' operator
-      this.addWhereCondition(column, '=', operatorOrValue)
+      conditionValue = operatorOrValue
     }
+
+    // support for null values with = and != operators
+    if (operator === '=' && conditionValue === null) {
+      operator = 'IS NULL'
+      conditionValue = undefined
+    } else if (operator === '!=' && conditionValue === null) {
+      operator = 'IS NOT NULL'
+      conditionValue = undefined
+    }
+
+    this.addWhereCondition(column, operator, conditionValue)
     return this
   }
 
@@ -205,10 +184,7 @@ export class QueryBuilder
    * @param {NonNullable<any>[]} values - Array of values to match against
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public whereIn(
-    column: string,
-    values: NonNullable<any>[]
-  ): QueryBuilderInterface {
+  public whereIn(column: string, values: NonNullable<any>[]): QueryBuilderInterface {
     this.addWhereCondition(column, 'IN', values)
     return this
   }
@@ -219,10 +195,7 @@ export class QueryBuilder
    * @param {NonNullable<any>[]} values - Array of values to exclude
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public whereNotIn(
-    column: string,
-    values: NonNullable<any>[]
-  ): QueryBuilderInterface {
+  public whereNotIn(column: string, values: NonNullable<any>[]): QueryBuilderInterface {
     this.addWhereCondition(column, 'NOT IN', values)
     return this
   }
@@ -254,11 +227,7 @@ export class QueryBuilder
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public join(
-    table: string,
-    on: string,
-    alias?: string
-  ): QueryBuilderInterface {
+  public join(table: string, on: string, alias?: string): QueryBuilderInterface {
     this.addJoin('INNER', table, on, alias)
     return this
   }
@@ -270,11 +239,7 @@ export class QueryBuilder
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public leftJoin(
-    table: string,
-    on: string,
-    alias?: string
-  ): QueryBuilderInterface {
+  public leftJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
     this.addJoin('LEFT', table, on, alias)
     return this
   }
@@ -286,11 +251,7 @@ export class QueryBuilder
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public rightJoin(
-    table: string,
-    on: string,
-    alias?: string
-  ): QueryBuilderInterface {
+  public rightJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
     this.addJoin('RIGHT', table, on, alias)
     return this
   }
@@ -302,11 +263,7 @@ export class QueryBuilder
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public fullJoin(
-    table: string,
-    on: string,
-    alias?: string
-  ): QueryBuilderInterface {
+  public fullJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
     this.addJoin('FULL', table, on, alias)
     return this
   }
@@ -317,10 +274,7 @@ export class QueryBuilder
    * @param {'ASC' | 'DESC'} [direction='ASC'] - Sort direction
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public orderBy(
-    column: string,
-    direction: 'ASC' | 'DESC' = 'ASC'
-  ): QueryBuilderInterface {
+  public orderBy(column: string, direction: 'ASC' | 'DESC' = 'ASC'): QueryBuilderInterface {
     this.addOrderBy(column, direction)
     return this
   }
@@ -400,10 +354,7 @@ export class QueryBuilder
     this.selectColumns = [`COUNT(${column}) as count`]
 
     const query = this.buildQuery()
-    const result = await this.executeQuery<{ count: string | number }>(
-      query.sql,
-      query.params
-    )
+    const result = await this.executeQuery<{ count: string | number }>(query.sql, query.params)
 
     // Restore original select
     this.selectColumns = originalSelect
@@ -511,9 +462,7 @@ export class QueryBuilder
     const joinClause = this.buildJoinClause()
     const whereClause = this.buildWhereClause()
     const groupByClause = this.buildGroupByClause()
-    const havingClause = this.havingCondition
-      ? ` HAVING ${this.havingCondition}`
-      : ''
+    const havingClause = this.havingCondition ? ` HAVING ${this.havingCondition}` : ''
     const orderByClause = this.buildOrderByClause()
     const limitOffsetClause = this.buildLimitOffsetClause()
 
@@ -558,9 +507,7 @@ export class QueryBuilder
       throw new Error('No data provided for insert. Use .insert() method.')
     }
 
-    const { columns, placeholders, params } = this.sqlHelper.buildInsertValues(
-      this.insertData
-    )
+    const { columns, placeholders, params } = this.sqlHelper.buildInsertValues(this.insertData)
     const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
     const returningClause =
       this.returningColumns.length > 0
@@ -586,9 +533,7 @@ export class QueryBuilder
     }
 
     const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
-    const { sql: setClause, params: setParams } = this.sqlHelper.buildSetClause(
-      this.updateData
-    )
+    const { sql: setClause, params: setParams } = this.sqlHelper.buildSetClause(this.updateData)
     const whereClause = this.buildWhereClause()
     const returningClause =
       this.returningColumns.length > 0
@@ -613,8 +558,7 @@ export class QueryBuilder
       const whereParams = [...whereClause.params]
 
       // Sort the replacements by parameter number (descending) to avoid conflicts
-      const replacements: Array<{ old: string; new: string; index: number }> =
-        []
+      const replacements: Array<{ old: string; new: string; index: number }> = []
       for (let i = 0; i < whereParams.length; i++) {
         const oldPlaceholder = `$${i + 1}`
         const newPlaceholder = `$${setParams.length + i + 1}`
@@ -629,10 +573,7 @@ export class QueryBuilder
       replacements.sort((a, b) => b.index - a.index)
 
       for (const replacement of replacements) {
-        whereSql = whereSql.replace(
-          new RegExp(`\\${replacement.old}(?!\\d)`, 'g'),
-          replacement.new
-        )
+        whereSql = whereSql.replace(new RegExp(`\\${replacement.old}(?!\\d)`, 'g'), replacement.new)
       }
 
       finalSql = finalSql.replace(whereClause.sql, whereSql)

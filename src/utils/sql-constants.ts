@@ -107,3 +107,8 @@ export const SQL_RESERVED_KEYWORDS = [
  * Maximum allowed length for identifiers to prevent buffer overflow attacks
  */
 export const MAX_IDENTIFIER_LENGTH = 128
+
+/**
+ * Allowed WHERE operators
+ */
+export const ALLOWED_WHERE_OPERATORS = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'ILIKE', 'IN', 'NOT IN'] as string[]

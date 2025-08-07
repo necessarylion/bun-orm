@@ -1,8 +1,4 @@
-import {
-  DANGEROUS_SQL_PATTERNS,
-  MAX_IDENTIFIER_LENGTH,
-  SQL_RESERVED_KEYWORDS,
-} from './sql-constants'
+import { DANGEROUS_SQL_PATTERNS, MAX_IDENTIFIER_LENGTH, SQL_RESERVED_KEYWORDS } from './sql-constants'
 
 /**
  * SQL Helper class for building and escaping SQL queries
@@ -42,17 +38,13 @@ export class SQLHelper {
 
     // Check length limit
     if (trimmed.length > MAX_IDENTIFIER_LENGTH) {
-      throw new Error(
-        `Table name too long. Maximum length is ${MAX_IDENTIFIER_LENGTH} characters`
-      )
+      throw new Error(`Table name too long. Maximum length is ${MAX_IDENTIFIER_LENGTH} characters`)
     }
 
     // Check for SQL injection patterns
     for (const pattern of DANGEROUS_SQL_PATTERNS) {
       if (pattern.test(trimmed)) {
-        throw new Error(
-          `Table name contains potentially dangerous pattern: ${pattern.source}`
-        )
+        throw new Error(`Table name contains potentially dangerous pattern: ${pattern.source}`)
       }
     }
 
@@ -141,18 +133,12 @@ export class SQLHelper {
         whereParts.push(`${this.safeEscapeIdentifier(column)} ${operator}`)
       } else if (operator === 'IN' || operator === 'NOT IN') {
         if (Array.isArray(value)) {
-          const placeholders = value
-            .map((_, j) => `$${params.length + j + 1}`)
-            .join(', ')
-          whereParts.push(
-            `${this.safeEscapeIdentifier(column)} ${operator} (${placeholders})`
-          )
+          const placeholders = value.map((_, j) => `$${params.length + j + 1}`).join(', ')
+          whereParts.push(`${this.safeEscapeIdentifier(column)} ${operator} (${placeholders})`)
           params.push(...value)
         }
       } else {
-        whereParts.push(
-          `${this.safeEscapeIdentifier(column)} ${operator} $${params.length + 1}`
-        )
+        whereParts.push(`${this.safeEscapeIdentifier(column)} ${operator} $${params.length + 1}`)
         params.push(value)
       }
     }
@@ -162,9 +148,7 @@ export class SQLHelper {
       const condition = rawConditions[k]
       if (condition?.sql) {
         // replace ? with $1, $2, etc.
-        const placeholders = condition.params
-          .map((_, j) => `$${i + j + 1}`)
-          .join(', ')
+        const placeholders = condition.params.map((_, j) => `$${i + j + 1}`).join(', ')
         const sql = condition.sql.replace(/\?/g, placeholders)
         whereParts.push(sql)
         params.push(...condition.params)
@@ -183,9 +167,7 @@ export class SQLHelper {
    * @param {Array<{ type: string; table: string; on: string; alias?: string }>} joins - Array of join conditions
    * @returns {string} JOIN clause SQL
    */
-  buildJoinClause(
-    joins: Array<{ type: string; table: string; on: string; alias?: string }>
-  ): string {
+  buildJoinClause(joins: Array<{ type: string; table: string; on: string; alias?: string }>): string {
     return joins
       .map((join) => {
         const tablePart = join.alias
@@ -201,15 +183,8 @@ export class SQLHelper {
    * @param {Array<{ column: string; direction: string }>} orders - Array of order conditions
    * @returns {string} ORDER BY clause SQL
    */
-  buildOrderByClause(
-    orders: Array<{ column: string; direction: string }>
-  ): string {
-    return orders
-      .map(
-        (order) =>
-          `${this.safeEscapeIdentifier(order.column)} ${order.direction}`
-      )
-      .join(', ')
+  buildOrderByClause(orders: Array<{ column: string; direction: string }>): string {
+    return orders.map((order) => `${this.safeEscapeIdentifier(order.column)} ${order.direction}`).join(', ')
   }
 
   /**
@@ -241,9 +216,7 @@ export class SQLHelper {
     const params: any[] = []
 
     for (const row of data) {
-      const rowPlaceholders = columns
-        .map((_, i) => `$${params.length + i + 1}`)
-        .join(', ')
+      const rowPlaceholders = columns.map((_, i) => `$${params.length + i + 1}`).join(', ')
       placeholders.push(`(${rowPlaceholders})`)
       params.push(...columns.map((col) => row[col]))
     }

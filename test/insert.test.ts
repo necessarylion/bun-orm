@@ -22,10 +22,7 @@ describe('INSERT Query Builder', () => {
       active: true,
     }
 
-    const result = await db
-      .table('users')
-      .returning(['id', 'name', 'email'])
-      .insert(userData)
+    const result = await db.table('users').returning(['id', 'name', 'email']).insert(userData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -34,11 +31,7 @@ describe('INSERT Query Builder', () => {
     expect(result[0].email).toBe('test@example.com')
 
     // Verify the record was actually inserted
-    const insertedUser = await db
-      .select()
-      .from('users')
-      .where('email', '=', 'test@example.com')
-      .first()
+    const insertedUser = await db.select().from('users').where('email', '=', 'test@example.com').first()
     expect(insertedUser).toBeDefined()
     expect(insertedUser.name).toBe('Test User')
   })
@@ -50,10 +43,7 @@ describe('INSERT Query Builder', () => {
       { name: 'User 3', email: 'user3@example.com', age: 35, active: true },
     ]
 
-    const result = await db
-      .table('users')
-      .returning(['id', 'name', 'email'])
-      .insert(usersData)
+    const result = await db.table('users').returning(['id', 'name', 'email']).insert(usersData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(3)
@@ -74,10 +64,7 @@ describe('INSERT Query Builder', () => {
       active: true,
     }
 
-    const result = await db
-      .table('users')
-      .returning(['name', 'email'])
-      .insert(userData)
+    const result = await db.table('users').returning(['name', 'email']).insert(userData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -101,11 +88,7 @@ describe('INSERT Query Builder', () => {
     expect(result.length).toBe(1)
 
     // Verify the record was inserted
-    const insertedUser = await db
-      .select()
-      .from('users')
-      .where('email', '=', 'noreturn@example.com')
-      .first()
+    const insertedUser = await db.select().from('users').where('email', '=', 'noreturn@example.com').first()
     expect(insertedUser).toBeDefined()
   })
 
@@ -137,10 +120,7 @@ describe('INSERT Query Builder', () => {
       active: true,
     }
 
-    const result = await db
-      .table('users')
-      .returning(['name', 'age'])
-      .insert(userData)
+    const result = await db.table('users').returning(['name', 'age']).insert(userData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -155,10 +135,7 @@ describe('INSERT Query Builder', () => {
       active: true,
     }
 
-    const result = await db
-      .table('users')
-      .returning(['id', 'name'])
-      .insert(userData)
+    const result = await db.table('users').returning(['id', 'name']).insert(userData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -181,10 +158,7 @@ describe('INSERT Query Builder', () => {
       },
     ]
 
-    const result = await db
-      .table('users')
-      .returning(['id', 'name'])
-      .insert(usersData)
+    const result = await db.table('users').returning(['id', 'name']).insert(usersData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(2)

@@ -35,11 +35,7 @@ describe('UPDATE Query Builder', () => {
     expect(result[0].email).toBe('john@example.com') // Should remain unchanged
 
     // Verify the update in database
-    const updatedUser = await db
-      .select()
-      .from('users')
-      .where('id', '=', 1)
-      .first()
+    const updatedUser = await db.select().from('users').where('id', '=', 1).first()
     expect(updatedUser.name).toBe('Updated Name')
     expect(updatedUser.age).toBe(31)
   })
@@ -49,22 +45,14 @@ describe('UPDATE Query Builder', () => {
       active: false,
     }
 
-    const result = await db
-      .table('users')
-      .where('age', '>', 25)
-      .returning(['id', 'name', 'active'])
-      .update(updateData)
+    const result = await db.table('users').where('age', '>', 25).returning(['id', 'name', 'active']).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(3) // 3 users with age > 25
     expect(result.every((user) => user.active === false)).toBe(true)
 
     // Verify all matching records were updated
-    const updatedUsers = await db
-      .select()
-      .from('users')
-      .where('age', '>', 25)
-      .get()
+    const updatedUsers = await db.select().from('users').where('age', '>', 25).get()
     expect(updatedUsers.every((user) => user.active === false)).toBe(true)
   })
 
@@ -73,11 +61,7 @@ describe('UPDATE Query Builder', () => {
       age: 40,
     }
 
-    const result = await db
-      .table('users')
-      .whereIn('id', [1, 2, 3])
-      .returning(['id', 'name', 'age'])
-      .update(updateData)
+    const result = await db.table('users').whereIn('id', [1, 2, 3]).returning(['id', 'name', 'age']).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(3)
@@ -96,11 +80,7 @@ describe('UPDATE Query Builder', () => {
       age: 25,
     }
 
-    const result = await db
-      .table('users')
-      .whereNull('age')
-      .returning(['id', 'name', 'age'])
-      .update(updateData)
+    const result = await db.table('users').whereNull('age').returning(['id', 'name', 'age']).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -112,11 +92,7 @@ describe('UPDATE Query Builder', () => {
       age: 50,
     }
 
-    const result = await db
-      .table('users')
-      .whereNotNull('age')
-      .returning(['id', 'name', 'age'])
-      .update(updateData)
+    const result = await db.table('users').whereNotNull('age').returning(['id', 'name', 'age']).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(4)
@@ -128,20 +104,13 @@ describe('UPDATE Query Builder', () => {
       name: 'No Return Update',
     }
 
-    const result = await db
-      .table('users')
-      .where('id', '=', 1)
-      .update(updateData)
+    const result = await db.table('users').where('id', '=', 1).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1) // No returning clause
 
     // Verify the update happened
-    const updatedUser = await db
-      .select()
-      .from('users')
-      .where('id', '=', 1)
-      .first()
+    const updatedUser = await db.select().from('users').where('id', '=', 1).first()
     expect(updatedUser.name).toBe('No Return Update')
   })
 
@@ -151,11 +120,7 @@ describe('UPDATE Query Builder', () => {
       email: 'allreturn@example.com',
     }
 
-    const result = await db
-      .table('users')
-      .where('id', '=', 1)
-      .returning()
-      .update(updateData)
+    const result = await db.table('users').where('id', '=', 1).returning().update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -175,11 +140,7 @@ describe('UPDATE Query Builder', () => {
       age: 35,
     }
 
-    const result = await db
-      .table('users')
-      .where('id', '=', 1)
-      .returning(['name', 'age'])
-      .update(updateData)
+    const result = await db.table('users').where('id', '=', 1).returning(['name', 'age']).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -196,11 +157,7 @@ describe('UPDATE Query Builder', () => {
       age: null,
     }
 
-    const result = await db
-      .table('users')
-      .where('id', '=', 1)
-      .returning(['id', 'name', 'age'])
-      .update(updateData)
+    const result = await db.table('users').where('id', '=', 1).returning(['id', 'name', 'age']).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -213,11 +170,7 @@ describe('UPDATE Query Builder', () => {
       email: 'constructor@example.com',
     }
 
-    const result = await db
-      .table('users')
-      .where('id', '=', 1)
-      .returning(['id', 'name', 'email'])
-      .update(updateData)
+    const result = await db.table('users').where('id', '=', 1).returning(['id', 'name', 'email']).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(1)
@@ -247,11 +200,7 @@ describe('UPDATE Query Builder', () => {
       name: 'No Match Update',
     }
 
-    const result = await db
-      .table('users')
-      .where('id', '=', 999)
-      .returning(['id', 'name'])
-      .update(updateData)
+    const result = await db.table('users').where('id', '=', 999).returning(['id', 'name']).update(updateData)
 
     expect(result).toBeDefined()
     expect(result.length).toBe(0)

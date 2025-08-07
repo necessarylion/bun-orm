@@ -37,11 +37,7 @@ export abstract class BaseQueryBuilder {
    * @param {FullWhereOperators} operator - Comparison operator
    * @param {any} [value] - Value to compare against
    */
-  protected addWhereCondition(
-    column: string,
-    operator: FullWhereOperators,
-    value?: any
-  ): void {
+  protected addWhereCondition(column: string, operator: FullWhereOperators, value?: any): void {
     this.whereConditions.push({ column, operator, value })
   }
 
@@ -61,12 +57,7 @@ export abstract class BaseQueryBuilder {
    * @param {string} on - Join condition
    * @param {string} [alias] - Optional table alias
    */
-  protected addJoin(
-    type: JoinType,
-    table: string,
-    on: string,
-    alias?: string
-  ): void {
+  protected addJoin(type: JoinType, table: string, on: string, alias?: string): void {
     this.joins.push({ type, table, on, alias })
   }
 
@@ -75,10 +66,7 @@ export abstract class BaseQueryBuilder {
    * @param {string} column - Column name to order by
    * @param {'ASC' | 'DESC'} [direction='ASC'] - Sort direction
    */
-  protected addOrderBy(
-    column: string,
-    direction: OrderDirection = 'ASC'
-  ): void {
+  protected addOrderBy(column: string, direction: OrderDirection = 'ASC'): void {
     this.orderByConditions.push({ column, direction })
   }
 
@@ -95,10 +83,7 @@ export abstract class BaseQueryBuilder {
    * @returns {{ sql: string; params: any[] }} SQL fragment and parameters
    */
   protected buildWhereClause(): { sql: string; params: any[] } {
-    return this.sqlHelper.buildWhereConditions(
-      this.whereConditions,
-      this.whereRawConditions
-    )
+    return this.sqlHelper.buildWhereConditions(this.whereConditions, this.whereRawConditions)
   }
 
   /**
@@ -122,9 +107,7 @@ export abstract class BaseQueryBuilder {
    * @returns {string} SQL GROUP BY clause
    */
   protected buildGroupByClause(): string {
-    return this.sqlHelper.buildGroupByClause(
-      this.groupByConditions.map((g) => g.column)
-    )
+    return this.sqlHelper.buildGroupByClause(this.groupByConditions.map((g) => g.column))
   }
 
   /**
@@ -161,10 +144,7 @@ export abstract class BaseQueryBuilder {
    * - Table/column names are properly escaped with this.sqlHelper.safeEscapeIdentifier()
    * - The SQL is built from controlled, validated input
    */
-  protected async executeQuery<T = any>(
-    query: string,
-    params: any[] = []
-  ): Promise<T[]> {
+  protected async executeQuery<T = any>(query: string, params: any[] = []): Promise<T[]> {
     try {
       const result = await this.sql.unsafe(query, params)
       return result

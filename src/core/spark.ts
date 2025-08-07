@@ -69,9 +69,7 @@ export class Spark {
    * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
    * @returns {QueryBuilder} Query builder instance
    */
-  public insert(
-    data?: Record<string, any> | Record<string, any>[]
-  ): QueryBuilder {
+  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder {
     const queryBuilder = new QueryBuilder()
     if (data) {
       queryBuilder.insert(data)
@@ -172,9 +170,7 @@ export class Spark {
    * @param {TransactionCallback<T>} callback - Transaction callback function
    * @returns {Promise<T>} Result of the transaction callback
    */
-  public async transaction<T = any>(
-    callback: TransactionCallback<T>
-  ): Promise<T> {
+  public async transaction<T = any>(callback: TransactionCallback<T>): Promise<T> {
     const connection = getConnection()
     const sql = connection.getSQL()
 

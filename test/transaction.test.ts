@@ -41,22 +41,13 @@ describe('Transaction Tests', () => {
   it('should commit a successful transaction', async () => {
     const result = await db.transaction(async (trx: Transaction) => {
       // Insert data
-      await trx
-        .table('transaction_test')
-        .insert({ name: 'John Doe', balance: 100.0 })
+      await trx.table('transaction_test').insert({ name: 'John Doe', balance: 100.0 })
 
       // Update data
-      await trx
-        .table('transaction_test')
-        .where('name', '=', 'John Doe')
-        .update({ balance: 150.0 })
+      await trx.table('transaction_test').where('name', '=', 'John Doe').update({ balance: 150.0 })
 
       // Return the final result
-      return await trx
-        .select()
-        .from('transaction_test')
-        .where('name', '=', 'John Doe')
-        .first()
+      return await trx.select().from('transaction_test').where('name', '=', 'John Doe').first()
     })
 
     expect(result).toBeDefined()
@@ -64,11 +55,7 @@ describe('Transaction Tests', () => {
     expect(parseFloat(result.balance)).toBe(150.0)
 
     // Verify data persists after transaction
-    const persisted = await db
-      .select()
-      .from('transaction_test')
-      .where('name', '=', 'John Doe')
-      .first()
+    const persisted = await db.select().from('transaction_test').where('name', '=', 'John Doe').first()
 
     expect(persisted).toBeDefined()
     expect(persisted.name).toBe('John Doe')
@@ -85,14 +72,10 @@ describe('Transaction Tests', () => {
     try {
       await db.transaction(async (trx: Transaction) => {
         // Insert first record
-        await trx
-          .table('transaction_test')
-          .insert({ name: 'Jane Smith', balance: 200.0 })
+        await trx.table('transaction_test').insert({ name: 'Jane Smith', balance: 200.0 })
 
         // This should fail and cause rollback - try to insert with null name (violates NOT NULL constraint)
-        await trx.raw(
-          'INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)'
-        )
+        await trx.raw('INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)')
       })
     } catch (error: any) {
       transactionFailed = true
@@ -107,16 +90,10 @@ describe('Transaction Tests', () => {
   it('should support raw SQL in transactions', async () => {
     const result = await db.transaction(async (trx: Transaction) => {
       // Use raw SQL
-      await trx.raw(
-        'INSERT INTO transaction_test (name, balance) VALUES ($1, $2)',
-        ['Charlie Wilson', 300.0]
-      )
+      await trx.raw('INSERT INTO transaction_test (name, balance) VALUES ($1, $2)', ['Charlie Wilson', 300.0])
 
       // Use raw SQL for select
-      const results = await trx.raw(
-        'SELECT * FROM transaction_test WHERE name = $1',
-        ['Charlie Wilson']
-      )
+      const results = await trx.raw('SELECT * FROM transaction_test WHERE name = $1', ['Charlie Wilson'])
 
       return results[0]
     })
@@ -140,15 +117,9 @@ describe('Transaction Tests', () => {
         .insert({ name: 'Ivy Chen', balance: 200.0 })
 
       // Update both users
-      await trx
-        .table('transaction_test')
-        .where('id', '=', user1[0].id)
-        .update({ balance: 150.0 })
+      await trx.table('transaction_test').where('id', '=', user1[0].id).update({ balance: 150.0 })
 
-      await trx
-        .table('transaction_test')
-        .where('id', '=', user2[0].id)
-        .update({ balance: 250.0 })
+      await trx.table('transaction_test').where('id', '=', user2[0].id).update({ balance: 250.0 })
 
       // Return both updated users
       return await trx
@@ -183,11 +154,7 @@ describe('Transaction Tests', () => {
     const userId = initialRecord[0].id
 
     // Verify the record exists
-    const beforeTransaction = await db
-      .select()
-      .from('transaction_test')
-      .where('id', '=', userId)
-      .first()
+    const beforeTransaction = await db.select().from('transaction_test').where('id', '=', userId).first()
 
     expect(beforeTransaction).toBeDefined()
     expect(beforeTransaction.name).toBe('Test User')
@@ -200,17 +167,10 @@ describe('Transaction Tests', () => {
       // 2. Run transaction query to update the record
       await db.transaction(async (trx: Transaction) => {
         // Update the balance
-        await trx
-          .table('transaction_test')
-          .where('id', '=', userId)
-          .update({ balance: 200.0 })
+        await trx.table('transaction_test').where('id', '=', userId).update({ balance: 200.0 })
 
         // Verify the update within transaction
-        const withinTransaction = await trx
-          .select()
-          .from('transaction_test')
-          .where('id', '=', userId)
-          .first()
+        const withinTransaction = await trx.select().from('transaction_test').where('id', '=', userId).first()
 
         expect(withinTransaction).toBeDefined()
         expect(withinTransaction.name).toBe('Test User')
@@ -218,9 +178,7 @@ describe('Transaction Tests', () => {
 
         // 3. Run another query that fails with error
         // This will cause the entire transaction to rollback
-        await trx.raw(
-          'INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)'
-        )
+        await trx.raw('INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)')
       })
     } catch (error: any) {
       transactionFailed = true
@@ -232,11 +190,7 @@ describe('Transaction Tests', () => {
     expect(errorMessage).toContain('null value')
 
     // 4. Check if query is rolled back - the balance should be back to original value
-    const afterTransaction = await db
-      .select()
-      .from('transaction_test')
-      .where('id', '=', userId)
-      .first()
+    const afterTransaction = await db.select().from('transaction_test').where('id', '=', userId).first()
 
     expect(afterTransaction).toBeDefined()
     expect(afterTransaction.name).toBe('Test User')
@@ -244,11 +198,7 @@ describe('Transaction Tests', () => {
     expect(parseFloat(afterTransaction.balance)).toBe(100.0)
 
     // Verify no additional records were created (the failed insert should be rolled back)
-    const allRecords = await db
-      .select()
-      .from('transaction_test')
-      .where('name', '=', 'Test User')
-      .get()
+    const allRecords = await db.select().from('transaction_test').where('name', '=', 'Test User').get()
 
     expect(allRecords).toHaveLength(1) // Only the original record should exist
   })

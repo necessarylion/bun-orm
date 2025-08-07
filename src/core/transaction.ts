@@ -55,9 +55,7 @@ export class Transaction implements TransactionType {
    * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
    * @returns {QueryBuilder} Query builder instance
    */
-  public insert(
-    data?: Record<string, any> | Record<string, any>[]
-  ): QueryBuilder {
+  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder {
     const queryBuilder = new QueryBuilder(this.transactionContext)
     if (data) {
       queryBuilder.insert(data)

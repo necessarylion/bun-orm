@@ -1,16 +1,6 @@
 export type ConnectionConfig = Bun.SQL.Options
 
-export type WhereOperator =
-  | '='
-  | '!='
-  | '>'
-  | '<'
-  | '>='
-  | '<='
-  | 'LIKE'
-  | 'ILIKE'
-  | 'IN'
-  | 'NOT IN'
+export type WhereOperator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN'
 
 export type FullWhereOperators = WhereOperator | 'IS NULL' | 'IS NOT NULL'
 
@@ -58,9 +48,7 @@ export type QueryBuilderInterface = {
   select: (columns?: SelectColumn | SelectColumn[]) => QueryBuilderInterface
 
   // Insert operations
-  insert: <T = any>(
-    data: Record<string, any> | Record<string, any>[]
-  ) => Promise<T[]>
+  insert: <T = any>(data: Record<string, any> | Record<string, any>[]) => Promise<T[]>
 
   // Update operations
   update: <T = any>(data: Record<string, any>) => Promise<T[]>
@@ -69,28 +57,17 @@ export type QueryBuilderInterface = {
   delete: <T = any>() => Promise<T[]>
 
   // Where conditions
-  where: (
-    column: string,
-    operatorOrValue: NonNullable<any>,
-    value?: NonNullable<any>
-  ) => QueryBuilderInterface
+  where: (column: string, operatorOrValue: NonNullable<any>, value?: NonNullable<any>) => QueryBuilderInterface
   whereRaw: (sql: string, params: any[]) => QueryBuilderInterface
   whereIn: (column: string, values: NonNullable<any>[]) => QueryBuilderInterface
-  whereNotIn: (
-    column: string,
-    values: NonNullable<any>[]
-  ) => QueryBuilderInterface
+  whereNotIn: (column: string, values: NonNullable<any>[]) => QueryBuilderInterface
   whereNull: (column: string) => QueryBuilderInterface
   whereNotNull: (column: string) => QueryBuilderInterface
 
   // Join operations
   join: (table: string, on: string, alias?: string) => QueryBuilderInterface
   leftJoin: (table: string, on: string, alias?: string) => QueryBuilderInterface
-  rightJoin: (
-    table: string,
-    on: string,
-    alias?: string
-  ) => QueryBuilderInterface
+  rightJoin: (table: string, on: string, alias?: string) => QueryBuilderInterface
   fullJoin: (table: string, on: string, alias?: string) => QueryBuilderInterface
 
   // Order and grouping
@@ -125,9 +102,7 @@ export type Transaction = {
   select: (columns?: SelectColumn | SelectColumn[]) => QueryBuilderInterface
   from: (table: string, alias?: string) => QueryBuilderInterface
   table: (table: string, alias?: string) => QueryBuilderInterface
-  insert: (
-    data?: Record<string, any> | Record<string, any>[]
-  ) => QueryBuilderInterface
+  insert: (data?: Record<string, any> | Record<string, any>[]) => QueryBuilderInterface
   update: (data?: Record<string, any>) => QueryBuilderInterface
   delete: () => QueryBuilderInterface
   raw: (sql: string, params?: any[]) => Promise<any[]>

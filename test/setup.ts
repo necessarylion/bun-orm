@@ -16,9 +16,7 @@ const db = spark(testConfig)
 db.testConnection()
   .then((isConnected) => {
     if (!isConnected) {
-      console.error(
-        'Failed to connect to test database. Please check your PostgreSQL connection.'
-      )
+      console.error('Failed to connect to test database. Please check your PostgreSQL connection.')
       process.exit(1)
     }
     console.log('✅ Connected to test database successfully')

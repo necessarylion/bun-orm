@@ -24,9 +24,7 @@ export class DatabaseConnection {
   public static getInstance(config?: ConnectionConfig): DatabaseConnection {
     if (!DatabaseConnection.instance) {
       if (!config) {
-        throw new Error(
-          'Database configuration is required for first initialization'
-        )
+        throw new Error('Database configuration is required for first initialization')
       }
       DatabaseConnection.instance = new DatabaseConnection(config)
     }
