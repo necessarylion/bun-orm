@@ -17,6 +17,7 @@ export abstract class BaseQueryBuilder {
   protected limitValue: number | null = null
   protected offsetValue: number | null = null
   protected distinctFlag: boolean = false
+  protected sqlHelper: SQLHelper = SQLHelper.getInstance()
 
   /**
    * Creates a new BaseQueryBuilder instance
@@ -93,7 +94,7 @@ export abstract class BaseQueryBuilder {
    * @returns {{ sql: string; params: any[] }} SQL fragment and parameters
    */
   protected buildWhereClause(): { sql: string; params: any[] } {
-    return SQLHelper.buildWhereConditions(this.whereConditions)
+    return this.sqlHelper.buildWhereConditions(this.whereConditions)
   }
 
   /**
@@ -101,7 +102,7 @@ export abstract class BaseQueryBuilder {
    * @returns {string} SQL JOIN clause
    */
   protected buildJoinClause(): string {
-    return SQLHelper.buildJoinClause(this.joins)
+    return this.sqlHelper.buildJoinClause(this.joins)
   }
 
   /**
@@ -109,7 +110,7 @@ export abstract class BaseQueryBuilder {
    * @returns {string} SQL ORDER BY clause
    */
   protected buildOrderByClause(): string {
-    return SQLHelper.buildOrderByClause(this.orderByConditions)
+    return this.sqlHelper.buildOrderByClause(this.orderByConditions)
   }
 
   /**
@@ -117,7 +118,7 @@ export abstract class BaseQueryBuilder {
    * @returns {string} SQL GROUP BY clause
    */
   protected buildGroupByClause(): string {
-    return SQLHelper.buildGroupByClause(
+    return this.sqlHelper.buildGroupByClause(
       this.groupByConditions.map((g) => g.column)
     )
   }
@@ -150,10 +151,10 @@ export abstract class BaseQueryBuilder {
    * @param {string} query - SQL query string (built safely with parameterized queries)
    * @param {any[]} [params=[]] - Query parameters
    * @returns {Promise<T[]>} Query results
-   * 
+   *
    * Note: This uses sql.unsafe() but is safe because:
    * - All user values are passed as parameters, not concatenated into SQL
-   * - Table/column names are properly escaped with SQLHelper.escapeIdentifier()
+   * - Table/column names are properly escaped with this.sqlHelper.escapeIdentifier()
    * - The SQL is built from controlled, validated input
    */
   protected async executeQuery<T = any>(

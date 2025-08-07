@@ -6,9 +6,6 @@
       "recommended": true,
       "suspicious": {
         "noExplicitAny": "off"
-      },
-      "complexity": {
-        "noStaticOnlyClass": "off"
       }
     }
   },

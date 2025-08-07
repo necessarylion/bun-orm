@@ -1,5 +1,4 @@
 import { BaseQueryBuilder } from './base-query-builder'
-import { SQLHelper } from '../utils/sql-helper'
 import type {
   QueryBuilderInterface,
   SelectColumn,
@@ -26,8 +25,8 @@ export class QueryBuilder
    * @returns {QueryBuilder} Query builder instance
    */
   public table(table: string, alias?: string): QueryBuilder {
-    this.fromTable = SQLHelper.sanitizeTableName(table)
-    this.fromAlias = alias ? SQLHelper.sanitizeTableName(alias) : ''
+    this.fromTable = this.sqlHelper.sanitizeTableName(table)
+    this.fromAlias = alias ? this.sqlHelper.sanitizeTableName(alias) : ''
     return this
   }
 
@@ -87,7 +86,7 @@ export class QueryBuilder
         } else {
           // Handle object format like { alias: 'column' }
           const [alias, column] = Object.entries(col)[0] as [string, string]
-          return `${SQLHelper.escapeIdentifier(column)} AS ${SQLHelper.escapeIdentifier(alias)}`
+          return `${this.sqlHelper.escapeIdentifier(column)} AS ${this.sqlHelper.escapeIdentifier(alias)}`
         }
       })
       this.selectColumns.push(...newColumns)
@@ -97,7 +96,7 @@ export class QueryBuilder
       // Handle object format
       const newColumns = Object.entries(columns).map(
         ([alias, column]) =>
-          `${SQLHelper.escapeIdentifier(column)} AS ${SQLHelper.escapeIdentifier(alias)}`
+          `${this.sqlHelper.escapeIdentifier(column)} AS ${this.sqlHelper.escapeIdentifier(alias)}`
       )
       this.selectColumns.push(...newColumns)
     }
@@ -468,8 +467,8 @@ export class QueryBuilder
     const distinctClause = this.buildDistinctClause()
     const selectClause = this.selectColumns.join(', ')
     const fromClause = this.fromAlias
-      ? `${SQLHelper.escapeIdentifier(this.fromTable)} AS ${SQLHelper.escapeIdentifier(this.fromAlias)}`
-      : SQLHelper.escapeIdentifier(this.fromTable)
+      ? `${this.sqlHelper.escapeIdentifier(this.fromTable)} AS ${this.sqlHelper.escapeIdentifier(this.fromAlias)}`
+      : this.sqlHelper.escapeIdentifier(this.fromTable)
 
     const joinClause = this.buildJoinClause()
     const whereClause = this.buildWhereClause()
@@ -521,13 +520,13 @@ export class QueryBuilder
       throw new Error('No data provided for insert. Use .insert() method.')
     }
 
-    const { columns, placeholders, params } = SQLHelper.buildInsertValues(
+    const { columns, placeholders, params } = this.sqlHelper.buildInsertValues(
       this.insertData
     )
-    const tableClause = SQLHelper.escapeIdentifier(this.fromTable)
+    const tableClause = this.sqlHelper.escapeIdentifier(this.fromTable)
     const returningClause =
       this.returningColumns.length > 0
-        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
         : ''
 
     const sql = `INSERT INTO ${tableClause} (${columns}) VALUES ${placeholders}${returningClause}`
@@ -548,14 +547,14 @@ export class QueryBuilder
       throw new Error('No data provided for update. Use .update() method.')
     }
 
-    const tableClause = SQLHelper.escapeIdentifier(this.fromTable)
-    const { sql: setClause, params: setParams } = SQLHelper.buildSetClause(
+    const tableClause = this.sqlHelper.escapeIdentifier(this.fromTable)
+    const { sql: setClause, params: setParams } = this.sqlHelper.buildSetClause(
       this.updateData
     )
     const whereClause = this.buildWhereClause()
     const returningClause =
       this.returningColumns.length > 0
-        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
         : ''
 
     let sql = `UPDATE ${tableClause} SET ${setClause}`
@@ -617,11 +616,11 @@ export class QueryBuilder
       throw new Error('Table name is required. Use .table() method.')
     }
 
-    const tableClause = SQLHelper.escapeIdentifier(this.fromTable)
+    const tableClause = this.sqlHelper.escapeIdentifier(this.fromTable)
     const whereClause = this.buildWhereClause()
     const returningClause =
       this.returningColumns.length > 0
-        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : SQLHelper.buildColumnList(this.returningColumns)}`
+        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
         : ''
 
     let sql = `DELETE FROM ${tableClause}`
