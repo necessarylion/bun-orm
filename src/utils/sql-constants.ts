@@ -11,18 +11,6 @@ export const DANGEROUS_SQL_PATTERNS = [
   /\/\*/, // C-style comments
   /\*\//, // C-style comments
   /;/, // Statement separators
-  /union/i, // UNION attacks
-  /select/i, // SELECT statements
-  /insert/i, // INSERT statements
-  /update/i, // UPDATE statements
-  /delete/i, // DELETE statements
-  /drop/i, // DROP statements
-  /create/i, // CREATE statements
-  /alter/i, // ALTER statements
-  /exec/i, // EXEC statements
-  /execute/i, // EXECUTE statements
-  /xp_/i, // Extended stored procedures
-  /sp_/i, // Stored procedures
 ] as const
 
 /**
