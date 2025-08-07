@@ -189,6 +189,17 @@ export class QueryBuilder
   }
 
   /**
+   * Adds a raw WHERE condition to the query
+   * @param {string} sql - Raw SQL condition
+   * @param {any[]} params - Parameters for the raw SQL condition
+   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   */
+  public whereRaw(sql: string, params: any[]): QueryBuilderInterface {
+    this.addWhereRawCondition(sql, params)
+    return this
+  }
+
+  /**
    * Adds a WHERE IN condition to the query
    * @param {string} column - Column name
    * @param {NonNullable<any>[]} values - Array of values to match against
@@ -432,7 +443,34 @@ export class QueryBuilder
    * @returns {{ sql: string; params: any[] }} SQL query and parameters
    */
   public override raw(): { sql: string; params: any[] } {
-    return this.buildQuery()
+    const query = this.buildQuery()
+    return {
+      sql: query.sql.replace(/\s+/g, ' '),
+      params: query.params,
+    }
+  }
+
+  /**
+   * Returns the SQL query as a string
+   * @returns {string} SQL query
+   */
+  public toSql(): string {
+    const { sql, params } = this.buildQuery()
+    const sqlString = sql.replace(/\s+/g, ' ')
+    return sqlString.replace(/\$(\d+)/g, (_: any, index: string) => {
+      const value = params[parseInt(index, 10) - 1]
+      if (typeof value === 'string') {
+        return value
+      } else if (typeof value === 'number') {
+        return value.toString()
+      } else if (typeof value === 'boolean') {
+        return value ? '1' : '0'
+      } else if (value === null || value === undefined) {
+        return 'NULL'
+      } else {
+        return value
+      }
+    })
   }
 
   /**

@@ -12,6 +12,7 @@ import type {
 
 export abstract class BaseQueryBuilder {
   protected sql: Bun.SQL
+  protected whereRawConditions: Array<{ sql: string; params: any[] }> = []
   protected whereConditions: WhereCondition[] = []
   protected joins: JoinCondition[] = []
   protected orderByConditions: OrderByCondition[] = []
@@ -42,6 +43,15 @@ export abstract class BaseQueryBuilder {
     value?: any
   ): void {
     this.whereConditions.push({ column, operator, value })
+  }
+
+  /**
+   * Adds a raw WHERE condition to the query
+   * @param {string} sql - Raw SQL condition
+   * @param {any[]} params - Parameters for the raw SQL condition
+   */
+  protected addWhereRawCondition(sql: string, params: any[]): void {
+    this.whereRawConditions.push({ sql, params })
   }
 
   /**
@@ -85,7 +95,10 @@ export abstract class BaseQueryBuilder {
    * @returns {{ sql: string; params: any[] }} SQL fragment and parameters
    */
   protected buildWhereClause(): { sql: string; params: any[] } {
-    return this.sqlHelper.buildWhereConditions(this.whereConditions)
+    return this.sqlHelper.buildWhereConditions(
+      this.whereConditions,
+      this.whereRawConditions
+    )
   }
 
   /**

@@ -315,4 +315,21 @@ describe('SELECT Query Builder', () => {
     expect(users.some((user) => user.name === 'John Doe')).toBe(true)
     expect(users.some((user) => user.my_email === 'bob@example.com')).toBe(true)
   })
+
+  it('should support where raw condition', async () => {
+    const user = await db
+      .from('users')
+      .select()
+      .where('active', true)
+      .where('age', '=', 28)
+      .whereRaw('email = ?', ['alice@example.com'])
+      .whereRaw('name = ?', ['Alice Brown'])
+      .first()
+
+    expect(user).toBeDefined()
+    expect(user.name).toBe('Alice Brown')
+    expect(user.email).toBe('alice@example.com')
+    expect(user.age).toBe(28)
+    expect(user.active).toBe(true)
+  })
 })

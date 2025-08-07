@@ -118,16 +118,18 @@ export class SQLHelper {
    * @returns {{ sql: string; params: any[] }} WHERE clause SQL and parameters
    */
   buildWhereConditions(
-    conditions: Array<{ column: string; operator: string; value?: any }>
+    conditions: Array<{ column: string; operator: string; value?: any }>,
+    rawConditions: Array<{ sql: string; params: any[] }> = []
   ): { sql: string; params: any[] } {
-    if (conditions.length === 0) {
+    if (conditions.length === 0 && rawConditions.length === 0) {
       return { sql: '', params: [] }
     }
 
     const whereParts: string[] = []
     const params: any[] = []
 
-    for (let i = 0; i < conditions.length; i++) {
+    let i = 0
+    for (i = 0; i < conditions.length; i++) {
       const condition = conditions[i]
       const { column, operator, value } = condition as {
         column: string
@@ -153,6 +155,21 @@ export class SQLHelper {
         )
         params.push(value)
       }
+    }
+
+    // handle raw conditions
+    for (let k = 0; k < rawConditions.length; k++) {
+      const condition = rawConditions[k]
+      if (condition?.sql) {
+        // replace ? with $1, $2, etc.
+        const placeholders = condition.params
+          .map((_, j) => `$${i + j + 1}`)
+          .join(', ')
+        const sql = condition.sql.replace(/\?/g, placeholders)
+        whereParts.push(sql)
+        params.push(...condition.params)
+      }
+      i++
     }
 
     return {

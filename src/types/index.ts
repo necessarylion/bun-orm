@@ -74,6 +74,7 @@ export type QueryBuilderInterface = {
     operatorOrValue: NonNullable<any>,
     value?: NonNullable<any>
   ) => QueryBuilderInterface
+  whereRaw: (sql: string, params: any[]) => QueryBuilderInterface
   whereIn: (column: string, values: NonNullable<any>[]) => QueryBuilderInterface
   whereNotIn: (
     column: string,
@@ -110,6 +111,7 @@ export type QueryBuilderInterface = {
   first: <T = any>() => Promise<T | null>
   get: <T = any>() => Promise<T[]>
   raw: () => { sql: string; params: any[] }
+  toSql: () => string
 }
 
 // Legacy types for backward compatibility
