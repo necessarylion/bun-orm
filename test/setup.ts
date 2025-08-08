@@ -1,7 +1,7 @@
 import { spark } from '../index'
 
 // Test database configuration
-const testConfig = {
+export const testConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5433'),
   database: process.env.DB_NAME || 'bun_orm',
