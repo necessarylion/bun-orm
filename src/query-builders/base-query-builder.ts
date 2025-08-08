@@ -1,7 +1,10 @@
 import { getConnection } from '../core/connection'
 import { SQLHelper } from '../utils/sql-helper'
+import { NestedQueryBuilder } from './nested-query-builder'
 import type {
   WhereCondition,
+  WhereGroupCondition,
+  WhereCallback,
   JoinCondition,
   OrderByCondition,
   GroupByCondition,
@@ -12,8 +15,8 @@ import type {
 
 export abstract class BaseQueryBuilder {
   protected sql: Bun.SQL
-  protected whereRawConditions: Array<{ sql: string; params: any[] }> = []
   protected whereConditions: WhereCondition[] = []
+  protected whereGroupConditions: WhereGroupCondition[] = []
   protected joins: JoinCondition[] = []
   protected orderByConditions: OrderByCondition[] = []
   protected groupByConditions: GroupByCondition[] = []
@@ -42,12 +45,24 @@ export abstract class BaseQueryBuilder {
   }
 
   /**
-   * Adds a raw WHERE condition to the query
-   * @param {string} sql - Raw SQL condition
-   * @param {any[]} params - Parameters for the raw SQL condition
+   * Adds a callback-based WHERE condition to the query
+   * @param {WhereCallback} callback - Callback function that receives a NestedQueryBuilder
    */
-  protected addWhereRawCondition(sql: string, params: any[]): void {
-    this.whereRawConditions.push({ sql, params })
+  protected addWhereCallback(callback: WhereCallback): void {
+    const nestedBuilder = new NestedQueryBuilder()
+    callback(nestedBuilder)
+    const conditions = nestedBuilder.getConditions()
+
+    if (conditions.length === 1 && conditions[0] && 'type' in conditions[0]) {
+      // Single group condition
+      this.whereGroupConditions.push(conditions[0] as WhereGroupCondition)
+    } else {
+      // Multiple conditions - wrap in AND group
+      this.whereGroupConditions.push({
+        type: 'AND',
+        conditions: conditions as WhereCondition[],
+      })
+    }
   }
 
   /**
@@ -83,7 +98,7 @@ export abstract class BaseQueryBuilder {
    * @returns {{ sql: string; params: any[] }} SQL fragment and parameters
    */
   protected buildWhereClause(): { sql: string; params: any[] } {
-    return this.sqlHelper.buildWhereConditions(this.whereConditions, this.whereRawConditions)
+    return this.sqlHelper.buildWhereConditions(this.whereConditions, this.whereGroupConditions)
   }
 
   /**

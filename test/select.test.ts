@@ -270,19 +270,40 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should support where raw condition', async () => {
-    const user = await db
+    const query = db
       .from('users')
       .select()
       .where('active', true)
       .where('age', '=', 28)
       .whereRaw('email = ?', ['alice@example.com'])
       .whereRaw('name = ?', ['Alice Brown'])
-      .first()
+
+    const user = await query.first()
+    const sql = query.toSql()
+    const rawSql = query.raw()
+
+    expect(rawSql.sql).toBe(
+      `SELECT * FROM \"users\" WHERE \"active\" = $1 AND \"age\" = $2 AND email = $3 AND name = $4`
+    )
+    expect(sql).toBe(
+      `SELECT * FROM "users" WHERE "active" = 1 AND "age" = '28' AND email = 'alice@example.com' AND name = 'Alice Brown'`
+    )
 
     expect(user).toBeDefined()
     expect(user.name).toBe('Alice Brown')
     expect(user.email).toBe('alice@example.com')
     expect(user.age).toBe(28)
     expect(user.active).toBe(true)
+  })
+
+  it('should support where raw condition', async () => {
+    const query = db
+      .from('users')
+      .select()
+      .where('active', true)
+      .where('age', '=', 28)
+      .whereRaw('email = alice@example.com')
+
+    console.log(query.toSql())
   })
 })

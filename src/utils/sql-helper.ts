@@ -1,3 +1,4 @@
+import type { WhereCondition, WhereGroupCondition } from '../types'
 import { DANGEROUS_SQL_PATTERNS, MAX_IDENTIFIER_LENGTH, SQL_RESERVED_KEYWORDS } from './sql-constants'
 
 /**
@@ -107,58 +108,111 @@ export class SQLHelper {
   /**
    * Builds WHERE conditions from an array of condition objects
    * @param {Array<{ column: string; operator: string; value?: any }>} conditions - Array of WHERE conditions
+   * @param {Array<{ sql: string; params: any[] }>} rawConditions - Array of raw WHERE conditions
+   * @param {Array<{ type: string; conditions: any[] }>} groupConditions - Array of grouped WHERE conditions
    * @returns {{ sql: string; params: any[] }} WHERE clause SQL and parameters
    */
   buildWhereConditions(
-    conditions: Array<{ column: string; operator: string; value?: any }>,
-    rawConditions: Array<{ sql: string; params: any[] }> = []
+    conditions: WhereCondition[],
+    groupConditions: WhereGroupCondition[] = []
   ): { sql: string; params: any[] } {
-    if (conditions.length === 0 && rawConditions.length === 0) {
+    if (conditions.length === 0 && groupConditions.length === 0) {
       return { sql: '', params: [] }
     }
 
     const whereParts: string[] = []
     const params: any[] = []
 
-    let i = 0
-    for (i = 0; i < conditions.length; i++) {
-      const condition = conditions[i]
-      const { column, operator, value } = condition as {
-        column: string
-        operator: string
-        value?: any
-      }
-
-      if (operator === 'IS NULL' || operator === 'IS NOT NULL') {
-        whereParts.push(`${this.safeEscapeIdentifier(column)} ${operator}`)
-      } else if (operator === 'IN' || operator === 'NOT IN') {
-        if (Array.isArray(value)) {
-          const placeholders = value.map((_, j) => `$${params.length + j + 1}`).join(', ')
-          whereParts.push(`${this.safeEscapeIdentifier(column)} ${operator} (${placeholders})`)
-          params.push(...value)
-        }
-      } else {
-        whereParts.push(`${this.safeEscapeIdentifier(column)} ${operator} $${params.length + 1}`)
-        params.push(value)
-      }
+    for (let i = 0; i < conditions.length; i++) {
+      const condition = conditions[i] as WhereCondition
+      const regularResult = this.#getRegularWhereCondition(condition, params.length)
+      whereParts.push(regularResult.wherePart)
+      params.push(...regularResult.params)
     }
 
-    // handle raw conditions
-    for (let k = 0; k < rawConditions.length; k++) {
-      const condition = rawConditions[k]
-      if (condition?.sql) {
-        // replace ? with $1, $2, etc.
-        const placeholders = condition.params.map((_, j) => `$${i + j + 1}`).join(', ')
-        const sql = condition.sql.replace(/\?/g, placeholders)
-        whereParts.push(sql)
-        params.push(...condition.params)
-      }
-      i++
+    // handle group conditions
+    for (const group of groupConditions) {
+      const groupResult = this.buildGroupCondition(group, params.length)
+      whereParts.push(groupResult.sql)
+      params.push(...groupResult.params)
     }
 
     return {
       sql: whereParts.join(' AND '),
       params,
+    }
+  }
+
+  /**
+   * Builds a single group condition (AND/OR)
+   * @param {any} group - Group condition object
+   * @param {number} paramOffset - Parameter offset for placeholders
+   * @returns {{ sql: string; params: any[] }} Group condition SQL and parameters
+   */
+  private buildGroupCondition(group: WhereGroupCondition, paramOffset: number): { sql: string; params: any[] } {
+    const groupParts: string[] = []
+    const params: any[] = []
+
+    for (const condition of group.conditions) {
+      if ('type' in condition) {
+        // Nested group
+        const nestedResult = this.buildGroupCondition(condition, paramOffset + params.length)
+        groupParts.push(`(${nestedResult.sql})`)
+        params.push(...nestedResult.params)
+      } else {
+        // Regular condition
+        const regularResult = this.#getRegularWhereCondition(condition, paramOffset + params.length)
+        groupParts.push(regularResult.wherePart)
+        params.push(...regularResult.params)
+      }
+    }
+
+    return {
+      sql: groupParts.length > 0 ? `(${groupParts.join(` ${group.type} `)})` : '',
+      params,
+    }
+  }
+
+  #getRegularWhereCondition(
+    condition: WhereCondition,
+    paramOffset: number
+  ): {
+    wherePart: string
+    params: any[]
+  } {
+    // Regular condition
+    const { column, operator, value } = condition
+
+    if (operator === 'IS NULL' || operator === 'IS NOT NULL') {
+      return {
+        wherePart: `${this.safeEscapeIdentifier(column)} ${operator}`,
+        params: [],
+      }
+    }
+    if ((operator === 'IN' || operator === 'NOT IN') && Array.isArray(value)) {
+      const placeholders = value.map((_, j) => `$${paramOffset + j + 1}`).join(', ')
+      return {
+        wherePart: `${this.safeEscapeIdentifier(column)} ${operator} (${placeholders})`,
+        params: value,
+      }
+    }
+    if (operator === 'RAW' && Array.isArray(value)) {
+      const placeholders = value.map((_, j) => `$${paramOffset + j + 1}`).join(', ')
+      const sql = column.replace(/\?/g, placeholders)
+      return {
+        wherePart: sql,
+        params: value,
+      }
+    }
+    if (operator === 'RAW' && !value) {
+      return {
+        wherePart: column,
+        params: [],
+      }
+    }
+    return {
+      wherePart: `${this.safeEscapeIdentifier(column)} ${operator} $${paramOffset + 1}`,
+      params: [value],
     }
   }
 

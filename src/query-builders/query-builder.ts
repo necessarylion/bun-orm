@@ -1,5 +1,5 @@
 import { BaseQueryBuilder } from './base-query-builder'
-import type { FullWhereOperators, OrderDirection, QueryBuilderInterface, SelectColumn, WhereOperator } from '../types'
+import type { FullWhereOperators, OrderDirection, QueryBuilderInterface, SelectColumn, WhereCallback } from '../types'
 import { ALLOWED_WHERE_OPERATORS } from '../utils/sql-constants'
 
 export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterface {
@@ -140,11 +140,18 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * - where('id', '=', 2) - with explicit operator
    * - where('id', 2) - defaults to '=' operator
    */
-  public where(column: string, value: any): QueryBuilderInterface
-  public where(column: string, operator: WhereOperator, value: any): QueryBuilderInterface
-  public where(column: string, operatorOrValue: any, value?: NonNullable<any>): QueryBuilderInterface {
+  public where(columnOrCallback: string | WhereCallback, operatorOrValue?: any, value?: any): QueryBuilderInterface {
+    // Handle callback-based where
+    if (typeof columnOrCallback === 'function') {
+      this.addWhereCallback(columnOrCallback)
+      return this
+    }
+
+    // Handle regular where conditions
+    const column = columnOrCallback as string
     let operator: FullWhereOperators = '='
     let conditionValue: any
+
     if (typeof operatorOrValue === 'string' && ALLOWED_WHERE_OPERATORS.includes(operatorOrValue)) {
       // where('id', '=', 2) syntax
       operator = operatorOrValue as FullWhereOperators
@@ -173,8 +180,8 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {any[]} params - Parameters for the raw SQL condition
    * @returns {QueryBuilderInterface} Query builder chain for method chaining
    */
-  public whereRaw(sql: string, params: any[]): QueryBuilderInterface {
-    this.addWhereRawCondition(sql, params)
+  public whereRaw(sql: string, params?: any[]): QueryBuilderInterface {
+    this.addWhereCondition(sql, 'RAW', params)
     return this
   }
 
@@ -217,6 +224,144 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    */
   public whereNotNull(column: string): QueryBuilderInterface {
     this.addWhereCondition(column, 'IS NOT NULL')
+    return this
+  }
+
+  /**
+   * Adds an OR WHERE condition to the query
+   * @param {string} column - Column name
+   * @param {any} operatorOrValue - Operator or value
+   * @param {any} [value] - Value to compare against
+   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   */
+  public orWhere(column: string, operatorOrValue: any, value?: any): QueryBuilderInterface {
+    let operator: FullWhereOperators = '='
+    let conditionValue: any
+
+    if (typeof operatorOrValue === 'string' && ALLOWED_WHERE_OPERATORS.includes(operatorOrValue)) {
+      operator = operatorOrValue as FullWhereOperators
+      conditionValue = value
+    } else {
+      conditionValue = operatorOrValue
+    }
+
+    if (operator === '=' && conditionValue === null) {
+      operator = 'IS NULL'
+      conditionValue = undefined
+    } else if (operator === '!=' && conditionValue === null) {
+      operator = 'IS NOT NULL'
+      conditionValue = undefined
+    }
+
+    // Create an OR group with existing conditions
+    const orGroup = {
+      type: 'OR' as const,
+      conditions: [
+        ...this.whereConditions.map((c) => ({ column: c.column, operator: c.operator, value: c.value })),
+        { column, operator, value: conditionValue },
+      ],
+    }
+
+    this.whereGroupConditions.push(orGroup)
+    this.whereConditions = [] // Clear regular conditions since they're now in the OR group
+    return this
+  }
+
+  /**
+   * Adds an OR raw WHERE condition to the query
+   * @param {string} sql - Raw SQL condition
+   * @param {any[]} params - Parameters for the raw SQL condition
+   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   */
+  public orWhereRaw(sql: string, params?: any[]): QueryBuilderInterface {
+    const orGroup = {
+      type: 'OR' as const,
+      conditions: [
+        ...this.whereConditions.map((c) => ({ column: c.column, operator: c.operator, value: c.value })),
+        { column: sql, operator: 'RAW' as FullWhereOperators, value: params },
+      ],
+    }
+
+    this.whereGroupConditions.push(orGroup)
+    this.whereConditions = []
+    return this
+  }
+
+  /**
+   * Adds an OR WHERE IN condition to the query
+   * @param {string} column - Column name
+   * @param {any[]} values - Array of values to match against
+   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   */
+  public orWhereIn(column: string, values: any[]): QueryBuilderInterface {
+    const orGroup = {
+      type: 'OR' as const,
+      conditions: [
+        ...this.whereConditions.map((c) => ({ column: c.column, operator: c.operator, value: c.value })),
+        { column, operator: 'IN' as FullWhereOperators, values },
+      ],
+    }
+
+    this.whereGroupConditions.push(orGroup)
+    this.whereConditions = []
+    return this
+  }
+
+  /**
+   * Adds an OR WHERE NOT IN condition to the query
+   * @param {string} column - Column name
+   * @param {any[]} values - Array of values to exclude
+   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   */
+  public orWhereNotIn(column: string, values: any[]): QueryBuilderInterface {
+    const orGroup = {
+      type: 'OR' as const,
+      conditions: [
+        ...this.whereConditions.map((c) => ({ column: c.column, operator: c.operator, value: c.value })),
+        { column, operator: 'NOT IN' as FullWhereOperators, values },
+      ],
+    }
+
+    this.whereGroupConditions.push(orGroup)
+    this.whereConditions = []
+    return this
+  }
+
+  /**
+   * Adds an OR WHERE NULL condition to the query
+   * @param {string} column - Column name
+   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   */
+  public orWhereNull(column: string): QueryBuilderInterface {
+    const orGroup = {
+      type: 'OR' as const,
+      conditions: [
+        ...this.whereConditions.map((c) => ({ column: c.column, operator: c.operator, value: c.value })),
+        { column, operator: 'IS NULL' as FullWhereOperators },
+      ],
+    }
+
+    this.whereGroupConditions.push(orGroup)
+    this.whereConditions = []
+    return this
+  }
+
+  /**
+   * Adds an OR WHERE NOT NULL condition to the query
+   * @param {string} column - Column name
+   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   */
+  public orWhereNotNull(column: string): QueryBuilderInterface {
+    const orGroup = {
+      type: 'OR' as const,
+      conditions: [
+        ...this.whereConditions.map((c) => ({ column: c.column, operator: c.operator, value: c.value })),
+        { column, operator: 'IS NOT NULL' as FullWhereOperators },
+      ],
+    }
+
+    this.whereGroupConditions.push(orGroup)
+    this.whereConditions = []
     return this
   }
 
@@ -411,15 +556,15 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
     return sqlString.replace(/\$(\d+)/g, (_: any, index: string) => {
       const value = params[parseInt(index, 10) - 1]
       if (typeof value === 'string') {
-        return value
+        return `'${value}'`
       } else if (typeof value === 'number') {
-        return value.toString()
+        return `'${value.toString()}'`
       } else if (typeof value === 'boolean') {
         return value ? '1' : '0'
       } else if (value === null || value === undefined) {
         return 'NULL'
       } else {
-        return value
+        return `'${value}'`
       }
     })
   }

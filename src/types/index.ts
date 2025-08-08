@@ -2,13 +2,34 @@ export type ConnectionConfig = Bun.SQL.Options
 
 export type WhereOperator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN'
 
-export type FullWhereOperators = WhereOperator | 'IS NULL' | 'IS NOT NULL'
+export type FullWhereOperators = WhereOperator | 'IS NULL' | 'IS NOT NULL' | 'RAW'
 
 export type WhereCondition = {
   column: string
   operator: FullWhereOperators
   value?: any
-  values?: any[]
+}
+
+export type WhereCallback = (query: NestedQueryBuilder) => void
+
+export type WhereGroupCondition = {
+  type: 'AND' | 'OR'
+  conditions: (WhereCondition | WhereGroupCondition)[]
+}
+
+export type NestedQueryBuilder = {
+  where: (column: string, operatorOrValue: any, value?: any) => NestedQueryBuilder
+  orWhere: (column: string, operatorOrValue: any, value?: any) => NestedQueryBuilder
+  whereIn: (column: string, values: any[]) => NestedQueryBuilder
+  orWhereIn: (column: string, values: any[]) => NestedQueryBuilder
+  whereNotIn: (column: string, values: any[]) => NestedQueryBuilder
+  orWhereNotIn: (column: string, values: any[]) => NestedQueryBuilder
+  whereNull: (column: string) => NestedQueryBuilder
+  orWhereNull: (column: string) => NestedQueryBuilder
+  whereNotNull: (column: string) => NestedQueryBuilder
+  orWhereNotNull: (column: string) => NestedQueryBuilder
+  whereRaw: (sql: string, params: any[]) => NestedQueryBuilder
+  orWhereRaw: (sql: string, params: any[]) => NestedQueryBuilder
 }
 
 export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL'
@@ -57,12 +78,18 @@ export type QueryBuilderInterface = {
   delete: <T = any>() => Promise<T[]>
 
   // Where conditions
-  where: (column: string, operatorOrValue: NonNullable<any>, value?: NonNullable<any>) => QueryBuilderInterface
-  whereRaw: (sql: string, params: any[]) => QueryBuilderInterface
+  where: (column: string | WhereCallback, operatorOrValue?: any, value?: any) => QueryBuilderInterface
+  orWhere: (column: string, operatorOrValue: any, value?: any) => QueryBuilderInterface
+  whereRaw: (sql: string, params?: any[]) => QueryBuilderInterface
+  orWhereRaw: (sql: string, params?: any[]) => QueryBuilderInterface
   whereIn: (column: string, values: NonNullable<any>[]) => QueryBuilderInterface
+  orWhereIn: (column: string, values: NonNullable<any>[]) => QueryBuilderInterface
   whereNotIn: (column: string, values: NonNullable<any>[]) => QueryBuilderInterface
+  orWhereNotIn: (column: string, values: NonNullable<any>[]) => QueryBuilderInterface
   whereNull: (column: string) => QueryBuilderInterface
+  orWhereNull: (column: string) => QueryBuilderInterface
   whereNotNull: (column: string) => QueryBuilderInterface
+  orWhereNotNull: (column: string) => QueryBuilderInterface
 
   // Join operations
   join: (table: string, on: string, alias?: string) => QueryBuilderInterface
