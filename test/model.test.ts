@@ -89,7 +89,7 @@ describe('Model', () => {
     expect(deletedUser).toBeNull()
   })
 
-  it('should find a user by id', async () => {
+  it('should find a user by id and remove it', async () => {
     const user = await User.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
@@ -98,5 +98,16 @@ describe('Model', () => {
     await User.query().where('id', id).delete()
     const deletedUser = await User.find(id)
     expect(deletedUser).toBeNull()
+  })
+
+  it('query first', async () => {
+    const users = await User.query().where('id', '>=', 1).first()
+    expect(users?.info()).toBe('John Doe john@example.com')
+  })
+
+  it('query all', async () => {
+    const users = await User.query().where('id', '>=', 1).get()
+    expect(users.length).toBe(4)
+    expect(users[0]?.info()).toBe('Alice Brown alice@example.com')
   })
 })

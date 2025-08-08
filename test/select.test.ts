@@ -87,7 +87,7 @@ describe('SELECT Query Builder', () => {
 
     expect(users).toBeDefined()
     expect(users.length).toBe(1)
-    expect(users[0].age).toBeNull()
+    expect(users[0]?.age).toBeNull()
   })
 
   it('should filter with WHERE NOT NULL clause', async () => {
@@ -127,8 +127,8 @@ describe('SELECT Query Builder', () => {
 
     expect(users).toBeDefined()
     expect(users.length).toBe(4)
-    expect(users[0].name).toBe('Alice Brown')
-    expect(users[3].name).toBe('John Doe')
+    expect(users[0]?.name).toBe('Alice Brown')
+    expect(users[3]?.name).toBe('John Doe')
   })
 
   it('should order by multiple columns', async () => {
@@ -150,8 +150,8 @@ describe('SELECT Query Builder', () => {
 
     expect(users).toBeDefined()
     expect(users.length).toBe(2)
-    expect(users[0].id).toBe(3)
-    expect(users[1].id).toBe(4)
+    expect(users[0]?.id).toBe(3)
+    expect(users[1]?.id).toBe(4)
   })
 
   it('should get distinct results', async () => {

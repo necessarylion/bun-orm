@@ -2,6 +2,7 @@ import { getColumns } from '../decorators/column'
 import { type QueryBuilder, spark } from './spark'
 import { getTableName } from '../utils/model-helper'
 import { camelCase } from 'change-case'
+import ModelQueryBuilder from '../query-builders/model-query-builder'
 
 /**
  * Interface for objects that can be serialized to a specific type
@@ -21,8 +22,6 @@ export interface Serializable<T> {
  * @template T - The type of the serialized data (defaults to Record<string, any>)
  */
 export abstract class Model implements Serializable<Record<string, any>> {
-  /** The table name for this model */
-  static _tableName: string
   /** The primary key column name for this model */
   static primaryKey: string
 
@@ -38,11 +37,9 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * Gets a query builder instance for this model's table
    * @returns A QueryBuilder instance configured for this model's table
    */
-  static get db(): QueryBuilder {
-    if (!this._tableName) {
-      this._tableName = getTableName(this.name)
-    }
-    return spark().table(this._tableName)
+  static db<T extends typeof Model>(this: T): QueryBuilder<InstanceType<T>> {
+    console.log('AAAA', getTableName(this.name))
+    return spark().table(getTableName(this.name)) as QueryBuilder<InstanceType<T>>
   }
 
   /**
@@ -57,11 +54,14 @@ export abstract class Model implements Serializable<Record<string, any>> {
   }
 
   /**
-   * Creates a new query builder instance for this model
-   * @returns A QueryBuilder instance for this model's table
+   * Finds a record by its primary key
+   * @template T - The model class type
+   * @param id - The primary key value to search for
+   * @returns Promise that resolves to the found model instance or null if not found
    */
-  static query(): QueryBuilder {
-    return this.db
+  static query<T extends typeof Model>(this: T): ModelQueryBuilder<InstanceType<T>> {
+    const instance = Object.create(this.prototype)
+    return new ModelQueryBuilder<InstanceType<T>>(instance, getTableName(this.name))
   }
 
   /**
@@ -131,7 +131,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @returns Promise that resolves to an array of model instances
    */
   static async all<T extends typeof Model>(this: T): Promise<InstanceType<T>[]> {
-    const results = await this.db.get()
+    const results = await this.db().get()
     return this.hydrateMany(results)
   }
 
@@ -145,7 +145,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
     this: T,
     data: Partial<InstanceType<T>> | Partial<InstanceType<T>>[]
   ): Promise<InstanceType<T>[]> {
-    const results = await this.db.insert(data)
+    const results = await this.db().insert(data)
     return this.hydrateMany(results)
   }
 
@@ -157,7 +157,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @throws Error if the creation fails
    */
   static async create<T extends typeof Model>(this: T, data: Partial<InstanceType<T>>): Promise<InstanceType<T>> {
-    const results = await this.db.insert(data)
+    const results = await this.db().insert(data)
     if (!results || results.length === 0) throw new Error('Failed to create')
     return this.hydrate(results[0])
   }
@@ -170,7 +170,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
    */
   static async find<T extends typeof Model>(this: T, id: number): Promise<InstanceType<T> | null> {
     const pk = this.getMetadata().columns.find((c: any) => c.primary)?.name || 'id'
-    const result = await this.db.where(pk, id).first()
+    const result = await this.db().where(pk, id).first()
     return result ? this.hydrate(result) : null
   }
 }

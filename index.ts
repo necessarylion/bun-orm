@@ -29,9 +29,5 @@ export type {
   GroupByCondition,
   SelectColumn,
   QueryResult,
-  QueryBuilderInterface,
-  InsertQueryBuilderInterface,
-  UpdateQueryBuilderInterface,
-  DeleteQueryBuilderInterface,
   TransactionCallback,
 } from './src/types'

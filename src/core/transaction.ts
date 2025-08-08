@@ -2,7 +2,7 @@ import { getConnection } from './connection'
 import { QueryBuilder } from '../query-builders/query-builder'
 import type { SelectColumn, Transaction as TransactionType } from '../types'
 
-export class Transaction implements TransactionType {
+export class Transaction<M> implements TransactionType {
   private sql: any
   private transactionContext: any
   private isCommitted: boolean = false
@@ -22,8 +22,8 @@ export class Transaction implements TransactionType {
    * @param {SelectColumn | SelectColumn[]} [columns] - Columns to select (defaults to '*')
    * @returns {QueryBuilder} Query builder instance for SELECT operations
    */
-  public select(columns?: SelectColumn | SelectColumn[]): QueryBuilder {
-    const queryBuilder = new QueryBuilder(this.transactionContext)
+  public select(columns?: SelectColumn | SelectColumn[]): QueryBuilder<M> {
+    const queryBuilder = new QueryBuilder<M>(this.transactionContext)
     if (columns) {
       queryBuilder.select(columns)
     }
@@ -36,8 +36,8 @@ export class Transaction implements TransactionType {
    * @param {string} [alias]
    * @returns {QueryBuilder}
    */
-  public from(table: string, alias?: string): QueryBuilder {
-    return new QueryBuilder(this.transactionContext).from(table, alias)
+  public from(table: string, alias?: string): QueryBuilder<M> {
+    return new QueryBuilder<M>(this.transactionContext).from(table, alias)
   }
 
   /**
@@ -46,8 +46,8 @@ export class Transaction implements TransactionType {
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilder} Query builder instance
    */
-  public table(table: string, alias?: string): QueryBuilder {
-    return new QueryBuilder(this.transactionContext).table(table, alias)
+  public table(table: string, alias?: string): QueryBuilder<M> {
+    return new QueryBuilder<M>(this.transactionContext).table(table, alias)
   }
 
   /**
@@ -55,8 +55,8 @@ export class Transaction implements TransactionType {
    * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
    * @returns {QueryBuilder} Query builder instance
    */
-  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder {
-    const queryBuilder = new QueryBuilder(this.transactionContext)
+  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder<M> {
+    const queryBuilder = new QueryBuilder<M>(this.transactionContext)
     if (data) {
       queryBuilder.insert(data)
     }
@@ -68,8 +68,8 @@ export class Transaction implements TransactionType {
    * @param {Record<string, any>} [data] - Data to update
    * @returns {QueryBuilder} Query builder instance
    */
-  public update(data?: Record<string, any>): QueryBuilder {
-    const queryBuilder = new QueryBuilder(this.transactionContext)
+  public update(data?: Record<string, any>): QueryBuilder<M> {
+    const queryBuilder = new QueryBuilder<M>(this.transactionContext)
     if (data) {
       queryBuilder.update(data)
     }
@@ -80,7 +80,7 @@ export class Transaction implements TransactionType {
    * Creates a DELETE query builder within the transaction
    * @returns {QueryBuilder} Query builder instance
    */
-  public delete(): QueryBuilder {
+  public delete(): QueryBuilder<M> {
     return new QueryBuilder(this.transactionContext)
   }
 

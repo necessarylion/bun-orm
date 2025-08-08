@@ -1,8 +1,8 @@
 import { BaseQueryBuilder } from './base-query-builder'
-import type { FullWhereOperators, OrderDirection, QueryBuilderInterface, SelectColumn, WhereCallback } from '../types'
+import type { FullWhereOperators, OrderDirection, SelectColumn, WhereCallback } from '../types'
 import { ALLOWED_WHERE_OPERATORS } from '../utils/sql-constants'
 
-export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterface {
+export class QueryBuilder<M> extends BaseQueryBuilder {
   private alreadyRemovedStar: boolean = false
   private selectColumns: string[] = ['*']
   private fromTable: string = ''
@@ -18,7 +18,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} [alias] - Optional table alias (for select queries)
    * @returns {QueryBuilder} Query builder instance
    */
-  public table(table: string, alias?: string): QueryBuilder {
+  public table(table: string, alias?: string): QueryBuilder<M> {
     this.fromTable = table
     this.fromAlias = alias ? alias : ''
     return this
@@ -30,7 +30,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilder} Query builder instance
    */
-  public from(table: string, alias?: string): QueryBuilder {
+  public from(table: string, alias?: string): QueryBuilder<M> {
     return this.table(table, alias)
   }
 
@@ -39,7 +39,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} table - Table name
    * @returns {QueryBuilder} Query builder instance
    */
-  public into(table: string): QueryBuilder {
+  public into(table: string): QueryBuilder<M> {
     return this.table(table)
   }
 
@@ -47,7 +47,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Initiates a SELECT query
    * @returns {QueryBuilder} Query builder instance
    */
-  public query(): QueryBuilder {
+  public query(): QueryBuilder<M> {
     this.queryMode = 'select'
     return this
   }
@@ -55,9 +55,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Sets the columns to select in the query
    * @param {SelectColumn | SelectColumn[]} [columns] - Columns to select (defaults to '*')
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public select(columns?: SelectColumn | SelectColumn[]): QueryBuilderInterface {
+  public select(columns?: SelectColumn | SelectColumn[]): QueryBuilder<M> {
     this.queryMode = 'select'
 
     if (!columns) {
@@ -140,7 +140,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * - where('id', '=', 2) - with explicit operator
    * - where('id', 2) - defaults to '=' operator
    */
-  public where(columnOrCallback: string | WhereCallback, operatorOrValue?: any, value?: any): QueryBuilderInterface {
+  public where(columnOrCallback: string | WhereCallback, operatorOrValue?: any, value?: any): QueryBuilder<M> {
     // Handle callback-based where
     if (typeof columnOrCallback === 'function') {
       this.addWhereCallback(columnOrCallback)
@@ -178,9 +178,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Adds a raw WHERE condition to the query
    * @param {string} sql - Raw SQL condition
    * @param {any[]} params - Parameters for the raw SQL condition
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public whereRaw(sql: string, params?: any[]): QueryBuilderInterface {
+  public whereRaw(sql: string, params?: any[]): QueryBuilder<M> {
     this.addWhereCondition(sql, 'RAW', params)
     return this
   }
@@ -189,9 +189,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Adds a WHERE IN condition to the query
    * @param {string} column - Column name
    * @param {NonNullable<any>[]} values - Array of values to match against
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public whereIn(column: string, values: NonNullable<any>[]): QueryBuilderInterface {
+  public whereIn(column: string, values: NonNullable<any>[]): QueryBuilder<M> {
     this.addWhereCondition(column, 'IN', values)
     return this
   }
@@ -200,9 +200,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Adds a WHERE NOT IN condition to the query
    * @param {string} column - Column name
    * @param {NonNullable<any>[]} values - Array of values to exclude
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public whereNotIn(column: string, values: NonNullable<any>[]): QueryBuilderInterface {
+  public whereNotIn(column: string, values: NonNullable<any>[]): QueryBuilder<M> {
     this.addWhereCondition(column, 'NOT IN', values)
     return this
   }
@@ -210,9 +210,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds a WHERE IS NULL condition to the query
    * @param {string} column - Column name
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public whereNull(column: string): QueryBuilderInterface {
+  public whereNull(column: string): QueryBuilder<M> {
     this.addWhereCondition(column, 'IS NULL')
     return this
   }
@@ -220,9 +220,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds a WHERE IS NOT NULL condition to the query
    * @param {string} column - Column name
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public whereNotNull(column: string): QueryBuilderInterface {
+  public whereNotNull(column: string): QueryBuilder<M> {
     this.addWhereCondition(column, 'IS NOT NULL')
     return this
   }
@@ -232,9 +232,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} column - Column name
    * @param {any} operatorOrValue - Operator or value
    * @param {any} [value] - Value to compare against
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public orWhere(column: string, operatorOrValue: any, value?: any): QueryBuilderInterface {
+  public orWhere(column: string, operatorOrValue: any, value?: any): QueryBuilder<M> {
     let operator: FullWhereOperators = '='
     let conditionValue: any
 
@@ -271,9 +271,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Adds an OR raw WHERE condition to the query
    * @param {string} sql - Raw SQL condition
    * @param {any[]} params - Parameters for the raw SQL condition
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public orWhereRaw(sql: string, params?: any[]): QueryBuilderInterface {
+  public orWhereRaw(sql: string, params?: any[]): QueryBuilder<M> {
     const orGroup = {
       type: 'OR' as const,
       conditions: [
@@ -291,9 +291,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Adds an OR WHERE IN condition to the query
    * @param {string} column - Column name
    * @param {any[]} values - Array of values to match against
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public orWhereIn(column: string, values: any[]): QueryBuilderInterface {
+  public orWhereIn(column: string, values: any[]): QueryBuilder<M> {
     const orGroup = {
       type: 'OR' as const,
       conditions: [
@@ -311,9 +311,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Adds an OR WHERE NOT IN condition to the query
    * @param {string} column - Column name
    * @param {any[]} values - Array of values to exclude
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public orWhereNotIn(column: string, values: any[]): QueryBuilderInterface {
+  public orWhereNotIn(column: string, values: any[]): QueryBuilder<M> {
     const orGroup = {
       type: 'OR' as const,
       conditions: [
@@ -330,9 +330,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds an OR WHERE NULL condition to the query
    * @param {string} column - Column name
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public orWhereNull(column: string): QueryBuilderInterface {
+  public orWhereNull(column: string): QueryBuilder<M> {
     const orGroup = {
       type: 'OR' as const,
       conditions: [
@@ -349,9 +349,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds an OR WHERE NOT NULL condition to the query
    * @param {string} column - Column name
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public orWhereNotNull(column: string): QueryBuilderInterface {
+  public orWhereNotNull(column: string): QueryBuilder<M> {
     const orGroup = {
       type: 'OR' as const,
       conditions: [
@@ -370,9 +370,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} table - Table name to join
    * @param {string} on - Join condition
    * @param {string} [alias] - Optional table alias
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public join(table: string, on: string, alias?: string): QueryBuilderInterface {
+  public join(table: string, on: string, alias?: string): QueryBuilder<M> {
     this.addJoin('INNER', table, on, alias)
     return this
   }
@@ -382,9 +382,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} table - Table name to join
    * @param {string} on - Join condition
    * @param {string} [alias] - Optional table alias
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public leftJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
+  public leftJoin(table: string, on: string, alias?: string): QueryBuilder<M> {
     this.addJoin('LEFT', table, on, alias)
     return this
   }
@@ -394,9 +394,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} table - Table name to join
    * @param {string} on - Join condition
    * @param {string} [alias] - Optional table alias
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public rightJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
+  public rightJoin(table: string, on: string, alias?: string): QueryBuilder<M> {
     this.addJoin('RIGHT', table, on, alias)
     return this
   }
@@ -406,9 +406,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string} table - Table name to join
    * @param {string} on - Join condition
    * @param {string} [alias] - Optional table alias
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public fullJoin(table: string, on: string, alias?: string): QueryBuilderInterface {
+  public fullJoin(table: string, on: string, alias?: string): QueryBuilder<M> {
     this.addJoin('FULL', table, on, alias)
     return this
   }
@@ -417,9 +417,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Adds an ORDER BY clause to the query
    * @param {string} column - Column name to order by
    * @param {OrderDirection} [direction='ASC'] - Sort direction
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public orderBy(column: string, direction: OrderDirection = 'ASC'): QueryBuilderInterface {
+  public orderBy(column: string, direction: OrderDirection = 'ASC'): QueryBuilder<M> {
     this.addOrderBy(column, direction)
     return this
   }
@@ -427,9 +427,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds a GROUP BY clause to the query
    * @param {string} column - Column name to group by
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public groupBy(column: string): QueryBuilderInterface {
+  public groupBy(column: string): QueryBuilder<M> {
     this.addGroupBy(column)
     return this
   }
@@ -437,9 +437,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds a HAVING clause to the query
    * @param {string} condition - HAVING condition
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public having(condition: string): QueryBuilderInterface {
+  public having(condition: string): QueryBuilder<M> {
     this.havingCondition = condition
     return this
   }
@@ -447,9 +447,9 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds a LIMIT clause to the query
    * @param {number} count - Number of rows to limit
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public limit(count: number): QueryBuilderInterface {
+  public limit(count: number): QueryBuilder<M> {
     this.limitValue = count
     return this
   }
@@ -457,18 +457,18 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
   /**
    * Adds an OFFSET clause to the query
    * @param {number} count - Number of rows to offset
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public offset(count: number): QueryBuilderInterface {
+  public offset(count: number): QueryBuilder<M> {
     this.offsetValue = count
     return this
   }
 
   /**
    * Adds DISTINCT to the query
-   * @returns {QueryBuilderInterface} Query builder chain for method chaining
+   * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public distinct(): QueryBuilderInterface {
+  public distinct(): QueryBuilder<M> {
     this.distinctFlag = true
     return this
   }
@@ -478,7 +478,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * @param {string | string[]} [columns] - Columns to return (defaults to '*')
    * @returns {QueryBuilder} Query builder instance
    */
-  public returning(columns?: string | string[]): QueryBuilder {
+  public returning(columns?: string | string[]): QueryBuilder<M> {
     if (!columns) {
       this.returningColumns = ['*']
     } else if (Array.isArray(columns)) {
@@ -512,6 +512,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
    * Executes the query and returns the first result
    * @returns {Promise<T | null>} First result or null if no results
    */
+  public async first(): Promise<M | null>
   public async first<T = any>(): Promise<T | null> {
     const originalLimit = this.limitValue
     this.limitValue = 1
@@ -525,10 +526,7 @@ export class QueryBuilder extends BaseQueryBuilder implements QueryBuilderInterf
     return result[0] || null
   }
 
-  /**
-   * Executes the query and returns all results
-   * @returns {Promise<T[]>} Array of results
-   */
+  public async get(): Promise<M[]>
   public async get<T = any>(): Promise<T[]> {
     const query = this.buildQuery()
     return await this.executeQuery<T>(query.sql, query.params)

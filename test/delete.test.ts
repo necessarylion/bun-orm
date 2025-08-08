@@ -74,7 +74,7 @@ describe('DELETE Query Builder', () => {
     // Verify remaining record exists
     const remainingUsers = await db.select().from('users').get()
     expect(remainingUsers.length).toBe(1)
-    expect(remainingUsers[0].id).toBe(4)
+    expect(remainingUsers[0]?.id).toBe(4)
   })
 
   it('should delete with WHERE NULL clause', async () => {

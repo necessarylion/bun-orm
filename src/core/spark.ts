@@ -35,7 +35,7 @@ export class Spark {
    * @param {string | string[]} [columns] - Columns to select (defaults to '*')
    * @returns {QueryBuilder} Query builder instance for SELECT operations
    */
-  public select(columns?: string | string[]): QueryBuilder {
+  public select(columns?: string | string[]): QueryBuilder<any> {
     const queryBuilder = new QueryBuilder()
     if (columns) {
       queryBuilder.select(columns)
@@ -49,7 +49,7 @@ export class Spark {
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilder} Query builder instance
    */
-  public from(table: string, alias?: string): QueryBuilder {
+  public from(table: string, alias?: string): QueryBuilder<any> {
     return new QueryBuilder().from(table, alias)
   }
 
@@ -59,7 +59,7 @@ export class Spark {
    * @param {string} [alias] - Optional table alias
    * @returns {QueryBuilder} Query builder instance
    */
-  public table(table: string, alias?: string): QueryBuilder {
+  public table(table: string, alias?: string): QueryBuilder<any> {
     return new QueryBuilder().table(table, alias)
   }
 
@@ -69,7 +69,7 @@ export class Spark {
    * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
    * @returns {QueryBuilder} Query builder instance
    */
-  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder {
+  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder<any> {
     const queryBuilder = new QueryBuilder()
     if (data) {
       queryBuilder.insert(data)
@@ -83,7 +83,7 @@ export class Spark {
    * @param {Record<string, any>} [data] - Data to update
    * @returns {QueryBuilder} Query builder instance
    */
-  public update(data?: Record<string, any>): QueryBuilder {
+  public update(data?: Record<string, any>): QueryBuilder<any> {
     const queryBuilder = new QueryBuilder()
     if (data) {
       queryBuilder.update(data)
@@ -96,7 +96,7 @@ export class Spark {
    * Creates a DELETE query builder
    * @returns {QueryBuilder} Query builder instance
    */
-  public delete(): QueryBuilder {
+  public delete(): QueryBuilder<any> {
     const queryBuilder = new QueryBuilder()
     // Set the query mode to delete so it works with the unified API
     ;(queryBuilder as any).queryMode = 'delete'
@@ -177,7 +177,7 @@ export class Spark {
     // Use Bun's callback-based transaction API
     return await sql.begin(async (tx: any) => {
       // Create transaction instance with the transaction context
-      const trx = new Transaction(tx)
+      const trx = new Transaction<any>(tx)
 
       // Execute the callback with transaction context
       return await callback(trx)
@@ -189,7 +189,7 @@ export class Spark {
    * @returns {Promise<Transaction>} Transaction instance
    * @throws {Error} Manual transaction control is not supported
    */
-  public async beginTransaction(): Promise<Transaction> {
+  public async beginTransaction(): Promise<Transaction<any>> {
     // For manual transactions, we'll use a different approach
     // This is a simplified version - in a real implementation you might want to use a different pattern
     throw new Error(

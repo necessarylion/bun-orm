@@ -12,6 +12,7 @@ import type {
   JoinType,
   OrderDirection,
 } from '../types'
+import type { Model } from '../core/model'
 
 export abstract class BaseQueryBuilder {
   protected sql: Bun.SQL
@@ -25,6 +26,9 @@ export abstract class BaseQueryBuilder {
   protected offsetValue: number | null = null
   protected distinctFlag: boolean = false
   protected sqlHelper: SQLHelper = SQLHelper.getInstance()
+  protected modelInstance: Model
+
+  hydrate(_instance: Model, _data: Record<string, any>): any {}
 
   /**
    * Creates a new BaseQueryBuilder instance
@@ -159,9 +163,12 @@ export abstract class BaseQueryBuilder {
    * - Table/column names are properly escaped with this.sqlHelper.safeEscapeIdentifier()
    * - The SQL is built from controlled, validated input
    */
-  protected async executeQuery<T = any>(query: string, params: any[] = []): Promise<T[]> {
+  public async executeQuery<T = any>(query: string, params: any[] = []): Promise<T[]> {
     try {
       const result = await this.sql.unsafe(query, params)
+      if (this.modelInstance !== undefined) {
+        return result.map((d: any) => this.hydrate(this.modelInstance, d))
+      }
       return result
     } catch (error) {
       console.error('Query execution error:', error)
