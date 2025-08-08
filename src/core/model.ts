@@ -22,9 +22,6 @@ export interface Serializable<T> {
  * @template T - The type of the serialized data (defaults to Record<string, any>)
  */
 export abstract class Model implements Serializable<Record<string, any>> {
-  /** The primary key column name for this model */
-  static primaryKey: string
-
   /**
    * Gets the table name for this model instance
    * @returns The table name derived from the constructor name
@@ -38,19 +35,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @returns A QueryBuilder instance configured for this model's table
    */
   static db<T extends typeof Model>(this: T): QueryBuilder<InstanceType<T>> {
-    console.log('AAAA', getTableName(this.name))
     return spark().table(getTableName(this.name)) as QueryBuilder<InstanceType<T>>
-  }
-
-  /**
-   * Gets metadata about this model including table name and column information
-   * @returns Object containing table name and column metadata
-   */
-  static getMetadata() {
-    return {
-      tableName: (this as any)._tableName,
-      columns: getColumns(this),
-    }
   }
 
   /**
@@ -169,7 +154,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @returns Promise that resolves to the found model instance or null if not found
    */
   static async find<T extends typeof Model>(this: T, id: number): Promise<InstanceType<T> | null> {
-    const pk = this.getMetadata().columns.find((c: any) => c.primary)?.name || 'id'
+    const pk = getColumns(this).find((c: any) => c.primary)?.name || 'id'
     const result = await this.db().where(pk, id).first()
     return result ? this.hydrate(result) : null
   }

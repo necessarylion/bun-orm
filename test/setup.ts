@@ -27,11 +27,11 @@ db.testConnection()
   })
 
 // Test tables setup
-export async function setupTestTables() {
+export async function setupTestTables(userIdPrimaryKey: string = 'id') {
   // Create users table
   await db.raw(`
     CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
+      ${userIdPrimaryKey} SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       age INTEGER,
@@ -44,7 +44,7 @@ export async function setupTestTables() {
   await db.raw(`
     CREATE TABLE IF NOT EXISTS posts (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id),
+      user_id INTEGER REFERENCES users(${userIdPrimaryKey}),
       title VARCHAR(255) NOT NULL,
       content TEXT,
       published BOOLEAN DEFAULT false,
@@ -72,12 +72,12 @@ export async function setupTestTables() {
 }
 
 // Clean up test data
-export async function cleanupTestData() {
+export async function cleanupTestData(userIdPrimaryKey: string = 'id') {
   await db.raw('DELETE FROM post_categories')
   await db.raw('DELETE FROM posts')
   await db.raw('DELETE FROM categories')
   await db.raw('DELETE FROM users')
-  await db.raw('ALTER SEQUENCE users_id_seq RESTART WITH 1')
+  await db.raw(`ALTER SEQUENCE users_${userIdPrimaryKey}_seq RESTART WITH 1`)
   await db.raw('ALTER SEQUENCE posts_id_seq RESTART WITH 1')
   await db.raw('ALTER SEQUENCE categories_id_seq RESTART WITH 1')
 }

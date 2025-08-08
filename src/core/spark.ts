@@ -120,9 +120,9 @@ export class Spark {
    * @param {string} tableName - Name of the table to drop
    * @returns {Promise<void>}
    */
-  public async dropTable(tableName: string): Promise<void> {
+  public async dropTable(tableName: string, options: { cascade: boolean } = { cascade: false }): Promise<void> {
     const connection = getConnection()
-    await connection.getSQL().unsafe(`DROP TABLE IF EXISTS "${tableName}"`)
+    await connection.getSQL().unsafe(`DROP TABLE IF EXISTS "${tableName}" ${options.cascade ? 'CASCADE' : ''}`)
   }
 
   /**
