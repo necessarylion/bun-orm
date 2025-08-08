@@ -1,24 +1,24 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'bun:test'
-import { spark } from '../src/core/spark'
-import type { QueryBuilder } from '../src/query-builders/query-builder'
+import { describe, it, expect, beforeEach, afterEach, spyOn, afterAll } from 'bun:test'
+import { type Spark, spark } from '../src/core/spark'
 import { BaseQueryBuilder } from '../src/query-builders/base-query-builder'
+import { cleanupTestData, testConfig } from './setup'
 
 describe('QueryBuilder string generation', () => {
-  let db: QueryBuilder<any>
-  const executeQuerySpy = vi.spyOn(BaseQueryBuilder.prototype, 'executeQuery').mockImplementation(async () => [])
+  let db: Spark
+  const executeQuerySpy = spyOn(BaseQueryBuilder.prototype, 'executeQuery').mockImplementation(async () => [])
 
-  beforeEach(() => {
-    db = spark({
-      host: 'localhost',
-      port: 5432,
-      database: 'test',
-      username: 'test',
-      password: 'test',
-    })
+  beforeEach(async () => {
+    await cleanupTestData()
+    db = spark(testConfig)
   })
 
-  afterEach(() => {
-    executeQuerySpy.mockClear()
+  afterAll(async () => {
+    await cleanupTestData()
+    executeQuerySpy.mockRestore()
+  })
+
+  afterEach(async () => {
+    executeQuerySpy.mockReset()
   })
 
   it('should generate a basic SELECT query', () => {
@@ -82,53 +82,64 @@ describe('QueryBuilder string generation', () => {
   })
 
   it('should generate a basic INSERT query', async () => {
-    await db.table('users').insert({ name: 'John', age: 30 })
-    const [sql, params] = executeQuerySpy.mock.calls[0]
-    expect(sql.replace(/\s+/g, ' ')).toBe('INSERT INTO "users" ("name", "age") VALUES ($1, $2) RETURNING *')
-    expect(params).toEqual(['John', 30])
+    await db.table('users').insert({ name: 'John', age: 30, email: 'john@example.com' })
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
+    expect(sql.replace(/\s+/g, ' ')).toBe(
+      'INSERT INTO "users" ("name", "age", "email") VALUES ($1, $2, $3) RETURNING *'
+    )
+    expect(params).toEqual(['John', 30, 'john@example.com'])
   })
 
   it('should generate an INSERT query for multiple records', async () => {
     await db.table('users').insert([
-      { name: 'John', age: 30 },
-      { name: 'Jane', age: 25 },
+      { name: 'John', age: 30, email: 'john@example.com' },
+      { name: 'Jane', age: 25, email: 'jane@example.com' },
     ])
-    const [sql, params] = executeQuerySpy.mock.calls[0]
-    expect(sql.replace(/\s+/g, ' ')).toBe('INSERT INTO "users" ("name", "age") VALUES ($1, $2), ($3, $4) RETURNING *')
-    expect(params).toEqual(['John', 30, 'Jane', 25])
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
+    expect(sql.replace(/\s+/g, ' ')).toBe(
+      'INSERT INTO "users" ("name", "age", "email") VALUES ($1, $2, $3), ($4, $5, $6) RETURNING *'
+    )
+    expect(params).toEqual(['John', 30, 'john@example.com', 'Jane', 25, 'jane@example.com'])
   })
 
   it('should generate an INSERT query with a RETURNING clause', async () => {
-    await db.table('users').returning(['id', 'name']).insert({ name: 'John', age: 30 })
-    const [sql, params] = executeQuerySpy.mock.calls[0]
-    expect(sql.replace(/\s+/g, ' ')).toBe('INSERT INTO "users" ("name", "age") VALUES ($1, $2) RETURNING "id", "name"')
-    expect(params).toEqual(['John', 30])
+    await db
+      .table('users')
+      .returning(['id', 'name', 'email'])
+      .insert({ name: 'John', age: 30, email: 'john@example.com' })
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
+    expect(sql.replace(/\s+/g, ' ')).toBe(
+      'INSERT INTO "users" ("name", "age", "email") VALUES ($1, $2, $3) RETURNING "id", "name", "email"'
+    )
+    expect(params).toEqual(['John', 30, 'john@example.com'])
   })
 
   it('should generate a basic UPDATE query', async () => {
     await db.table('users').where('id', 1).update({ name: 'John', age: 30 })
-    const [sql, params] = executeQuerySpy.mock.calls[0]
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
     expect(sql.replace(/\s+/g, ' ')).toBe('UPDATE "users" SET "name" = $1, "age" = $2 WHERE "id" = $3 RETURNING *')
     expect(params).toEqual(['John', 30, 1])
   })
 
   it('should generate an UPDATE query with a RETURNING clause', async () => {
     await db.table('users').where('id', 1).returning(['id', 'name']).update({ name: 'John', age: 30 })
-    const [sql, params] = executeQuerySpy.mock.calls[0]
-    expect(sql.replace(/\s+/g, ' ')).toBe('UPDATE "users" SET "name" = $1, "age" = $2 WHERE "id" = $3 RETURNING "id", "name"')
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
+    expect(sql.replace(/\s+/g, ' ')).toBe(
+      'UPDATE "users" SET "name" = $1, "age" = $2 WHERE "id" = $3 RETURNING "id", "name"'
+    )
     expect(params).toEqual(['John', 30, 1])
   })
 
   it('should generate a basic DELETE query', async () => {
     await db.table('users').where('id', 1).delete()
-    const [sql, params] = executeQuerySpy.mock.calls[0]
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
     expect(sql.replace(/\s+/g, ' ')).toBe('DELETE FROM "users" WHERE "id" = $1 RETURNING *')
     expect(params).toEqual([1])
   })
 
   it('should generate a DELETE query with a RETURNING clause', async () => {
     await db.table('users').where('id', 1).returning(['id', 'name']).delete()
-    const [sql, params] = executeQuerySpy.mock.calls[0]
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
     expect(sql.replace(/\s+/g, ' ')).toBe('DELETE FROM "users" WHERE "id" = $1 RETURNING "id", "name"')
     expect(params).toEqual([1])
   })
