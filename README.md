@@ -2,6 +2,38 @@
 
 A lightweight, type-safe query builder for Bun with PostgreSQL support. Built with performance and developer experience in mind.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [1. Setup Database Connection](#1-setup-database-connection)
+  - [2. Basic Queries (Query Builder)](#2-basic-queries-query-builder)
+    - [SELECT Queries](#select-queries)
+    - [INSERT Queries](#insert-queries)
+    - [UPDATE Queries](#update-queries)
+    - [DELETE Queries](#delete-queries)
+  - [3. Models (ORM)](#3-models-orm)
+    - [Creating a Model](#creating-a-model)
+    - [Model Operations](#model-operations)
+    - [Querying with Models](#querying-with-models)
+  - [4. Transactions](#4-transactions)
+  - [5. Raw SQL Queries](#5-raw-sql-queries)
+- [Type Safety](#type-safety)
+- [API Reference](#api-reference)
+  - [Connection Configuration](#connection-configuration)
+  - [Query Builder Methods](#query-builder-methods)
+  - [Model Methods](#model-methods)
+  - [Column Decorator Options](#column-decorator-options)
+- [Development](#development)
+  - [Running Tests](#running-tests)
+  - [Environment Setup](#environment-setup)
+  - [Available Scripts](#available-scripts)
+- [CI/CD](#cicd)
+- [License](#license)
+- [Contributing](#contributing)
+- [Roadmap](#roadmap)
+
 ## Features
 
 - 🚀 **Fast**: Built on Bun's high-performance runtime
@@ -32,12 +64,12 @@ const db = spark({
   password: 'password'
 })
 
-// Test connection
+// `db` is a query builder instance
 const isConnected = await db.testConnection()
 console.log('Connected:', isConnected)
 ```
 
-### 2. Basic Queries
+### 2. Basic Queries (Query Builder)
 
 #### SELECT Queries
 
@@ -90,6 +122,29 @@ const usersWithoutAge = await db
   .whereNull('age')
   .get()
 
+// WHERE NOT NULL clause
+const usersWithAge = await db
+  .select()
+  .from('users')
+  .whereNotNull('age')
+  .get()
+
+// WHERE NOT IN clause
+const excludedUsers = await db
+  .select()
+  .from('users')
+  .whereNotIn('id', [1, 2, 3])
+  .get()
+
+// ORDER BY, LIMIT, and OFFSET
+const sortedAndPaginatedUsers = await db
+  .select()
+  .from('users')
+  .orderBy('name', 'DESC')
+  .limit(10)
+  .offset(5)
+  .get()
+
 // Get first result
 const firstUser = await db
   .select()
@@ -125,7 +180,7 @@ const newUsers = await db
 await db.table('users').insert({
   name: 'Alice Brown',
   email: 'alice@example.com',
-  age: 28
+  age: 28,
 })
 ```
 
@@ -179,7 +234,7 @@ const users = await db
   .delete()
 ```
 
-### 3. Models
+### 3. Models (ORM)
 
 Bun ORM provides a powerful Model system for object-relational mapping (ORM) functionality. Models allow you to work with database records as objects with methods and properties.
 
@@ -213,33 +268,62 @@ class User extends Model {
 }
 ```
 
-#### Model Decorators
+#### Column Decorator
 
-The `@column` decorator configures how model properties map to database columns:
+The `@column` decorator maps model properties to database columns.
 
 ```typescript
-@column({
-  name: 'column_name',        // Database column name (optional, defaults to property name)
-  primary: true,              // Mark as primary key
-  serializeAs: 'custom_name', // Custom name for serialization
-  serialize: (value: string) => `My email is ${value}` // Custom serializer function
-})
+@column(options?: ColumnOptions)
 ```
 
-#### Basic Model Operations
+**Options:**
+
+- `name: string`: The database column name. Defaults to the property name.
+- `primary: boolean`: Marks the column as the primary key.
+- `serializeAs: string`: A custom name for the property when serializing the model.
+- `serialize: (value: any) => any`: A function to customize the value when serializing.
+- `type: string`: The data type of the column (e.g., `'string'`, `'number'`, `'Date'`).
+- `default: any`: The default value for the column.
+- `unique: boolean`: Marks the column as unique.
+- `nullable: boolean`: Specifies if the column can be `NULL`.
+
+**Example:**
+
+```typescript
+import { Model, column } from 'bun-spark'
+
+class User extends Model {
+  @column({ primary: true })
+  public id: number
+
+  @column({ name: 'full_name' })
+  public name: string
+
+  @column({
+    serializeAs: 'user_email',
+    serialize: (value: string) => `Email: ${value}`
+  })
+  public email: string
+
+  @column({ type: 'number', default: 0 })
+  public score: number
+}
+```
+
+#### Model Operations
 
 ```typescript
 // Create a new user
 const user = await User.create({
   name: 'John Doe',
   email: 'john@example.com',
-  age: 30
+  age: 30,
 })
 
-// Find user by ID
-const user = await User.find(1)
-if (user) {
-  console.log(user.name) // Access properties directly
+// Find a user by ID
+const foundUser = await User.find(1)
+if (foundUser) {
+  console.log(foundUser.name) // Access properties directly
 }
 
 // Get all users
@@ -251,22 +335,22 @@ users.forEach(user => {
 // Insert multiple users
 const newUsers = await User.insert([
   { name: 'Jane Smith', email: 'jane@example.com', age: 25 },
-  { name: 'Bob Johnson', email: 'bob@example.com', age: 35 }
+  { name: 'Bob Johnson', email: 'bob@example.com', age: 35 },
 ])
 
-// Update user properties
-if (user) {
-  user.age = 31
-  await user.save() // Save changes to database
+// Update user properties and save
+if (foundUser) {
+  foundUser.age = 31
+  await foundUser.save() // Save changes to the database
 }
 
-// Delete user
-if (user) {
-  await user.delete()
+// Delete a user
+if (foundUser) {
+  await foundUser.delete()
 }
 ```
 
-#### Model Querying
+#### Querying with Models
 
 Models provide a fluent query interface:
 
@@ -338,41 +422,6 @@ console.log(metadata.columns)   // Array of column definitions
 console.log(User.db.table) // QueryBuilder for this model's table
 ```
 
-#### Advanced Model Features
-
-```typescript
-class Post extends Model {
-  @Column({ name: 'id', primary: true, autoIncrement: true })
-  id!: number
-
-  @Column({ name: 'title' })
-  title!: string
-
-  @Column({ name: 'content' })
-  content!: string
-
-  @Column({ name: 'user_id' })
-  userId!: number
-
-  // Custom methods
-  get excerpt(): string {
-    return this.content.substring(0, 100) + '...'
-  }
-
-  // Static methods for business logic
-  static async findByAuthor(userId: number) {
-    return this.query().where('user_id', userId).get()
-  }
-
-  static async published() {
-    return this.query().where('published', true).get()
-  }
-}
-
-// Usage
-const userPosts = await Post.findByAuthor(1)
-const publishedPosts = await Post.published()
-```
 
 ### 4. Transactions
 
@@ -440,23 +489,32 @@ await db.raw(`
 `)
 ```
 
-### 6. Type Safety
+## Type Safety
 
-Bun ORM provides compile-time type safety to prevent common errors:
+This library is designed with type safety as a core principle. It leverages TypeScript to catch common errors at compile time, long before they become runtime issues.
+
+### Compile-Time Null Prevention
+
+The query builder prevents the use of `null` or `undefined` in `where` and `whereIn` clauses, which helps avoid unexpected SQL errors.
 
 ```typescript
-// ✅ These work correctly
+// ✅ These are valid and type-safe
 db.select().from('users').where('id', 1)
 db.select().from('users').where('id', '=', 1)
 db.select().from('users').whereIn('id', [1, 2, 3])
 
 // ❌ These will cause TypeScript compilation errors
-db.select().from('users').where('id', null) // Error: null not assignable
-db.select().from('users').where('id', undefined) // Error: undefined not assignable
-db.select().from('users').whereIn('id', [1, null, 3]) // Error: null not assignable
+db.select().from('users').where('id', null)
+// Error: Argument of type 'null' is not assignable to parameter of type 'NonNullable<any>'.
+
+db.select().from('users').where('id', undefined)
+// Error: Argument of type 'undefined' is not assignable to parameter of type 'NonNullable<any>'.
+
+db.select().from('users').whereIn('id', [1, null, 3])
+// Error: Type 'null' is not assignable to type 'NonNullable<any>'.
 ```
 
-The library uses `NonNullable<any>` types to ensure that null and undefined values are caught at compile time, preventing runtime errors.
+This feature is enforced by using `NonNullable<T>` in method signatures, ensuring that you always provide valid values.
 
 ## API Reference
 
