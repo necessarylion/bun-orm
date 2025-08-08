@@ -28,6 +28,12 @@ export abstract class BaseQueryBuilder {
   protected sqlHelper: SQLHelper = SQLHelper.getInstance()
   protected modelInstance: Model
 
+  /**
+   * Hydrates a model instance with data
+   * @param {Model} _instance - Model instance to hydrate
+   * @param {Record<string, any>} _data - Data to hydrate the model instance with
+   * @returns {any} The hydrated model instance
+   */
   hydrate(_instance: Model, _data: Record<string, any>): any {}
 
   /**

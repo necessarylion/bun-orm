@@ -12,14 +12,16 @@ export default class ModelQueryBuilder<M> extends QueryBuilder<M> {
 
   override hydrate(instance: Model, data: Record<string, any>) {
     // Get column metadata to map database column names to property names
-    const columns = getColumns(instance)
+    const columns = getColumns(instance.constructor)
     const columnMap = new Map(columns.map((col: any) => [col.name, col.propertyKey]))
+    const typeMap = new Map(columns.map((col: any) => [col.name, col.type]))
 
     // Map database column names to property names
     const mappedData: Record<string, any> = {}
     for (const [dbColumn, value] of Object.entries(data)) {
       const propertyName = columnMap.get(dbColumn) ?? camelCase(dbColumn)
-      mappedData[propertyName as string] = value
+      const propertyType = typeMap.get(dbColumn)
+      mappedData[propertyName as string] = propertyType === 'Date' ? new Date(value) : value
     }
     Object.assign(instance, mappedData)
     return instance

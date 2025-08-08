@@ -18,8 +18,8 @@ class User extends Model {
   @column()
   public email: string
 
-  @column({ name: 'created_at' })
-  public createdTime: string
+  @column({ name: 'created_at', serializeAs: 'created_time' })
+  public createdTime: Date
 
   public info(): string {
     return `${this.name} ${this.email}`
@@ -101,8 +101,9 @@ describe('Model', () => {
   })
 
   it('query first', async () => {
-    const users = await User.query().where('id', '>=', 1).first()
-    expect(users?.info()).toBe('John Doe john@example.com')
+    const user = await User.query().where('id', '>=', 1).first()
+    expect(user?.createdTime).toBeInstanceOf(Date)
+    expect(user?.info()).toBe('John Doe john@example.com')
   })
 
   it('query all', async () => {
