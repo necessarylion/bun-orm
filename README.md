@@ -325,11 +325,6 @@ const newUsers = await User.insert([
   { name: 'Bob Johnson', email: 'bob@example.com', age: 35 },
 ])
 
-// Update user properties and save
-if (foundUser) {
-  foundUser.age = 31
-  await foundUser.save() // Save changes to the database
-}
 
 // Delete a user
 if (foundUser) {
