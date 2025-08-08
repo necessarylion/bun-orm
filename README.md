@@ -292,7 +292,7 @@ class User extends Model {
   })
   public email: string
 
-  @column()
+  @column({ type: 'number', default: 0 })
   public score: number
 }
 ```
@@ -325,6 +325,11 @@ const newUsers = await User.insert([
   { name: 'Bob Johnson', email: 'bob@example.com', age: 35 },
 ])
 
+// Update user properties and save
+if (foundUser) {
+  foundUser.age = 31
+  await foundUser.save() // Save changes to the database
+}
 
 // Delete a user
 if (foundUser) {
@@ -472,30 +477,25 @@ await db.raw(`
 
 ## Type Safety
 
-This library is designed with type safety as a core principle. It leverages TypeScript to catch common errors at compile time, long before they become runtime issues.
+This library is designed with type safety as a core principle. It leverages TypeScript to catch common errors at compile time.
 
-### Compile-Time Null Prevention
+### Null and Undefined Handling
 
-The query builder prevents the use of `null` or `undefined` in `where` and `whereIn` clauses, which helps avoid unexpected SQL errors.
+- **`where()` clause**: The `where` clause correctly handles `null` values. `db.table('users').where('id', null)` is equivalent to `db.table('users').whereNull('id')` and generates an `IS NULL` check. Using `undefined` is not recommended as it may lead to unexpected behavior.
+
+- **`whereIn()` clause**: To prevent runtime errors, the `whereIn` clause does not allow `null` or `undefined` values in the array at compile time.
 
 ```typescript
-// ✅ These are valid and type-safe
-db.table('users').where('id', 1)
-db.table('users').where('id', '=', 1)
-db.table('users').whereIn('id', [1, 2, 3])
+// ✅ This is valid and correctly handled
+db.table('users').where('id', null); // Generates: WHERE "id" IS NULL
 
-// ❌ These will cause TypeScript compilation errors
-db.table('users').where('id', null)
-// Error: Argument of type 'null' is not assignable to parameter of type 'NonNullable<any>'.
+// ✅ This is also valid
+db.table('users').whereNull('id');
 
-db.table('users').where('id', undefined)
-// Error: Argument of type 'undefined' is not assignable to parameter of type 'NonNullable<any>'.
-
-db.table('users').whereIn('id', [1, null, 3])
+// ❌ This will cause a TypeScript compilation error
+db.table('users').whereIn('id', [1, null, 3]);
 // Error: Type 'null' is not assignable to type 'NonNullable<any>'.
 ```
-
-This feature is enforced by using `NonNullable<T>` in method signatures, ensuring that you always provide valid values.
 
 ## API Reference
 
@@ -516,8 +516,8 @@ interface ConnectionConfig {
 #### SELECT
 - `select(columns?: string[] | Record<string, string>)` - Start a SELECT query
 - `from(table: string)` - Specify the table to query
-- `where(column: string, operatorOrValue: NonNullable<any>, value?: NonNullable<any>)` - Add WHERE condition (supports both `where('id', '=', 2)` and `where('id', 2)` syntax, prevents null/undefined values)
-- `whereIn(column: string, values: NonNullable<any>[])` - Add WHERE IN condition (prevents null/undefined values)
+- `where(column: string, operatorOrValue: any, value?: any)` - Add WHERE condition (supports both `where('id', '=', 2)` and `where('id', 2)` syntax)
+- `whereIn(column: string, values: NonNullable<any>[])` - Add WHERE IN condition (prevents null/undefined values in the array)
 - `whereNotIn(column: string, values: NonNullable<any>[])` - Add WHERE NOT IN condition (prevents null/undefined values)
 - `whereNull(column: string)` - Add WHERE NULL condition
 - `whereNotNull(column: string)` - Add WHERE NOT NULL condition
