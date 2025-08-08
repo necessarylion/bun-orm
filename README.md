@@ -75,71 +75,63 @@ console.log('Connected:', isConnected)
 
 ```typescript
 // Select all users
-const users = await db.select().from('users').get()
+const users = await db.table('users').get()
 
 // Select specific columns
-const userNames = await db.select(['name', 'email']).from('users').get()
+const userNames = await db.table('users').select(['name', 'email']).get()
 
 // Select with column aliases
 const usersWithAliases = await db
+  .table('users')
   .select({ user_name: 'name', user_email: 'email' })
-  .from('users')
   .get()
 
 // Filter with WHERE clause (explicit operator)
 const activeUsers = await db
-  .select()
-  .from('users')
+  .table('users')
   .where('active', '=', true)
   .get()
 
 // Filter with WHERE clause (implicit equals operator)
 const user = await db
-  .select()
-  .from('users')
+  .table('users')
   .where('id', 1) // Type-safe: null/undefined values are prevented at compile time
   .first()
 
 // Multiple WHERE conditions
 const users = await db
-  .select()
-  .from('users')
+  .table('users')
   .where('active', '=', true)
   .where('age', '>', 25)
   .get()
 
 // WHERE IN clause
 const specificUsers = await db
-  .select()
-  .from('users')
+  .table('users')
   .whereIn('id', [1, 2, 3])
   .get()
 
 // WHERE NULL clause
 const usersWithoutAge = await db
-  .select()
-  .from('users')
+  .table('users')
   .whereNull('age')
   .get()
 
 // WHERE NOT NULL clause
 const usersWithAge = await db
-  .select()
-  .from('users')
+  .table('users')
   .whereNotNull('age')
   .get()
 
 // WHERE NOT IN clause
 const excludedUsers = await db
-  .select()
-  .from('users')
+  .table('users')
   .whereNotIn('id', [1, 2, 3])
   .get()
 
 // ORDER BY, LIMIT, and OFFSET
 const sortedAndPaginatedUsers = await db
-  .select()
-  .from('users')
+  .table('users')
   .orderBy('name', 'DESC')
   .limit(10)
   .offset(5)
@@ -147,8 +139,7 @@ const sortedAndPaginatedUsers = await db
 
 // Get first result
 const firstUser = await db
-  .select()
-  .from('users')
+  .table('users')
   .where('id', '=', 1)
   .first()
 ```
@@ -443,8 +434,7 @@ const result = await db.transaction(async (trx: Transaction) => {
 
   // Return final result
   return await trx
-    .select()
-    .from('users')
+    .table('users')
     .where('name', '=', 'John Doe')
     .first()
 })
@@ -499,18 +489,18 @@ The query builder prevents the use of `null` or `undefined` in `where` and `wher
 
 ```typescript
 // ✅ These are valid and type-safe
-db.select().from('users').where('id', 1)
-db.select().from('users').where('id', '=', 1)
-db.select().from('users').whereIn('id', [1, 2, 3])
+db.table('users').where('id', 1)
+db.table('users').where('id', '=', 1)
+db.table('users').whereIn('id', [1, 2, 3])
 
 // ❌ These will cause TypeScript compilation errors
-db.select().from('users').where('id', null)
+db.table('users').where('id', null)
 // Error: Argument of type 'null' is not assignable to parameter of type 'NonNullable<any>'.
 
-db.select().from('users').where('id', undefined)
+db.table('users').where('id', undefined)
 // Error: Argument of type 'undefined' is not assignable to parameter of type 'NonNullable<any>'.
 
-db.select().from('users').whereIn('id', [1, null, 3])
+db.table('users').whereIn('id', [1, null, 3])
 // Error: Type 'null' is not assignable to type 'NonNullable<any>'.
 ```
 
