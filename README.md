@@ -292,7 +292,7 @@ class User extends Model {
   })
   public email: string
 
-  @column({ type: 'number', default: 0 })
+  @column()
   public score: number
 }
 ```
