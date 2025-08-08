@@ -4,7 +4,11 @@ import { type QueryBuilder, spark } from './spark'
 import { getTableName } from '../utils/model-helper'
 import { camelCase } from 'change-case'
 
-export abstract class Model {
+export interface Serializable<T> {
+  serialize(): T
+}
+
+export abstract class Model implements Serializable<Record<string, any>> {
   static _tableName: string
   static primaryKey: string
 
@@ -51,18 +55,18 @@ export abstract class Model {
    */
   static hydrate<T extends typeof Model>(this: T, data: Record<string, any>): InstanceType<T> {
     const instance = Object.create(this.prototype) as InstanceType<T>
-    
+
     // Get column metadata to map database column names to property names
     const columns = getColumns(this)
     const columnMap = new Map(columns.map((col: any) => [col.name, col.propertyKey]))
-    
+
     // Map database column names to property names
     const mappedData: Record<string, any> = {}
     for (const [dbColumn, value] of Object.entries(data)) {
       const propertyName = columnMap.get(dbColumn) ?? camelCase(dbColumn)
       mappedData[propertyName as string] = value
     }
-    
+
     Object.assign(instance, mappedData)
     return instance
   }

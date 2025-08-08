@@ -6,9 +6,9 @@ class User extends Model {
   @column({ primary: true })
   public id: number
 
-  @column({ 
+  @column({
     serializeAs: 'full_name',
-    serialize: (value: string) => `My name is ${value}`
+    serialize: (value: string) => `My name is ${value}`,
   })
   public name: string
 
