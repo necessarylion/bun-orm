@@ -6,13 +6,22 @@ class User extends Model {
   @column({ primary: true })
   public id: number
 
-  @column()
+  @column({ 
+    serializeAs: 'full_name',
+    serialize: (value: string) => `My name is ${value}`
+  })
   public name: string
+
+  @column()
+  public age: number
 
   @column()
   public email: string
 
-  public fullName(): string {
+  @column({ name: 'created_at' })
+  public createdTime: string
+
+  public info(): string {
     return `${this.name} ${this.email}`
   }
 }
@@ -27,12 +36,26 @@ describe('Model', () => {
     await insertTestData()
   })
 
+  it('should create a new user with custom serialize', async () => {
+    const user = await User.create({
+      name: 'John Doe',
+      email: 'john.doe@example.com',
+      age: 20,
+    })
+    const data = user.serialize()
+    expect(data.id).toBeDefined()
+    expect(data).toBeDefined()
+    expect(data.full_name).toBe('My name is John Doe')
+    expect(data.email).toBe('john.doe@example.com')
+    expect(data.created_at).toBeDefined
+  })
+
   it('should create a new user', async () => {
     const user = await User.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
+      age: 20,
     })
-
     expect(user.id).toBeDefined()
     expect(user).toBeDefined()
     expect(user.name).toBe('John Doe')
@@ -44,7 +67,7 @@ describe('Model', () => {
     expect(user?.id).toBe(1)
     expect(user?.name).toBe('John Doe')
     expect(user?.email).toBe('john@example.com')
-    expect(user?.fullName()).toBe('John Doe john@example.com')
+    expect(user?.info()).toBe('John Doe john@example.com')
   })
 
   it('should find all users', async () => {

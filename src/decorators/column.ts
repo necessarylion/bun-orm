@@ -1,8 +1,11 @@
+import { snakeCase } from 'change-case'
 import 'reflect-metadata'
 
 export interface ColumnOptions {
   primary?: boolean
   name?: string
+  serialize?: (value: any) => any
+  serializeAs?: string
 }
 
 const COLUMNS_KEY = Symbol('bun-spark:columns')
@@ -15,6 +18,8 @@ export function column(options: ColumnOptions = {}) {
       propertyKey,
       name: options.name || propertyKey,
       primary: options.primary || false,
+      serializeAs: options.serializeAs || snakeCase(propertyKey),
+      serialize: options.serialize,
       type: Reflect.getMetadata('design:type', target, propertyKey).name,
     })
 
