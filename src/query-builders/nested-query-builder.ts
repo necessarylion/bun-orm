@@ -4,6 +4,7 @@ import type {
   NestedQueryBuilder as INestedQueryBuilder,
   FullWhereOperators,
 } from '../types'
+import { FULL_WHERE_OPERATORS } from '../utils/sql-constants'
 
 export class NestedQueryBuilder implements INestedQueryBuilder {
   private conditions: (WhereCondition | WhereGroupCondition)[] = []
@@ -220,20 +221,6 @@ export class NestedQueryBuilder implements INestedQueryBuilder {
    * Checks if a string is a valid where operator
    */
   private isWhereOperator(operator: string): boolean {
-    const operators: FullWhereOperators[] = [
-      '=',
-      '!=',
-      '>',
-      '<',
-      '>=',
-      '<=',
-      'LIKE',
-      'ILIKE',
-      'IN',
-      'NOT IN',
-      'IS NULL',
-      'IS NOT NULL',
-    ]
-    return operators.includes(operator as FullWhereOperators)
+    return FULL_WHERE_OPERATORS.includes(operator as FullWhereOperators)
   }
 }
