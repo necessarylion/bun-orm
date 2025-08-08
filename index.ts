@@ -14,6 +14,12 @@ export { BaseQueryBuilder } from './src/query-builders/base-query-builder'
 // Utilities
 export { SQLHelper } from './src/utils/sql-helper'
 
+// Decorators
+export { column } from './src/decorators/column'
+
+// Models
+export { Model } from './src/core/model'
+
 // Types
 export type {
   ConnectionConfig,

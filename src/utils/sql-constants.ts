@@ -2,7 +2,7 @@
  * SQL security constants for validation and escaping
  */
 
-import type { FullWhereOperators } from "../types"
+import type { FullWhereOperators } from '../types'
 
 /**
  * Dangerous SQL patterns that could indicate SQL injection attempts
