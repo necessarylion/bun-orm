@@ -273,10 +273,6 @@ The `@column` decorator maps model properties to database columns.
 - `primary: boolean`: Marks the column as the primary key.
 - `serializeAs: string`: A custom name for the property when serializing the model.
 - `serialize: (value: any) => any`: A function to customize the value when serializing.
-- `type: string`: The data type of the column (e.g., `'string'`, `'number'`, `'Date'`).
-- `default: any`: The default value for the column.
-- `unique: boolean`: Marks the column as unique.
-- `nullable: boolean`: Specifies if the column can be `NULL`.
 
 **Example:**
 
@@ -575,10 +571,6 @@ interface ConnectionConfig {
 - `name: string` - Database column name
 - `primary: boolean` - Mark as primary key
 - `autoIncrement: boolean` - Auto-incrementing column
-- `type: string` - SQL data type
-- `nullable: boolean` - Allow NULL values
-- `default: any` - Default value
-- `unique: boolean` - Unique constraint
 - `serializeAs: string` - Custom name for serialization
 
 ## Development
