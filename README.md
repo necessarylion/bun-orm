@@ -179,7 +179,202 @@ const users = await db
   .delete()
 ```
 
-### 3. Transactions
+### 3. Models
+
+Bun ORM provides a powerful Model system for object-relational mapping (ORM) functionality. Models allow you to work with database records as objects with methods and properties.
+
+#### Creating a Model
+
+```typescript
+import { Model } from 'bun-spark'
+import { column } from 'bun-spark'
+
+class User extends Model {
+  @column({ primary: true })
+  public id: number
+
+  @column({ name: 'name' })
+  public name: string
+
+  @column({ 
+    serializeAs: 'user_email', 
+    serialize: (value: string) => `My email is ${value}` 
+  })
+  public email: string
+
+  @column({ name: 'age' })
+  public age: number
+
+  @column({ name: 'active' })
+  public active: boolean
+
+  @column({ name: 'created_at' })
+  public createdAt: Date
+}
+```
+
+#### Model Decorators
+
+The `@column` decorator configures how model properties map to database columns:
+
+```typescript
+@column({
+  name: 'column_name',        // Database column name (optional, defaults to property name)
+  primary: true,              // Mark as primary key
+  serializeAs: 'custom_name', // Custom name for serialization
+  serialize: (value: string) => `My email is ${value}` // Custom serializer function
+})
+```
+
+#### Basic Model Operations
+
+```typescript
+// Create a new user
+const user = await User.create({
+  name: 'John Doe',
+  email: 'john@example.com',
+  age: 30
+})
+
+// Find user by ID
+const user = await User.find(1)
+if (user) {
+  console.log(user.name) // Access properties directly
+}
+
+// Get all users
+const users = await User.all()
+users.forEach(user => {
+  console.log(`${user.name} (${user.email})`)
+})
+
+// Insert multiple users
+const newUsers = await User.insert([
+  { name: 'Jane Smith', email: 'jane@example.com', age: 25 },
+  { name: 'Bob Johnson', email: 'bob@example.com', age: 35 }
+])
+
+// Update user properties
+if (user) {
+  user.age = 31
+  await user.save() // Save changes to database
+}
+
+// Delete user
+if (user) {
+  await user.delete()
+}
+```
+
+#### Model Querying
+
+Models provide a fluent query interface:
+
+```typescript
+// Basic queries
+const activeUsers = await User.query()
+  .where('active', true)
+  .get()
+
+const user = await User.query()
+  .where('email', 'john@example.com')
+  .first()
+
+// Complex queries
+const users = await User.query()
+  .where('age', '>', 25)
+  .where('active', true)
+  .orderBy('name', 'ASC')
+  .limit(10)
+  .get()
+
+// Count records
+const count = await User.query()
+  .where('active', true)
+  .count()
+```
+
+#### Model Serialization
+
+Models can be serialized to plain objects for API responses:
+
+```typescript
+const user = await User.find(1)
+if (user) {
+  // Serialize to plain object
+  const userData = user.serialize()
+  console.log(userData) // { id: 1, name: 'John Doe', email: 'john@example.com', ... }
+}
+```
+
+#### Model Hydration
+
+Convert database results back to model instances:
+
+```typescript
+// Hydrate single record
+const userData = { id: 1, name: 'John Doe', email: 'john@example.com' }
+const user = User.hydrate(userData)
+
+// Hydrate multiple records
+const usersData = [
+  { id: 1, name: 'John Doe', email: 'john@example.com' },
+  { id: 2, name: 'Jane Smith', email: 'jane@example.com' }
+]
+const users = User.hydrateMany(usersData)
+```
+
+#### Model Metadata
+
+Access model configuration and column information:
+
+```typescript
+// Get model metadata
+const metadata = User.getMetadata()
+console.log(metadata.tableName) // 'users'
+console.log(metadata.columns)   // Array of column definitions
+
+// Get table name
+console.log(User.db.table) // QueryBuilder for this model's table
+```
+
+#### Advanced Model Features
+
+```typescript
+class Post extends Model {
+  @Column({ name: 'id', primary: true, autoIncrement: true })
+  id!: number
+
+  @Column({ name: 'title' })
+  title!: string
+
+  @Column({ name: 'content' })
+  content!: string
+
+  @Column({ name: 'user_id' })
+  userId!: number
+
+  // Custom methods
+  get excerpt(): string {
+    return this.content.substring(0, 100) + '...'
+  }
+
+  // Static methods for business logic
+  static async findByAuthor(userId: number) {
+    return this.query().where('user_id', userId).get()
+  }
+
+  static async published() {
+    return this.query().where('published', true).get()
+  }
+}
+
+// Usage
+const userPosts = await Post.findByAuthor(1)
+const publishedPosts = await Post.published()
+```
+
+### 4. Transactions
 
 ```typescript
 import { Transaction } from 'bun-spark'
@@ -220,7 +415,7 @@ try {
 }
 ```
 
-### 4. Raw SQL Queries
+### 5. Raw SQL Queries
 
 ```typescript
 // Execute raw SQL
@@ -245,7 +440,7 @@ await db.raw(`
 `)
 ```
 
-### 5. Type Safety
+### 6. Type Safety
 
 Bun ORM provides compile-time type safety to prevent common errors:
 
@@ -311,6 +506,32 @@ interface ConnectionConfig {
 
 - `transaction(callback: TransactionCallback)` - Execute a transaction
 - `raw(sql: string)` - Execute raw SQL within transaction
+
+### Model Methods
+
+#### Static Methods
+- `Model.create(data: Partial<InstanceType<T>>)` - Create a single record
+- `Model.insert(data: Partial<InstanceType<T>> | Partial<InstanceType<T>>[])` - Insert one or more records
+- `Model.find(id: number)` - Find record by primary key
+- `Model.all()` - Get all records
+- `Model.query()` - Get query builder for this model
+- `Model.hydrate(data: Record<string, any>)` - Convert plain object to model instance
+- `Model.hydrateMany(data: Record<string, any>[])` - Convert array of plain objects to model instances
+- `Model.getMetadata()` - Get model metadata (table name, columns)
+
+#### Instance Methods
+- `model.delete()` - Delete the current record
+- `model.serialize()` - Serialize model to plain object
+
+#### Column Decorator Options
+- `name: string` - Database column name
+- `primary: boolean` - Mark as primary key
+- `autoIncrement: boolean` - Auto-incrementing column
+- `type: string` - SQL data type
+- `nullable: boolean` - Allow NULL values
+- `default: any` - Default value
+- `unique: boolean` - Unique constraint
+- `serializeAs: string` - Custom name for serialization
 
 ## Development
 
