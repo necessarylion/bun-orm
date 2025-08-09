@@ -1,19 +1,14 @@
-import { getConnection } from './connection'
 import { QueryBuilder } from '../query-builders/query-builder'
 import type { SelectColumn } from '../types'
 
 export class Transaction<M = any> {
-  private sql: any
-  private transactionContext: any
-  private isCommitted: boolean = false
-  private isRolledBack: boolean = false
+  private transactionContext: Bun.SQL
 
   /**
    * Creates a new Transaction instance
    * @param {any} [transactionContext] - Optional transaction context from Bun SQL
    */
   constructor(transactionContext?: any) {
-    this.sql = getConnection().getSQL()
     this.transactionContext = transactionContext
   }
 
@@ -92,59 +87,7 @@ export class Transaction<M = any> {
    * @throws {Error} When transaction has already been committed or rolled back
    */
   public async raw(sql: string, params: any[] = []): Promise<any[]> {
-    if (this.isCommitted || this.isRolledBack) {
-      throw new Error('Transaction has already been committed or rolled back')
-    }
-
-    if (this.transactionContext) {
-      return this.transactionContext.unsafe(sql, params)
-    } else {
-      return this.sql.unsafe(sql, params)
-    }
-  }
-
-  /**
-   * Commits the transaction
-   * @returns {Promise<void>}
-   * @throws {Error} When transaction has already been committed or rolled back
-   */
-  public async commit(): Promise<void> {
-    if (this.isCommitted) {
-      throw new Error('Transaction has already been committed')
-    }
-    if (this.isRolledBack) {
-      throw new Error('Transaction has already been rolled back')
-    }
-
-    // In Bun's callback-based approach, commit happens automatically when the callback returns
-    this.isCommitted = true
-  }
-
-  /**
-   * Rolls back the transaction
-   * @returns {Promise<void>}
-   * @throws {Error} When transaction has already been committed or rolled back
-   */
-  public async rollback(): Promise<void> {
-    if (this.isCommitted) {
-      throw new Error('Transaction has already been committed')
-    }
-    if (this.isRolledBack) {
-      throw new Error('Transaction has already been rolled back')
-    }
-
-    // In Bun's callback-based approach, rollback happens automatically when an error is thrown
-    this.isRolledBack = true
-    throw new Error('Transaction rolled back')
-  }
-
-  // Check if transaction is active
-  /**
-   * Checks if the transaction is still active
-   * @returns {boolean} True if transaction is active, false if committed or rolled back
-   */
-  public isActive(): boolean {
-    return !this.isCommitted && !this.isRolledBack
+    return this.transactionContext.unsafe(sql, params)
   }
 
   // Set transaction context (used internally)
