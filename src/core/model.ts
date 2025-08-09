@@ -3,6 +3,7 @@ import { type QueryBuilder, spark } from './spark'
 import { getTableName } from '../utils/model-helper'
 import { camelCase } from 'change-case'
 import ModelQueryBuilder from '../query-builders/model-query-builder'
+import type { Transaction } from './transaction'
 
 /**
  * Interface for objects that can be serialized to a specific type
@@ -28,6 +29,15 @@ export abstract class Model implements Serializable<Record<string, any>> {
    */
   public get tableName() {
     return getTableName(this.constructor.name)
+  }
+
+  /**
+   * Creates a query builder with transaction context
+   * @param {Transaction} trx - Transaction instance
+   * @returns {QueryBuilder} Query builder instance
+   */
+  static useTransaction<T extends typeof Model>(self: T, trx: Transaction<T>): QueryBuilder<InstanceType<T>> {
+    return spark().useTransaction(trx).table(getTableName(self.name)) as QueryBuilder<InstanceType<T>>
   }
 
   /**

@@ -29,7 +29,15 @@ export class Spark {
     return Spark.getInstance()
   }
 
-  // SELECT queries
+  /**
+   * Creates a query builder with transaction context
+   * @param {Transaction} trx - Transaction instance
+   * @returns {QueryBuilder} Query builder instance
+   */
+  public useTransaction(trx: Transaction): QueryBuilder<any> {
+    return new QueryBuilder(trx.getTransactionContext())
+  }
+
   /**
    * Creates a SELECT query builder
    * @param {string | string[]} [columns] - Columns to select (defaults to '*')

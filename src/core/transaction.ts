@@ -90,12 +90,19 @@ export class Transaction<M = any> {
     return this.transactionContext.unsafe(sql, params)
   }
 
-  // Set transaction context (used internally)
   /**
    * Sets the transaction context (used internally)
    * @param {any} context - Transaction context from Bun SQL
    */
   public setTransactionContext(context: any): void {
     this.transactionContext = context
+  }
+
+  /**
+   * Gets the transaction context
+   * @returns {Bun.SQL} Transaction context
+   */
+  public getTransactionContext(): Bun.SQL {
+    return this.transactionContext
   }
 }

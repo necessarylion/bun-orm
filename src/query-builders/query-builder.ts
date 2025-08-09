@@ -1,6 +1,7 @@
 import { BaseQueryBuilder } from './base-query-builder'
 import type { FullWhereOperators, OrderDirection, SelectColumn, WhereCallback } from '../types'
 import { ALLOWED_WHERE_OPERATORS } from '../utils/sql-constants'
+import type { Transaction } from '../core/transaction'
 
 export class QueryBuilder<M> extends BaseQueryBuilder {
   private alreadyRemovedStar: boolean = false
@@ -11,6 +12,16 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
   private updateData: Record<string, any> = {}
   private returningColumns: string[] = ['*']
   private queryMode: 'select' | 'insert' | 'update' | 'delete' = 'select'
+
+  /**
+   * Sets the transaction context
+   * @param {Transaction} trx - Transaction instance
+   * @returns {QueryBuilder} Query builder instance
+   */
+  useTransaction(trx: Transaction): QueryBuilder<M> {
+    this.sql = trx.getTransactionContext()
+    return this
+  }
 
   /**
    * Sets the table for all operations
