@@ -640,10 +640,7 @@ MIT
 
 ## Roadmap
 
-- [ ] JOIN support
 - [ ] Aggregation functions (COUNT, SUM, AVG, etc.)
-- [ ] Migration system
-- [ ] Connection pooling
+- [ ] Advanced JOIN support
 - [ ] Query logging
-- [ ] Prepared statements
 - [ ] Multiple database support (MySQL, SQLite)
