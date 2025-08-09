@@ -644,3 +644,4 @@ MIT
 - [ ] Advanced JOIN support
 - [ ] Query logging
 - [ ] Multiple database support (MySQL, SQLite)
+- [ ] Manual transaction support
