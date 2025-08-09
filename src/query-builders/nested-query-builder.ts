@@ -1,12 +1,7 @@
-import type {
-  WhereCondition,
-  WhereGroupCondition,
-  NestedQueryBuilder as INestedQueryBuilder,
-  FullWhereOperators,
-} from '../types'
+import type { WhereCondition, WhereGroupCondition, FullWhereOperators } from '../types'
 import { FULL_WHERE_OPERATORS } from '../utils/sql-constants'
 
-export class NestedQueryBuilder implements INestedQueryBuilder {
+export class NestedQueryBuilder {
   private conditions: (WhereCondition | WhereGroupCondition)[] = []
 
   /**

@@ -1,8 +1,8 @@
 import { getConnection } from './connection'
 import { QueryBuilder } from '../query-builders/query-builder'
-import type { SelectColumn, Transaction as TransactionType } from '../types'
+import type { SelectColumn } from '../types'
 
-export class Transaction<M> implements TransactionType {
+export class Transaction<M = any> {
   private sql: any
   private transactionContext: any
   private isCommitted: boolean = false
