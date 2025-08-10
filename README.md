@@ -280,6 +280,8 @@ The `@column` decorator maps model properties to database columns.
 import { Model, column } from 'bun-spark'
 
 class User extends Model {
+  public static override tableName = 'users' // Optional: specify the table name
+
   @column({ primary: true })
   public id: number
 
@@ -376,37 +378,6 @@ if (user) {
   const userData = user.serialize()
   console.log(userData) // { id: 1, name: 'John Doe', email: 'john@example.com', ... }
 }
-```
-
-#### Model Hydration
-
-Convert database results back to model instances:
-
-```typescript
-// Hydrate single record
-const userData = { id: 1, name: 'John Doe', email: 'john@example.com' }
-const user = User.hydrate(userData)
-
-// Hydrate multiple records
-const usersData = [
-  { id: 1, name: 'John Doe', email: 'john@example.com' },
-  { id: 2, name: 'Jane Smith', email: 'jane@example.com' }
-]
-const users = User.hydrateMany(usersData)
-```
-
-#### Model Metadata
-
-Access model configuration and column information:
-
-```typescript
-// Get model metadata
-const metadata = User.getMetadata()
-console.log(metadata.tableName) // 'users'
-console.log(metadata.columns)   // Array of column definitions
-
-// Get table name
-console.log(User.db.table) // QueryBuilder for this model's table
 ```
 
 
