@@ -134,6 +134,16 @@ export class Spark {
   }
 
   /**
+   * Truncates a table
+   * @param {string} tableName - Name of the table to truncate
+   * @returns {Promise<void>}
+   */
+  public async truncate(tableName: string): Promise<void> {
+    const connection = getConnection()
+    await connection.getSQL().unsafe(`TRUNCATE TABLE "${tableName}"`)
+  }
+
+  /**
    * Checks if a table exists in the database
    * @param {string} tableName - Name of the table to check
    * @returns {Promise<boolean>} True if table exists, false otherwise
@@ -193,16 +203,20 @@ export class Spark {
   }
 
   /**
-   * Begins a manual transaction (not supported in this version)
+   * Begins a manual transaction
    * @returns {Promise<Transaction>} Transaction instance
    * @throws {Error} Manual transaction control is not supported
    */
   public async beginTransaction(): Promise<Transaction<any>> {
-    // For manual transactions, we'll use a different approach
-    // This is a simplified version - in a real implementation you might want to use a different pattern
-    throw new Error(
-      'Manual transaction control is not supported in this version. Use db.transaction(callback) instead.'
-    )
+    // get bun sql connection
+    const connection = getConnection()
+    const sql = connection.getSQL()
+    const reservedSql = await sql.reserve()
+    await reservedSql`BEGIN`
+    // create transaction
+    const transaction = new Transaction()
+    transaction.setReservedSql(reservedSql)
+    return transaction
   }
 }
 

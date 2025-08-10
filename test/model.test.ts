@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'bun:test'
-import { cleanupTestData, insertTestData, setupTestTables } from './setup'
+import { cleanupTestData, db, insertTestData, setupTestTables } from './setup'
 import { Model, column } from '../index'
 
 class User extends Model {
@@ -110,5 +110,47 @@ describe('Model', () => {
     const users = await User.query().where('id', '>=', 1).get()
     expect(users.length).toBe(4)
     expect(users[0]?.info()).toBe('Alice Brown alice@example.com')
+  })
+
+  it('with manual transaction with rollback due to error', async () => {
+    await User.insert({
+      name: 'John Wrick',
+      email: 'johnwrick@example.com',
+      age: 20,
+    })
+    const trx = await db.beginTransaction()
+    try {
+      await User.useTransaction(trx).query().where('email', 'johnwrick@example.com').update({
+        name: 'Boogeyman',
+        age: 25,
+      })
+      throw new Error('test')
+    } catch (_) {
+      await trx.rollback()
+    }
+    const user = await User.query().where('email', 'johnwrick@example.com').first()
+    expect(user?.name).toBe('John Wrick')
+    expect(user?.age).toBe(20)
+  })
+
+  it('with manual transaction with commit should success', async () => {
+    await User.insert({
+      name: 'John Wrick',
+      email: 'johnwrick@example.com',
+      age: 20,
+    })
+    const trx = await db.beginTransaction()
+    try {
+      await User.useTransaction(trx).query().where('email', 'johnwrick@example.com').update({
+        name: 'Boogeyman',
+        age: 25,
+      })
+      await trx.commit()
+    } catch (_) {
+      await trx.rollback()
+    }
+    const user = await User.query().where('email', 'johnwrick@example.com').first()
+    expect(user?.name).toBe('Boogeyman')
+    expect(user?.age).toBe(25)
   })
 })

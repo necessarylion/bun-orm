@@ -36,8 +36,8 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @param {Transaction} trx - Transaction instance
    * @returns {QueryBuilder} Query builder instance
    */
-  static useTransaction<T extends typeof Model>(self: T, trx: Transaction<T>): QueryBuilder<InstanceType<T>> {
-    return spark().useTransaction(trx).table(getTableName(self.name)) as QueryBuilder<InstanceType<T>>
+  static useTransaction<T extends typeof Model>(this: T, trx: Transaction<T>): QueryBuilder<InstanceType<T>> {
+    return spark().useTransaction(trx).table(getTableName(this.name)) as QueryBuilder<InstanceType<T>>
   }
 
   /**

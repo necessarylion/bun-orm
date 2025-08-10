@@ -1,8 +1,9 @@
 import { QueryBuilder } from '../query-builders/query-builder'
-import type { SelectColumn } from '../types'
+import type { ReservedSQL } from 'bun'
 
 export class Transaction<M = any> {
-  private transactionContext: Bun.SQL
+  private transactionContext?: Bun.SQL
+  private reservedSql?: ReservedSQL
 
   /**
    * Creates a new Transaction instance
@@ -13,16 +14,11 @@ export class Transaction<M = any> {
   }
 
   /**
-   * Creates a SELECT query builder within the transaction
-   * @param {SelectColumn | SelectColumn[]} [columns] - Columns to select (defaults to '*')
-   * @returns {QueryBuilder} Query builder instance for SELECT operations
+   * Gets the SQL context
+   * @returns {Bun.SQL | ReservedSQL | undefined} SQL context
    */
-  public select(columns?: SelectColumn | SelectColumn[]): QueryBuilder<M> {
-    const queryBuilder = new QueryBuilder<M>(this.transactionContext)
-    if (columns) {
-      queryBuilder.select(columns)
-    }
-    return queryBuilder
+  get sql(): Bun.SQL | ReservedSQL | undefined {
+    return this.transactionContext ?? this.reservedSql
   }
 
   /**
@@ -32,7 +28,7 @@ export class Transaction<M = any> {
    * @returns {QueryBuilder}
    */
   public from(table: string, alias?: string): QueryBuilder<M> {
-    return new QueryBuilder<M>(this.transactionContext).from(table, alias)
+    return new QueryBuilder<M>(this.sql).from(table, alias)
   }
 
   /**
@@ -42,41 +38,26 @@ export class Transaction<M = any> {
    * @returns {QueryBuilder} Query builder instance
    */
   public table(table: string, alias?: string): QueryBuilder<M> {
-    return new QueryBuilder<M>(this.transactionContext).table(table, alias)
+    return new QueryBuilder<M>(this.sql).table(table, alias)
   }
 
   /**
-   * Creates an INSERT query builder within the transaction
+   * Inserts a new record/records into the database
    * @param {Record<string, any> | Record<string, any>[]} [data] - Data to insert
    * @returns {QueryBuilder} Query builder instance
    */
-  public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder<M> {
-    const queryBuilder = new QueryBuilder<M>(this.transactionContext)
-    if (data) {
-      queryBuilder.insert(data)
-    }
-    return queryBuilder
+  public async insert(data: Record<string, any> | Record<string, any>[]): Promise<M[]> {
+    const queryBuilder = new QueryBuilder<M>(this.sql)
+    return await queryBuilder.insert(data)
   }
 
   /**
-   * Creates an UPDATE query builder within the transaction
-   * @param {Record<string, any>} [data] - Data to update
-   * @returns {QueryBuilder} Query builder instance
+   * Creates a new record in the database
+   * @param {Record<string, any>} data - Data to insert
+   * @returns {Promise<M[]>} Inserted records
    */
-  public update(data?: Record<string, any>): QueryBuilder<M> {
-    const queryBuilder = new QueryBuilder<M>(this.transactionContext)
-    if (data) {
-      queryBuilder.update(data)
-    }
-    return queryBuilder
-  }
-
-  /**
-   * Creates a DELETE query builder within the transaction
-   * @returns {QueryBuilder} Query builder instance
-   */
-  public delete(): QueryBuilder<M> {
-    return new QueryBuilder(this.transactionContext)
+  public create(data: Record<string, any>): Promise<M[]> {
+    return this.insert(data)
   }
 
   /**
@@ -87,15 +68,24 @@ export class Transaction<M = any> {
    * @throws {Error} When transaction has already been committed or rolled back
    */
   public async raw(sql: string, params: any[] = []): Promise<any[]> {
-    return this.transactionContext.unsafe(sql, params)
+    if (!this.sql) throw new Error('Transaction context is required to execute raw SQL')
+    return this.sql.unsafe(sql, params)
   }
 
   /**
    * Sets the transaction context (used internally)
    * @param {any} context - Transaction context from Bun SQL
    */
-  public setTransactionContext(context: any): void {
+  public setTransactionContext(context: Bun.SQL): void {
     this.transactionContext = context
+  }
+
+  /**
+   * Sets the reserved SQL (used internally)
+   * @param {ReservedSQL} reservedSql - Reserved SQL from Bun SQL
+   */
+  public setReservedSql(reservedSql: ReservedSQL): void {
+    this.reservedSql = reservedSql
   }
 
   /**
@@ -103,6 +93,35 @@ export class Transaction<M = any> {
    * @returns {Bun.SQL} Transaction context
    */
   public getTransactionContext(): Bun.SQL {
-    return this.transactionContext
+    if (!this.sql) throw new Error('Transaction context is required')
+    return this.sql
+  }
+
+  /**
+   * Gets the reserved SQL (used internally)
+   * @returns {ReservedSQL} Reserved SQL
+   */
+  public getReservedSql(): ReservedSQL | undefined {
+    return this.reservedSql
+  }
+
+  /**
+   * Commits the transaction
+   * @returns {Promise<void>}
+   */
+  public async commit(): Promise<void> {
+    if (!this.reservedSql) throw new Error('Transaction context is required to commit')
+    await this.reservedSql`COMMIT`
+    this.reservedSql.release()
+  }
+
+  /**
+   * Rolls back the transaction
+   * @returns {Promise<void>}
+   */
+  public async rollback(): Promise<void> {
+    if (!this.reservedSql) throw new Error('Transaction context is required to rollback')
+    await this.reservedSql`ROLLBACK`
+    this.reservedSql.release()
   }
 }

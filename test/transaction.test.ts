@@ -46,7 +46,7 @@ describe('Transaction Tests', () => {
       await trx.table('transaction_test').where('name', '=', 'John Doe').update({ balance: 150.0 })
 
       // Return the final result
-      return await trx.select().from('transaction_test').where('name', '=', 'John Doe').first()
+      return await trx.table('transaction_test').where('name', '=', 'John Doe').first()
     })
 
     expect(result).toBeDefined()
@@ -122,8 +122,7 @@ describe('Transaction Tests', () => {
 
       // Return both updated users
       return await trx
-        .select()
-        .from('transaction_test')
+        .table('transaction_test')
         .whereIn('name', ['Henry Adams', 'Ivy Chen'])
         .orderBy('name', 'asc')
         .get()
@@ -169,7 +168,7 @@ describe('Transaction Tests', () => {
         await trx.table('transaction_test').where('id', '=', userId).update({ balance: 200.0 })
 
         // Verify the update within transaction
-        const withinTransaction = await trx.select().from('transaction_test').where('id', '=', userId).first()
+        const withinTransaction = await trx.table('transaction_test').where('id', '=', userId).first()
 
         expect(withinTransaction).toBeDefined()
         expect(withinTransaction.name).toBe('Test User')
@@ -200,5 +199,41 @@ describe('Transaction Tests', () => {
     const allRecords = await db.select().from('transaction_test').where('name', '=', 'Test User').get()
 
     expect(allRecords).toHaveLength(1) // Only the original record should exist
+  })
+
+  it('manual transaction with rollback', async () => {
+    await db.truncate('transaction_test')
+    await db.table('transaction_test').insert({ name: 'John', balance: 100.0 })
+    const trx = await db.beginTransaction()
+    try {
+      await trx.table('transaction_test').where('name', 'John').update({
+        balance: 200.0,
+      })
+      throw new Error('test')
+    } catch (_) {
+      await trx.rollback()
+    }
+    const transaction = await db.select().from('transaction_test').where('name', 'John').first()
+    expect(transaction).toBeDefined()
+    expect(parseFloat(transaction.balance)).toBe(100)
+    expect(transaction.name).toBe('John')
+  })
+
+  it('manual transaction with commit', async () => {
+    await db.truncate('transaction_test')
+    await db.table('transaction_test').insert({ name: 'John', balance: 100.0 })
+    const trx = await db.beginTransaction()
+    try {
+      await trx.table('transaction_test').where('name', 'John').update({
+        balance: 200.0,
+      })
+      await trx.commit()
+    } catch (_) {
+      await trx.rollback()
+    }
+    const transaction = await db.select().from('transaction_test').where('name', 'John').first()
+    expect(transaction).toBeDefined()
+    expect(parseFloat(transaction.balance)).toBe(200)
+    expect(transaction.name).toBe('John')
   })
 })
