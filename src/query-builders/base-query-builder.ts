@@ -1,4 +1,4 @@
-import { getConnection } from '../core/connection'
+import { type DatabaseConnection, getConnection } from '../core/connection'
 import { SQLHelper } from '../utils/sql-helper'
 import { NestedQueryBuilder } from './nested-query-builder'
 import type {
@@ -16,6 +16,7 @@ import type { Model } from '../core/model'
 import { cloneInstance } from '../utils/model-helper'
 
 export abstract class BaseQueryBuilder {
+  protected connection: DatabaseConnection
   protected sql: Bun.SQL
   protected whereConditions: WhereCondition[] = []
   protected whereGroupConditions: WhereGroupCondition[] = []
@@ -42,7 +43,8 @@ export abstract class BaseQueryBuilder {
    * @param {Bun.SQL} [transactionContext] - Optional transaction context
    */
   constructor(transactionContext?: Bun.SQL) {
-    this.sql = transactionContext ?? getConnection().getSQL()
+    this.connection = getConnection()
+    this.sql = transactionContext ?? this.connection.getSQL()
   }
 
   /**
@@ -172,6 +174,11 @@ export abstract class BaseQueryBuilder {
    */
   public async executeQuery<T = any>(query: string, params: any[] = []): Promise<T[]> {
     try {
+      const config = this.connection.getConfig()
+      if (config.debug === true) {
+        console.log('-----------------------------------------------------')
+        console.log(`\x1b[33m${query.replace(/\s+/g, ' ')}\x1b[0m`)
+      }
       const result = await this.sql.unsafe(query, params)
       if (this.modelInstance !== undefined) {
         return result.map((d: any, index: number) => {

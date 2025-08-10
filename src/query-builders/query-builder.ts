@@ -561,21 +561,7 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    */
   public toSql(): string {
     const { sql, params } = this.buildQuery()
-    const sqlString = sql.replace(/\s+/g, ' ')
-    return sqlString.replace(/\$(\d+)/g, (_: any, index: string) => {
-      const value = params[parseInt(index, 10) - 1]
-      if (typeof value === 'string') {
-        return `'${value}'`
-      } else if (typeof value === 'number') {
-        return `'${value.toString()}'`
-      } else if (typeof value === 'boolean') {
-        return value ? '1' : '0'
-      } else if (value === null || value === undefined) {
-        return 'NULL'
-      } else {
-        return `'${value}'`
-      }
-    })
+    return this.sqlHelper.toSql(sql, params)
   }
 
   /**
