@@ -412,6 +412,10 @@ console.log(User.db.table) // QueryBuilder for this model's table
 
 ### 4. Transactions
 
+Bun ORM supports both automatic and manual transaction management.
+
+#### Automatic Transactions
+
 ```typescript
 import { Transaction } from 'bun-spark'
 
@@ -446,6 +450,64 @@ try {
     await trx.raw('INSERT INTO users (name) VALUES (NULL)')
   })
 } catch (error) {
+  console.log('Transaction rolled back:', error.message)
+}
+```
+
+#### Manual Transactions
+
+For more control over transaction lifecycle, you can use manual transactions:
+
+```typescript
+// Manual transaction with rollback
+const trx = await db.beginTransaction()
+try {
+  await trx
+    .table('users')
+    .where('name', 'John')
+    .update({ age: 25 })
+  
+  // Some operation that might fail
+  throw new Error('Something went wrong')
+  
+  await trx.commit()
+} catch (error) {
+  await trx.rollback()
+  console.log('Transaction rolled back:', error.message)
+}
+
+// Manual transaction with commit
+const trx2 = await db.beginTransaction()
+try {
+  await trx2
+    .table('users')
+    .where('name', 'John')
+    .update({ age: 30 })
+  
+  await trx2.commit()
+} catch (error) {
+  await trx2.rollback()
+  console.log('Transaction rolled back:', error.message)
+}
+```
+
+#### Using Transactions with Models
+
+Models can also participate in transactions:
+
+```typescript
+// Using manual transaction with models
+const trx = await db.beginTransaction()
+try {
+  // Use transaction with User model
+  await User.useTransaction(trx)
+    .query()
+    .where('email', 'john@example.com')
+    .update({ age: 25 })
+  
+  await trx.commit()
+} catch (error) {
+  await trx.rollback()
   console.log('Transaction rolled back:', error.message)
 }
 ```
@@ -543,7 +605,10 @@ interface ConnectionConfig {
 
 ### Transaction Methods
 
-- `transaction(callback: TransactionCallback)` - Execute a transaction
+- `transaction(callback: TransactionCallback)` - Execute a transaction with automatic commit/rollback
+- `beginTransaction()` - Start a manual transaction
+- `commit()` - Commit a manual transaction
+- `rollback()` - Rollback a manual transaction
 - `raw(sql: string)` - Execute raw SQL within transaction
 
 ### Model Methods
@@ -554,6 +619,7 @@ interface ConnectionConfig {
 - `Model.find(id: number)` - Find record by primary key
 - `Model.all()` - Get all records
 - `Model.query()` - Get query builder for this model
+- `Model.useTransaction(trx: Transaction)` - Get query builder with transaction context
 - `Model.hydrate(data: Record<string, any>)` - Convert plain object to model instance
 - `Model.hydrateMany(data: Record<string, any>[])` - Convert array of plain objects to model instances
 - `Model.getMetadata()` - Get model metadata (table name, columns)
