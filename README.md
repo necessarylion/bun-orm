@@ -640,8 +640,8 @@ MIT
 
 ## Roadmap
 
+- [x] Manual transaction support
 - [ ] Aggregation functions (COUNT, SUM, AVG, etc.)
 - [ ] Advanced JOIN support
 - [ ] Query logging
 - [ ] Multiple database support (MySQL, SQLite)
-- [ ] Manual transaction support
