@@ -13,6 +13,7 @@ import type {
   OrderDirection,
 } from '../types'
 import type { Model } from '../core/model'
+import { cloneInstance } from '../utils/model-helper'
 
 export abstract class BaseQueryBuilder {
   protected sql: Bun.SQL
@@ -173,7 +174,10 @@ export abstract class BaseQueryBuilder {
     try {
       const result = await this.sql.unsafe(query, params)
       if (this.modelInstance !== undefined) {
-        return result.map((d: any) => this.hydrate(this.modelInstance, d))
+        return result.map((d: any, index: number) => {
+          if (index === 0) return this.hydrate(this.modelInstance, d)
+          return this.hydrate(cloneInstance(this.modelInstance), d)
+        })
       }
       return result
     } catch (error) {

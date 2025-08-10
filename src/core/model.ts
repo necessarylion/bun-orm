@@ -1,7 +1,6 @@
 import { getColumns } from '../decorators/column'
 import { type QueryBuilder, spark } from './spark'
-import { getTableName } from '../utils/model-helper'
-import { camelCase } from 'change-case'
+import { parseTableName } from '../utils/model-helper'
 import ModelQueryBuilder from '../query-builders/model-query-builder'
 import type { Transaction } from './transaction'
 
@@ -23,12 +22,14 @@ export interface Serializable<T> {
  * @template T - The type of the serialized data (defaults to Record<string, any>)
  */
 export abstract class Model implements Serializable<Record<string, any>> {
+  public static tableName?: string
+
   /**
    * Gets the table name for this model instance
    * @returns The table name derived from the constructor name
    */
-  public get tableName() {
-    return getTableName(this.constructor.name)
+  static getTableName<T extends typeof Model>(this: T) {
+    return parseTableName(this.tableName ?? this.name)
   }
 
   /**
@@ -37,7 +38,15 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @returns {QueryBuilder} Query builder instance
    */
   static useTransaction<T extends typeof Model>(this: T, trx: Transaction<T>): QueryBuilder<InstanceType<T>> {
-    return spark().useTransaction(trx).table(getTableName(this.name)) as QueryBuilder<InstanceType<T>>
+    return spark().useTransaction(trx).table(this.getTableName()) as QueryBuilder<InstanceType<T>>
+  }
+
+  /**
+   * Gets a query builder instance for this model's table
+   * @returns A QueryBuilder instance configured for this model's table
+   */
+  static truncate<T extends typeof Model>(this: T): Promise<void> {
+    return spark().truncate(this.getTableName())
   }
 
   /**
@@ -45,7 +54,8 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @returns A QueryBuilder instance configured for this model's table
    */
   static db<T extends typeof Model>(this: T): QueryBuilder<InstanceType<T>> {
-    return spark().table(getTableName(this.name)) as QueryBuilder<InstanceType<T>>
+    const instance = Object.create(this.prototype)
+    return new ModelQueryBuilder<InstanceType<T>>(instance, this.getTableName())
   }
 
   /**
@@ -56,7 +66,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
    */
   static query<T extends typeof Model>(this: T): ModelQueryBuilder<InstanceType<T>> {
     const instance = Object.create(this.prototype)
-    return new ModelQueryBuilder<InstanceType<T>>(instance, getTableName(this.name))
+    return new ModelQueryBuilder<InstanceType<T>>(instance, this.getTableName())
   }
 
   /**
@@ -67,7 +77,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
   public async delete(): Promise<void> {
     const self = this as any
     const pk = getColumns(this.constructor).find((c: any) => c.primary)?.name || 'id'
-    await spark().table(this.tableName).where(pk, self[pk]).delete()
+    await spark().table(self.constructor.getTableName()).where(pk, self[pk]).delete()
   }
 
   /**
@@ -86,48 +96,12 @@ export abstract class Model implements Serializable<Record<string, any>> {
   }
 
   /**
-   * Hydrates a plain object into a model instance
-   * Maps database column names to property names and creates a new model instance
-   * @template T - The model class type
-   * @param data - The plain object data from the database
-   * @returns A new model instance with the provided data
-   */
-  static hydrate<T extends typeof Model>(this: T, data: Record<string, any>): InstanceType<T> {
-    const instance = Object.create(this.prototype) as InstanceType<T>
-
-    // Get column metadata to map database column names to property names
-    const columns = getColumns(this)
-    const columnMap = new Map(columns.map((col: any) => [col.name, col.propertyKey]))
-
-    // Map database column names to property names
-    const mappedData: Record<string, any> = {}
-    for (const [dbColumn, value] of Object.entries(data)) {
-      const propertyName = columnMap.get(dbColumn) ?? camelCase(dbColumn)
-      mappedData[propertyName as string] = value
-    }
-
-    Object.assign(instance, mappedData)
-    return instance
-  }
-
-  /**
-   * Hydrates an array of plain objects into model instances
-   * @template T - The model class type
-   * @param data - Array of plain object data from the database
-   * @returns Array of model instances
-   */
-  static hydrateMany<T extends typeof Model>(this: T, data: Record<string, any>[]): InstanceType<T>[] {
-    return data.map((item) => this.hydrate(item))
-  }
-
-  /**
    * Retrieves all records from the model's table
    * @template T - The model class type
    * @returns Promise that resolves to an array of model instances
    */
   static async all<T extends typeof Model>(this: T): Promise<InstanceType<T>[]> {
-    const results = await this.db().get()
-    return this.hydrateMany(results)
+    return this.db().get()
   }
 
   /**
@@ -140,8 +114,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
     this: T,
     data: Partial<InstanceType<T>> | Partial<InstanceType<T>>[]
   ): Promise<InstanceType<T>[]> {
-    const results = await this.db().insert(data)
-    return this.hydrateMany(results)
+    return this.db().insert(data)
   }
 
   /**
@@ -154,7 +127,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
   static async create<T extends typeof Model>(this: T, data: Partial<InstanceType<T>>): Promise<InstanceType<T>> {
     const results = await this.db().insert(data)
     if (!results || results.length === 0) throw new Error('Failed to create')
-    return this.hydrate(results[0])
+    return results[0]
   }
 
   /**
@@ -166,6 +139,6 @@ export abstract class Model implements Serializable<Record<string, any>> {
   static async find<T extends typeof Model>(this: T, id: number): Promise<InstanceType<T> | null> {
     const pk = getColumns(this).find((c: any) => c.primary)?.name || 'id'
     const result = await this.db().where(pk, id).first()
-    return result ? this.hydrate(result) : null
+    return result ? result : null
   }
 }

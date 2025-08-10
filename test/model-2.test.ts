@@ -2,7 +2,9 @@ import { describe, it, expect, beforeAll, beforeEach } from 'bun:test'
 import { cleanupTestData, db, insertTestData, setupTestTables } from './setup'
 import { Model, column } from '../index'
 
-class User extends Model {
+class Customer extends Model {
+  public static override tableName = 'users'
+
   @column({ primary: true })
   public id: number
 
@@ -26,7 +28,7 @@ class User extends Model {
   }
 }
 
-describe('Model', () => {
+describe('Model with custom table name', () => {
   beforeAll(async () => {
     await setupTestTables()
   })
@@ -37,7 +39,7 @@ describe('Model', () => {
   })
 
   it('should create a new user with custom serialize', async () => {
-    const user = await User.create({
+    const user = await Customer.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
       age: 20,
@@ -51,7 +53,7 @@ describe('Model', () => {
   })
 
   it('should create a new user', async () => {
-    const user = await User.create({
+    const user = await Customer.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
       age: 20,
@@ -63,7 +65,7 @@ describe('Model', () => {
   })
 
   it('should find a user by id', async () => {
-    const user = await User.find(1)
+    const user = await Customer.find(1)
     expect(user?.id).toBe(1)
     expect(user?.name).toBe('John Doe')
     expect(user?.email).toBe('john@example.com')
@@ -71,7 +73,7 @@ describe('Model', () => {
   })
 
   it('should find all users', async () => {
-    const users = await User.all()
+    const users = await Customer.all()
     expect(users.length).toBeGreaterThan(2)
     expect(users[0]?.id).toBe(1)
     expect(users[0]?.name).toBe('John Doe')
@@ -79,48 +81,48 @@ describe('Model', () => {
   })
 
   it('should find a user', async () => {
-    const user = await User.create({
+    const customer = await Customer.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
     })
-    const id = user.id
-    await user.delete()
-    const deletedUser = await User.find(id)
+    const id = customer.id
+    await customer.delete()
+    const deletedUser = await Customer.find(id)
     expect(deletedUser).toBeNull()
   })
 
   it('should find a user by id and remove it', async () => {
-    const user = await User.create({
+    const user = await Customer.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
     })
     const id = user.id
-    await User.query().where('id', id).delete()
-    const deletedUser = await User.find(id)
+    await Customer.query().where('id', id).delete()
+    const deletedUser = await Customer.find(id)
     expect(deletedUser).toBeNull()
   })
 
   it('query first', async () => {
-    const user = await User.query().where('id', '>=', 1).first()
+    const user = await Customer.query().where('id', '>=', 1).first()
     expect(user?.createdTime).toBeInstanceOf(Date)
     expect(user?.info()).toBe('John Doe john@example.com')
   })
 
   it('query all', async () => {
-    const users = await User.query().where('id', '>=', 1).get()
+    const users = await Customer.query().where('id', '>=', 1).get()
     expect(users.length).toBe(4)
     expect(users[0]?.info()).toBe('John Doe john@example.com')
   })
 
   it('with manual transaction with rollback due to error', async () => {
-    await User.insert({
+    await Customer.insert({
       name: 'John Wrick',
       email: 'johnwrick@example.com',
       age: 20,
     })
     const trx = await db.beginTransaction()
     try {
-      await User.useTransaction(trx).query().where('email', 'johnwrick@example.com').update({
+      await Customer.useTransaction(trx).query().where('email', 'johnwrick@example.com').update({
         name: 'Boogeyman',
         age: 25,
       })
@@ -128,20 +130,20 @@ describe('Model', () => {
     } catch (_) {
       await trx.rollback()
     }
-    const user = await User.query().where('email', 'johnwrick@example.com').first()
+    const user = await Customer.query().where('email', 'johnwrick@example.com').first()
     expect(user?.name).toBe('John Wrick')
     expect(user?.age).toBe(20)
   })
 
   it('with manual transaction with commit should success', async () => {
-    await User.insert({
+    await Customer.insert({
       name: 'John Wrick',
       email: 'johnwrick@example.com',
       age: 20,
     })
     const trx = await db.beginTransaction()
     try {
-      await User.useTransaction(trx).query().where('email', 'johnwrick@example.com').update({
+      await Customer.useTransaction(trx).query().where('email', 'johnwrick@example.com').update({
         name: 'Boogeyman',
         age: 25,
       })
@@ -149,7 +151,7 @@ describe('Model', () => {
     } catch (_) {
       await trx.rollback()
     }
-    const user = await User.query().where('email', 'johnwrick@example.com').first()
+    const user = await Customer.query().where('email', 'johnwrick@example.com').first()
     expect(user?.name).toBe('Boogeyman')
     expect(user?.age).toBe(25)
   })
