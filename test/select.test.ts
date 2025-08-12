@@ -349,6 +349,6 @@ describe('SELECT Query Builder', () => {
     expect(user).toBeDefined()
     expect(user.length).toBe(2)
     expect(user[0].age_avg).toBe(35)
-    expect(user[1].age_avg).toBe(28)
+    expect(parseFloat(user[1].age_avg.toFixed(2))).toBe(27.67)
   })
 })

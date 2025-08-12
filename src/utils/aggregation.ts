@@ -6,7 +6,7 @@
  */
 export function count(column: string = '*', alias?: string): string {
   const aliasName = alias ? alias : `${column}_count`.replace('*_', '')
-  const sql = `COUNT(${column})::int as ${aliasName}`
+  const sql = `CAST(COUNT(${column}) as REAL) as ${aliasName}`
   return sql
 }
 
@@ -18,7 +18,7 @@ export function count(column: string = '*', alias?: string): string {
  */
 export function sum(column: string, alias?: string): string {
   const aliasName = alias ? alias : `${column}_sum`.replace('*_', '')
-  const sql = `SUM(${column})::int as ${aliasName}`
+  const sql = `CAST(SUM(${column}) as REAL) as ${aliasName}`
   return sql
 }
 
@@ -30,6 +30,6 @@ export function sum(column: string, alias?: string): string {
  */
 export function avg(column: string, alias?: string): string {
   const aliasName = alias ? alias : `${column}_avg`.replace('*_', '')
-  const sql = `AVG(${column})::int as ${aliasName}`
+  const sql = `CAST(AVG(${column}) as REAL) as ${aliasName}`
   return sql
 }
