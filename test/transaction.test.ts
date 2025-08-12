@@ -54,7 +54,7 @@ describe('Transaction Tests', () => {
     expect(parseFloat(result.balance)).toBe(150.0)
 
     // Verify data persists after transaction
-    const persisted = await db.select().from('transaction_test').where('name', '=', 'John Doe').first()
+    const persisted = await db.table('transaction_test').where('name', '=', 'John Doe').first()
 
     expect(persisted).toBeDefined()
     expect(persisted.name).toBe('John Doe')
@@ -152,7 +152,7 @@ describe('Transaction Tests', () => {
     const userId = initialRecord[0].id
 
     // Verify the record exists
-    const beforeTransaction = await db.select().from('transaction_test').where('id', '=', userId).first()
+    const beforeTransaction = await db.table('transaction_test').where('id', '=', userId).first()
 
     expect(beforeTransaction).toBeDefined()
     expect(beforeTransaction.name).toBe('Test User')
@@ -188,7 +188,7 @@ describe('Transaction Tests', () => {
     expect(errorMessage).toContain('null value')
 
     // 4. Check if query is rolled back - the balance should be back to original value
-    const afterTransaction = await db.select().from('transaction_test').where('id', '=', userId).first()
+    const afterTransaction = await db.table('transaction_test').where('id', '=', userId).first()
 
     expect(afterTransaction).toBeDefined()
     expect(afterTransaction.name).toBe('Test User')
@@ -196,7 +196,7 @@ describe('Transaction Tests', () => {
     expect(parseFloat(afterTransaction.balance)).toBe(100.0)
 
     // Verify no additional records were created (the failed insert should be rolled back)
-    const allRecords = await db.select().from('transaction_test').where('name', '=', 'Test User').get()
+    const allRecords = await db.table('transaction_test').where('name', '=', 'Test User').get()
 
     expect(allRecords).toHaveLength(1) // Only the original record should exist
   })
@@ -213,7 +213,7 @@ describe('Transaction Tests', () => {
     } catch (_) {
       await trx.rollback()
     }
-    const transaction = await db.select().from('transaction_test').where('name', 'John').first()
+    const transaction = await db.table('transaction_test').where('name', 'John').first()
     expect(transaction).toBeDefined()
     expect(parseFloat(transaction.balance)).toBe(100)
     expect(transaction.name).toBe('John')
@@ -231,7 +231,7 @@ describe('Transaction Tests', () => {
     } catch (_) {
       await trx.rollback()
     }
-    const transaction = await db.select().from('transaction_test').where('name', 'John').first()
+    const transaction = await db.table('transaction_test').where('name', 'John').first()
     expect(transaction).toBeDefined()
     expect(parseFloat(transaction.balance)).toBe(200)
     expect(transaction.name).toBe('John')

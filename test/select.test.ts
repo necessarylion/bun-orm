@@ -17,7 +17,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should select all columns from a table', async () => {
-    const users = await db.select().from('users').get()
+    const users = await db.table('users').get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(4)
@@ -27,7 +27,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should select specific columns', async () => {
-    const users = await db.select(['name', 'email']).from('users').get()
+    const users = await db.table('users').select(['name', 'email']).get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(4)
@@ -38,8 +38,8 @@ describe('SELECT Query Builder', () => {
 
   it('should select with column aliases', async () => {
     const users = await db
+      .table('users')
       .select({ user_name: 'name', user_email: 'email' } as any)
-      .from('users')
       .get()
 
     expect(users).toBeDefined()
@@ -49,7 +49,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should filter with WHERE clause', async () => {
-    const activeUsers = await db.select().from('users').where('active', '=', true).get()
+    const activeUsers = await db.table('users').where('active', '=', true).get()
 
     expect(activeUsers).toBeDefined()
     expect(activeUsers.length).toBe(3)
@@ -57,7 +57,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should filter with multiple WHERE conditions', async () => {
-    const users = await db.select().from('users').where('active', '=', true).where('age', '>', 25).get()
+    const users = await db.table('users').where('active', '=', true).where('age', '>', 25).get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(2)
@@ -65,7 +65,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should filter with WHERE IN clause', async () => {
-    const users = await db.select().from('users').whereIn('id', [1, 2, 3]).get()
+    const users = await db.table('users').whereIn('id', [1, 2, 3]).get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(3)
@@ -73,7 +73,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should filter with WHERE NOT IN clause', async () => {
-    const users = await db.select().from('users').whereNotIn('id', [1, 2]).get()
+    const users = await db.table('users').whereNotIn('id', [1, 2]).get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(2)
@@ -84,7 +84,7 @@ describe('SELECT Query Builder', () => {
     // Insert a user with null age
     await db.table('users').insert({ name: 'Null Age User', email: 'null@example.com', age: null })
 
-    const users = await db.select().from('users').whereNull('age').get()
+    const users = await db.table('users').whereNull('age').get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(1)
@@ -92,7 +92,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should filter with WHERE NOT NULL clause', async () => {
-    const users = await db.select().from('users').whereNotNull('age').get()
+    const users = await db.table('users').whereNotNull('age').get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(4)
@@ -101,8 +101,8 @@ describe('SELECT Query Builder', () => {
 
   it('should join tables', async () => {
     const postsWithUsers = await db
+      .table('posts')
       .select(['posts.title', 'users.name as author'])
-      .from('posts')
       .join('users', 'posts.user_id = users.id')
       .get()
 
@@ -114,8 +114,8 @@ describe('SELECT Query Builder', () => {
 
   it('should left join tables', async () => {
     const postsWithUsers = await db
+      .table('posts')
       .select(['posts.title', 'users.name as author'])
-      .from('posts')
       .leftJoin('users', 'posts.user_id = users.id')
       .get()
 
@@ -124,7 +124,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should order results', async () => {
-    const users = await db.select().from('users').orderBy('name', 'ASC').get()
+    const users = await db.table('users').orderBy('name', 'ASC').get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(4)
@@ -133,21 +133,21 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should order by multiple columns', async () => {
-    const users = await db.select().from('users').orderBy('active', 'DESC').orderBy('name', 'ASC').get()
+    const users = await db.table('users').orderBy('active', 'DESC').orderBy('name', 'ASC').get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(4)
   })
 
   it('should limit results', async () => {
-    const users = await db.select().from('users').limit(2).get()
+    const users = await db.table('users').limit(2).get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(2)
   })
 
   it('should offset results', async () => {
-    const users = await db.select().from('users').orderBy('id', 'ASC').limit(2).offset(2).get()
+    const users = await db.table('users').orderBy('id', 'ASC').limit(2).offset(2).get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(2)
@@ -162,41 +162,41 @@ describe('SELECT Query Builder', () => {
       { name: 'John Doe', email: 'john3@example.com', age: 45 },
     ])
 
-    const distinctNames = await db.select('name').from('users').distinct().get()
+    const distinctNames = await db.table('users').select('name').distinct().get()
 
     expect(distinctNames).toBeDefined()
     expect(distinctNames.length).toBe(4) // 4 unique names (John Doe appears twice)
   })
 
   it('should get first result', async () => {
-    const firstUser = await db.select().from('users').orderBy('id', 'ASC').first()
+    const firstUser = await db.table('users').orderBy('id', 'ASC').first()
 
     expect(firstUser).toBeDefined()
     expect(firstUser.id).toBe(1)
   })
 
   it('should return null when no results for first()', async () => {
-    const user = await db.select().from('users').where('id', '=', 999).first()
+    const user = await db.table('users').where('id', '=', 999).first()
 
     expect(user).toBeNull()
   })
 
   it('should count results', async () => {
-    const count = await db.select().from('users').where('active', '=', true).count()
+    const count = await db.table('users').where('active', '=', true).count()
 
     expect(count).toBe(3)
   })
 
   it('should count specific column', async () => {
-    const count = await db.select().from('users').where('active', '=', true).count('id')
+    const count = await db.table('users').where('active', '=', true).count('id')
 
     expect(count).toBe(3)
   })
 
   it('should group by column', async () => {
     const userPostCounts = await db
+      .table('users')
       .select(['name', 'COUNT(posts.id) as post_count'])
-      .from('users')
       .leftJoin('posts', 'users.id = posts.user_id')
       .groupBy('name')
       .get()
@@ -207,14 +207,14 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should use table aliases', async () => {
-    const users = await db.select(['u.name', 'u.email']).from('users', 'u').get()
+    const users = await db.table('users', 'u').select(['u.name', 'u.email']).get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(4)
   })
 
   it('should build raw query', async () => {
-    const query = db.select(['name', 'email']).from('users').where('active', '=', true).raw()
+    const query = db.table('users').select(['name', 'email']).where('active', '=', true).raw()
 
     expect(query).toHaveProperty('sql')
     expect(query).toHaveProperty('params')
@@ -224,7 +224,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should support where with implicit equals operator', async () => {
-    const user = await db.select().from('users').where('id', 1).first()
+    const user = await db.table('users').where('id', 1).first()
 
     expect(user).toBeDefined()
     expect(user.id).toBe(1)
@@ -232,7 +232,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should support where with explicit equals operator', async () => {
-    const user = await db.select().from('users').where('id', '=', 1).first()
+    const user = await db.table('users').where('id', '=', 1).first()
 
     expect(user).toBeDefined()
     expect(user.id).toBe(1)
@@ -240,7 +240,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should support where with other operators', async () => {
-    const users = await db.select().from('users').where('age', '>', 25).get()
+    const users = await db.table('users').where('age', '>', 25).get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(3)
@@ -248,7 +248,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should support where with LIKE operator', async () => {
-    const users = await db.select().from('users').where('name', 'LIKE', '%John%').get()
+    const users = await db.table('users').where('name', 'LIKE', '%John%').get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(2) // John Doe and Bob Johnson
@@ -258,15 +258,14 @@ describe('SELECT Query Builder', () => {
 
   it('should support multiple select columns', async () => {
     const users = await db
-      .select('name')
-      .select({ my_email: 'email' })
-      .from('users')
+      .table('users')
+      .select({ my_email: 'email', my_name: 'name' })
       .where('name', 'LIKE', '%John%')
       .get()
 
     expect(users).toBeDefined()
     expect(users.length).toBe(2) // John Doe and Bob Johnson
-    expect(users.some((user) => user.name === 'John Doe')).toBe(true)
+    expect(users.some((user) => user.my_name === 'John Doe')).toBe(true)
     expect(users.some((user) => user.my_email === 'bob@example.com')).toBe(true)
   })
 

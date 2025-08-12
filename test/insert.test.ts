@@ -31,7 +31,7 @@ describe('INSERT Query Builder', () => {
     expect(result[0].email).toBe('test@example.com')
 
     // Verify the record was actually inserted
-    const insertedUser = await db.select().from('users').where('email', '=', 'test@example.com').first()
+    const insertedUser = await db.table('users').where('email', '=', 'test@example.com').first()
     expect(insertedUser).toBeDefined()
     expect(insertedUser.name).toBe('Test User')
   })
@@ -52,7 +52,7 @@ describe('INSERT Query Builder', () => {
     expect(result[2]).toHaveProperty('id')
 
     // Verify all records were inserted
-    const allUsers = await db.select().from('users').get()
+    const allUsers = await db.table('users').get()
     expect(allUsers.length).toBe(3)
   })
 
@@ -88,7 +88,7 @@ describe('INSERT Query Builder', () => {
     expect(result.length).toBe(1)
 
     // Verify the record was inserted
-    const insertedUser = await db.select().from('users').where('email', '=', 'noreturn@example.com').first()
+    const insertedUser = await db.table('users').where('email', '=', 'noreturn@example.com').first()
     expect(insertedUser).toBeDefined()
   })
 

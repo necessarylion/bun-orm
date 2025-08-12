@@ -39,19 +39,6 @@ export class Spark {
   }
 
   /**
-   * Creates a SELECT query builder
-   * @param {string | string[]} [columns] - Columns to select (defaults to '*')
-   * @returns {QueryBuilder} Query builder instance for SELECT operations
-   */
-  public select(columns?: string | string[]): QueryBuilder<any> {
-    const queryBuilder = new QueryBuilder()
-    if (columns) {
-      queryBuilder.select(columns)
-    }
-    return queryBuilder
-  }
-
-  /**
    * Creates a query builder with FROM clause
    * @param {string} table - Table name to query from
    * @param {string} [alias] - Optional table alias

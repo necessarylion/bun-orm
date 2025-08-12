@@ -28,11 +28,11 @@ describe('DELETE Query Builder', () => {
     expect(result[0].name).toBe('John Doe')
 
     // Verify the record was deleted
-    const deletedUser = await db.select().from('users').where('id', '=', 1).first()
+    const deletedUser = await db.table('users').where('id', '=', 1).first()
     expect(deletedUser).toBeNull()
 
     // Verify other records still exist
-    const remainingUsers = await db.select().from('users').get()
+    const remainingUsers = await db.table('users').get()
     expect(remainingUsers.length).toBe(3)
   })
 
@@ -48,11 +48,11 @@ describe('DELETE Query Builder', () => {
     expect(result[0].active).toBe(false)
 
     // Verify inactive users were deleted
-    const inactiveUsers = await db.select().from('users').where('active', '=', false).get()
+    const inactiveUsers = await db.table('users').where('active', '=', false).get()
     expect(inactiveUsers.length).toBe(0)
 
     // Verify active users still exist
-    const activeUsers = await db.select().from('users').where('active', '=', true).get()
+    const activeUsers = await db.table('users').where('active', '=', true).get()
     expect(activeUsers.length).toBe(3)
   })
 
@@ -68,11 +68,11 @@ describe('DELETE Query Builder', () => {
     expect(result.map((user) => user.id).sort()).toEqual([1, 2, 3].sort())
 
     // Verify the records were deleted
-    const deletedUsers = await db.select().from('users').whereIn('id', [1, 2, 3]).get()
+    const deletedUsers = await db.table('users').whereIn('id', [1, 2, 3]).get()
     expect(deletedUsers.length).toBe(0)
 
     // Verify remaining record exists
-    const remainingUsers = await db.select().from('users').get()
+    const remainingUsers = await db.table('users').get()
     expect(remainingUsers.length).toBe(1)
     expect(remainingUsers[0]?.id).toBe(4)
   })
@@ -92,7 +92,7 @@ describe('DELETE Query Builder', () => {
     expect(result[0].age).toBeNull()
 
     // Verify null age users were deleted
-    const nullAgeUsers = await db.select().from('users').whereNull('age').get()
+    const nullAgeUsers = await db.table('users').whereNull('age').get()
     expect(nullAgeUsers.length).toBe(0)
   })
 
@@ -107,7 +107,7 @@ describe('DELETE Query Builder', () => {
     expect(result.length).toBe(4)
 
     // Verify all users with age were deleted
-    const usersWithAge = await db.select().from('users').whereNotNull('age').get()
+    const usersWithAge = await db.table('users').whereNotNull('age').get()
     expect(usersWithAge.length).toBe(0)
   })
 
@@ -122,7 +122,7 @@ describe('DELETE Query Builder', () => {
     expect(result.length).toBe(1)
 
     // Verify the record was deleted
-    const deletedUser = await db.select().from('users').where('id', '=', 1).first()
+    const deletedUser = await db.table('users').where('id', '=', 1).first()
     expect(deletedUser).toBeNull()
   })
 
@@ -185,7 +185,7 @@ describe('DELETE Query Builder', () => {
     expect(result.every((user) => user.active === true && user.age > 25)).toBe(true)
 
     // Verify the records were deleted
-    const deletedUsers = await db.select().from('users').where('active', '=', true).where('age', '>', 25).get()
+    const deletedUsers = await db.table('users').where('active', '=', true).where('age', '>', 25).get()
     expect(deletedUsers.length).toBe(0)
   })
 
@@ -196,7 +196,7 @@ describe('DELETE Query Builder', () => {
     expect(result.length).toBe(0)
 
     // Verify no records were deleted
-    const allUsers = await db.select().from('users').get()
+    const allUsers = await db.table('users').get()
     expect(allUsers.length).toBe(4)
   })
 
@@ -211,7 +211,7 @@ describe('DELETE Query Builder', () => {
     expect(result.length).toBe(4)
 
     // Verify all records were deleted
-    const allUsers = await db.select().from('users').get()
+    const allUsers = await db.table('users').get()
     expect(allUsers.length).toBe(0)
   })
 
@@ -228,7 +228,7 @@ describe('DELETE Query Builder', () => {
     expect(result[0].id).toBe(1)
 
     // Verify the user was deleted
-    const deletedUser = await db.select().from('users').where('id', '=', 1).first()
+    const deletedUser = await db.table('users').where('id', '=', 1).first()
     expect(deletedUser).toBeNull()
 
     // Note: Posts with user_id = 1 will still exist unless CASCADE is set up

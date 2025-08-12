@@ -563,8 +563,8 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    * Executes the query and returns the first result
    * @returns {Promise<M & S | null>} First result
    */
-  public async first<S>(): Promise<M & S | null>
-  public async first<T, S>(): Promise<T & S | null>
+  public async first<S>(): Promise<(M & S) | null>
+  public async first<T, S>(): Promise<(T & S) | null>
   public async first(): Promise<M | null>
   public async first<T = any>(): Promise<T | null> {
     const originalLimit = this.limitValue
