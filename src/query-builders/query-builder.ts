@@ -68,7 +68,10 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    * @param {SelectColumn | SelectColumn[]} [columns] - Columns to select (defaults to '*')
    * @returns {QueryBuilder} Query builder chain for method chaining
    */
-  public select(columns?: SelectColumn | SelectColumn[]): QueryBuilder<M> {
+  public select(...columns: SelectColumn[]): QueryBuilder<M>
+  public select(column: SelectColumn): QueryBuilder<M>
+  public select(columns: SelectColumn[]): QueryBuilder<M>
+  public select(columns?: SelectColumn | SelectColumn[], ...rest: SelectColumn[]): QueryBuilder<M> {
     this.queryMode = 'select'
 
     if (!columns) {
@@ -102,6 +105,10 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
           `${this.sqlHelper.safeEscapeIdentifier(column)} AS ${this.sqlHelper.safeEscapeIdentifier(alias)}`
       )
       this.selectColumns.push(...newColumns)
+    }
+
+    if (rest.length > 0) {
+      this.select(rest)
     }
 
     return this
@@ -554,8 +561,10 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
 
   /**
    * Executes the query and returns the first result
-   * @returns {Promise<T | null>} First result or null if no results
+   * @returns {Promise<M & S | null>} First result
    */
+  public async first<S>(): Promise<M & S | null>
+  public async first<T, S>(): Promise<T & S | null>
   public async first(): Promise<M | null>
   public async first<T = any>(): Promise<T | null> {
     const originalLimit = this.limitValue
@@ -570,6 +579,12 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
     return result[0] || null
   }
 
+  /**
+   * Executes the query and returns the results
+   * @returns {Promise<Array<M & S> | Array<T & S> | M[] | T[]>} Results
+   */
+  public async get<S>(): Promise<Array<M & S>>
+  public async get<T, S>(): Promise<Array<T & S>>
   public async get(): Promise<M[]>
   public async get<T = any>(): Promise<T[]> {
     const query = this.buildQuery()

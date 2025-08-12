@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'bun:test'
 import { cleanupTestData, db, insertTestData, setupTestTables } from './setup'
-import { Model, column } from '../index'
+import { Model, avg, column } from '../index'
 
 class User extends Model {
   @column({ primary: true })
@@ -48,6 +48,15 @@ describe('Model', () => {
     expect(data.full_name).toBe('My name is John Doe')
     expect(data.email).toBe('john.doe@example.com')
     expect(data.created_at).toBeDefined
+  })
+
+  it('should include avg in select', async () => {
+    const user = await User.query()
+      .select('active', avg('age'))
+      .groupBy('active')
+      .where('active', false)
+      .first<{ ageAvg: number }>()
+    expect(user?.ageAvg).toBe(35)
   })
 
   it('should create a new user', async () => {
