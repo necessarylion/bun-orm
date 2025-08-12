@@ -225,6 +225,27 @@ const users = await db
   .delete()
 ```
 
+#### Aggregation Queries, SUM, AVG, COUNT etc...
+
+```typescript
+// Count records
+const count = await db.table('users').count()
+
+// Sum records
+const sum = await db.table('users').sum('age')
+
+// Average records
+const avg = await db.table('users').avg('age')
+
+// add count in the selection
+const count = await db.table('users')
+  .select('age', count('age')) // support count, sum, avg etc..
+  .groupBy('active')
+  .get<{age_count: number}()
+console.log(count.age_count)
+```
+
+
 ### 3. Models (ORM)
 
 Bun ORM provides a powerful Model system for object-relational mapping (ORM) functionality. Models allow you to work with database records as objects with methods and properties.
