@@ -41,6 +41,7 @@ describe('Model', () => {
       name: 'John Doe',
       email: 'john.doe@example.com',
       age: 20,
+      createdTime: new Date(),
     })
     const data = user.serialize()
     expect(data.id).toBeDefined()
@@ -60,15 +61,19 @@ describe('Model', () => {
   })
 
   it('should create a new user', async () => {
-    const user = await User.create({
+    const time = new Date()
+    const users = await User.insert({
       name: 'John Doe',
       email: 'john.doe@example.com',
       age: 20,
+      createdTime: time,
     })
+    const user = users[0] as User
     expect(user.id).toBeDefined()
     expect(user).toBeDefined()
     expect(user.name).toBe('John Doe')
     expect(user.email).toBe('john.doe@example.com')
+    expect(user.createdTime.toISOString()).toBe(time.toISOString())
   })
 
   it('should find a user by id', async () => {

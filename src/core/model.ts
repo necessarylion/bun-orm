@@ -1,6 +1,6 @@
 import { getColumns } from '../decorators/column'
 import { type QueryBuilder, spark } from './spark'
-import { parseTableName } from '../utils/model-helper'
+import { parseTableName, toSnakeCase } from '../utils/model-helper'
 import ModelQueryBuilder from '../query-builders/model-query-builder'
 import type { Transaction } from './transaction'
 
@@ -114,7 +114,9 @@ export abstract class Model implements Serializable<Record<string, any>> {
     this: T,
     data: Partial<InstanceType<T>> | Partial<InstanceType<T>>[]
   ): Promise<InstanceType<T>[]> {
-    return this.db().insert(data)
+    const columns = getColumns(this)
+    const columnMap = new Map(columns.map((col: any) => [col.propertyKey, col.name]))
+    return this.db().insert(toSnakeCase(data, columnMap))
   }
 
   /**
@@ -125,8 +127,8 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @throws Error if the creation fails
    */
   static async create<T extends typeof Model>(this: T, data: Partial<InstanceType<T>>): Promise<InstanceType<T>> {
-    const results = await this.db().insert(data)
-    if (!results || results.length === 0) throw new Error('Failed to create')
+    const results = await this.insert(data)
+    if (!results || results.length === 0 || !results[0]) throw new Error('Failed to create')
     return results[0]
   }
 
