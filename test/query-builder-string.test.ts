@@ -143,4 +143,35 @@ describe('QueryBuilder string generation', () => {
     expect(sql.replace(/\s+/g, ' ')).toBe('DELETE FROM "users" WHERE "id" = $1 RETURNING "id", "name"')
     expect(params).toEqual([1])
   })
+
+  it('should generate a basic UPSERT query', async () => {
+    await db.table('users').onConflict('email').upsert({ name: 'John', age: 30, email: 'john@example.com' })
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
+    expect(sql.replace(/\s+/g, ' ')).toBe(
+      'INSERT INTO "users" ("name", "age", "email") VALUES ($1, $2, $3) ON CONFLICT ("email") DO UPDATE SET "name" = $4, "age" = $5, "email" = $6 RETURNING *'
+    )
+    expect(params).toEqual(['John', 30, 'john@example.com', 'John', 30, 'john@example.com'])
+  })
+
+  it('should generate an UPSERT query with multiple conflict columns', async () => {
+    await db.table('users').onConflict(['name', 'email']).upsert({ name: 'John', age: 30, email: 'john@example.com' })
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
+    expect(sql.replace(/\s+/g, ' ')).toBe(
+      'INSERT INTO "users" ("name", "age", "email") VALUES ($1, $2, $3) ON CONFLICT ("name", "email") DO UPDATE SET "name" = $4, "age" = $5, "email" = $6 RETURNING *'
+    )
+    expect(params).toEqual(['John', 30, 'john@example.com', 'John', 30, 'john@example.com'])
+  })
+
+  it('should generate an UPSERT query with a RETURNING clause', async () => {
+    await db
+      .table('users')
+      .onConflict('email')
+      .returning(['id', 'name', 'email'])
+      .upsert({ name: 'John', age: 30, email: 'john@example.com' })
+    const [sql, params] = executeQuerySpy.mock.calls[0] as [string, any[]]
+    expect(sql.replace(/\s+/g, ' ')).toBe(
+      'INSERT INTO "users" ("name", "age", "email") VALUES ($1, $2, $3) ON CONFLICT ("email") DO UPDATE SET "name" = $4, "age" = $5, "email" = $6 RETURNING "id", "name", "email"'
+    )
+    expect(params).toEqual(['John', 30, 'john@example.com', 'John', 30, 'john@example.com'])
+  })
 })

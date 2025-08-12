@@ -203,6 +203,48 @@ const users = await db
   .update({ age: 40 })
 ```
 
+#### UPSERT Queries
+
+Upsert (INSERT ... ON CONFLICT) allows you to insert a record if it doesn't exist, or update it if it does exist based on a conflict condition.
+
+```typescript
+// Upsert with single conflict column
+const user = await db
+  .table('users')
+  .onConflict('email')
+  .returning(['id', 'name', 'email'])
+  .upsert({
+    name: 'John Doe',
+    email: 'john@example.com',
+    age: 30,
+    active: true
+  })
+
+// Upsert with multiple conflict columns
+const user = await db
+  .table('users')
+  .onConflict(['name', 'email'])
+  .returning(['id', 'name', 'email', 'age'])
+  .upsert({
+    name: 'John Doe',
+    email: 'john@example.com',
+    age: 30,
+    active: true
+  })
+
+// Upsert without returning data
+await db
+  .table('users')
+  .onConflict('email')
+  .upsert({
+    name: 'John Doe',
+    email: 'john@example.com',
+    age: 30
+  })
+```
+
+**Note:** The table must have a unique constraint on the conflict column(s) for upsert to work properly.
+
 #### DELETE Queries
 
 ```typescript
@@ -584,6 +626,12 @@ interface ConnectionConfig {
 #### INSERT
 - `table(table: string)` - Specify the table to insert into
 - `insert(data: Record<string, any> | Record<string, any>[])` - Insert data
+- `returning(columns: string[])` - Specify columns to return
+
+#### UPSERT
+- `table(table: string)` - Specify the table to upsert into
+- `onConflict(columns: string | string[])` - Specify conflict column(s) for ON CONFLICT clause
+- `upsert(data: Record<string, any>)` - Upsert data (insert or update on conflict)
 - `returning(columns: string[])` - Specify columns to return
 
 #### UPDATE

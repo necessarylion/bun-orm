@@ -11,7 +11,9 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
   private insertData: Record<string, any>[] = []
   private updateData: Record<string, any> = {}
   private returningColumns: string[] = ['*']
-  private queryMode: 'select' | 'insert' | 'update' | 'delete' = 'select'
+  private queryMode: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select'
+  private upsertData: Record<string, any> = {}
+  private conflictColumns: string[] = []
 
   /**
    * Sets the transaction context
@@ -111,6 +113,28 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
       this.select(rest)
     }
 
+    return this
+  }
+
+  /**
+   * Executes an UPSERT operation
+   * @param {Record<string, any>} data - Data to upsert
+   * @returns {Promise<any>} Upsert result
+   */
+  public async upsert(data: Record<string, any>): Promise<any> {
+    this.queryMode = 'upsert'
+    this.upsertData = data
+    const query = this.buildQuery()
+    return await this.executeQuery(query.sql, query.params)
+  }
+
+  /**
+   * Sets the conflict columns for upsert operations (ON CONFLICT)
+   * @param {string | string[]} columns - Column(s) to check for conflicts
+   * @returns {QueryBuilder} Query builder instance
+   */
+  public onConflict(columns: string | string[]): QueryBuilder<M> {
+    this.conflictColumns = Array.isArray(columns) ? columns : [columns]
     return this
   }
 
@@ -627,6 +651,8 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
         return this.buildUpdateQuery()
       case 'delete':
         return this.buildDeleteQuery()
+      case 'upsert':
+        return this.buildUpsertQuery()
       default:
         throw new Error('Invalid query mode')
     }
@@ -802,5 +828,54 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
       sql,
       params: whereClause.params,
     }
+  }
+
+  /**
+   * Builds an UPSERT query
+   * @returns {{ sql: string; params: any[] }} SQL query and parameters
+   */
+  private buildUpsertQuery(): { sql: string; params: any[] } {
+    if (!this.fromTable) {
+      throw new Error('Table name is required. Use .table() method.')
+    }
+
+    if (Object.keys(this.upsertData).length === 0) {
+      throw new Error('No data provided for upsert. Use .upsert() method.')
+    }
+
+    if (this.conflictColumns.length === 0) {
+      throw new Error('Conflict columns are required for upsert. Use .onConflict() method.')
+    }
+
+    const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
+    const columns = Object.keys(this.upsertData)
+    const escapedColumns = this.sqlHelper.buildColumnList(columns)
+    const placeholders = this.sqlHelper.buildValuePlaceholders(columns.length)
+    const conflictClause = ` ON CONFLICT (${this.sqlHelper.buildColumnList(this.conflictColumns)})`
+
+    // Build the UPDATE SET clause with proper parameter numbering
+    const { sql: setClause, params: setParams } = this.sqlHelper.buildSetClause(this.upsertData)
+
+    // Adjust parameter numbers in SET clause to account for INSERT parameters
+    let adjustedSetClause = setClause
+    for (let i = 0; i < setParams.length; i++) {
+      const oldPlaceholder = `$${i + 1}`
+      const newPlaceholder = `$${columns.length + i + 1}`
+      adjustedSetClause = adjustedSetClause.replace(new RegExp(`\\${oldPlaceholder}(?!\\d)`, 'g'), newPlaceholder)
+    }
+
+    const updateClause = ` DO UPDATE SET ${adjustedSetClause}`
+    const returningClause =
+      this.returningColumns.length > 0
+        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
+        : ''
+
+    const sql = `INSERT INTO ${tableClause} (${escapedColumns}) VALUES (${placeholders})${conflictClause}${updateClause}${returningClause}`
+
+    // Combine parameters: INSERT values first, then UPDATE values
+    const insertParams = Object.values(this.upsertData)
+    const allParams = [...insertParams, ...setParams]
+
+    return { sql, params: allParams }
   }
 }
