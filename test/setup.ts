@@ -7,7 +7,7 @@ export const testConfig: ConnectionConfig = {
   database: process.env.DB_NAME || 'bun_orm',
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
-  debug: false
+  debug: false,
 }
 
 // Initialize spark with test configuration

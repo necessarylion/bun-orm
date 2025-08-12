@@ -500,6 +500,39 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
     return this
   }
 
+  public async avg(column: string): Promise<number> {
+    const originalSelect = this.selectColumns
+    this.selectColumns = [`AVG(${column}) as avg`]
+
+    const query = this.buildQuery()
+    const result = await this.executeQuery<{ avg: string | number }>(query.sql, query.params)
+
+    // Restore original select
+    this.selectColumns = originalSelect
+    const avg = result[0]?.avg || 0
+
+    return typeof avg === 'string' ? parseFloat(avg) : avg
+  }
+
+  /**
+   * Executes a SUM query
+   * @param {string} column - Column to sum
+   * @returns {Promise<number>} Sum result
+   */
+  public async sum(column: string): Promise<number> {
+    const originalSelect = this.selectColumns
+    this.selectColumns = [`SUM(${column}) as sum`]
+
+    const query = this.buildQuery()
+    const result = await this.executeQuery<{ sum: string | number }>(query.sql, query.params)
+
+    // Restore original select
+    this.selectColumns = originalSelect
+
+    const sum = result[0]?.sum || 0
+    return typeof sum === 'string' ? parseFloat(sum) : sum
+  }
+
   /**
    * Executes a COUNT query
    * @param {string} [column='*'] - Column to count

@@ -679,6 +679,11 @@ MIT
 
 - [x] Manual transaction support
 - [ ] Aggregation functions (COUNT, SUM, AVG, etc.)
+  - [x] COUNT
+  - [x] SUM
+  - [x] AVG
+  - [ ] MIN
+  - [ ] MAX
 - [ ] Advanced JOIN support
 - [x] Query logging/debugging
 - [ ] Multiple database support (MySQL, SQLite)

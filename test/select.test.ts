@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
 import { db, setupTestTables, cleanupTestData, insertTestData } from './setup'
+import { avg, count, sum } from '../index'
 
 describe('SELECT Query Builder', () => {
   beforeAll(async () => {
@@ -296,14 +297,59 @@ describe('SELECT Query Builder', () => {
     expect(user.active).toBe(true)
   })
 
-  it('should support where raw condition', async () => {
-    const query = db
-      .from('users')
-      .select()
-      .where('active', true)
-      .where('age', '=', 28)
-      .whereRaw('email = alice@example.com')
+  it('should sum column', async () => {
+    const sum = await db.table('users').sum('age')
+    expect(sum).toBe(118)
+  })
 
-    console.log(query.toSql())
+  it('should count rows', async () => {
+    const count = await db.table('users').count()
+    expect(count).toBe(4)
+  })
+
+  it('should result average value', async () => {
+    const count = await db.table('users').avg('age')
+    expect(count).toBe(29.5)
+  })
+
+  it('should include count in select', async () => {
+    const user = await db
+      .table('users')
+      .select(['active', count('active')])
+      .groupBy('active')
+      .get()
+
+    expect(user).toBeDefined()
+    expect(user.length).toBe(2)
+    expect(user[0].active).toBe(false)
+    expect(user[0].active_count).toBe(1)
+    expect(user[1].active).toBe(true)
+    expect(user[1].active_count).toBe(3)
+  })
+
+  it('should include sum in select', async () => {
+    const user = await db
+      .table('users')
+      .select(['active', sum('age')])
+      .groupBy('active')
+      .get()
+
+    expect(user).toBeDefined()
+    expect(user.length).toBe(2)
+    expect(user[0].age_sum).toBe(35)
+    expect(user[1].age_sum).toBe(83)
+  })
+
+  it('should include avg in select', async () => {
+    const user = await db
+      .table('users')
+      .select(['active', avg('age')])
+      .groupBy('active')
+      .get()
+
+    expect(user).toBeDefined()
+    expect(user.length).toBe(2)
+    expect(user[0].age_avg).toBe(35)
+    expect(user[1].age_avg).toBe(28)
   })
 })

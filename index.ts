@@ -31,3 +31,5 @@ export type {
   QueryResult,
   TransactionCallback,
 } from './src/types'
+
+export { count, sum, avg } from './src/utils/aggregation'
