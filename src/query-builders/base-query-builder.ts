@@ -16,19 +16,19 @@ import type { Model } from '../core/model'
 import { cloneInstance } from '../utils/model-helper'
 
 export abstract class BaseQueryBuilder {
-  protected connection: DatabaseConnection
-  protected sql: Bun.SQL
-  protected whereConditions: WhereCondition[] = []
-  protected whereGroupConditions: WhereGroupCondition[] = []
-  protected joins: JoinCondition[] = []
-  protected orderByConditions: OrderByCondition[] = []
-  protected groupByConditions: GroupByCondition[] = []
-  protected havingCondition: string = ''
-  protected limitValue: number | null = null
-  protected offsetValue: number | null = null
-  protected distinctFlag: boolean = false
-  protected sqlHelper: SQLHelper = SQLHelper.getInstance()
-  protected modelInstance: Model
+  public connection: DatabaseConnection
+  public sql: Bun.SQL
+  public whereConditions: WhereCondition[] = []
+  public whereGroupConditions: WhereGroupCondition[] = []
+  public joins: JoinCondition[] = []
+  public orderByConditions: OrderByCondition[] = []
+  public groupByConditions: GroupByCondition[] = []
+  public havingCondition: string = ''
+  public limitValue: number | null = null
+  public offsetValue: number | null = null
+  public distinctFlag: boolean = false
+  public sqlHelper: SQLHelper = SQLHelper.getInstance()
+  public modelInstance: Model
 
   /**
    * Hydrates a model instance with data
@@ -104,61 +104,6 @@ export abstract class BaseQueryBuilder {
    */
   protected addGroupBy(column: string): void {
     this.groupByConditions.push({ column })
-  }
-
-  /**
-   * Builds the WHERE clause from conditions
-   * @returns {{ sql: string; params: any[] }} SQL fragment and parameters
-   */
-  protected buildWhereClause(): { sql: string; params: any[] } {
-    return this.sqlHelper.buildWhereConditions(this.whereConditions, this.whereGroupConditions)
-  }
-
-  /**
-   * Builds the JOIN clause from join conditions
-   * @returns {string} SQL JOIN clause
-   */
-  protected buildJoinClause(): string {
-    return this.sqlHelper.buildJoinClause(this.joins)
-  }
-
-  /**
-   * Builds the ORDER BY clause from order conditions
-   * @returns {string} SQL ORDER BY clause
-   */
-  protected buildOrderByClause(): string {
-    return this.sqlHelper.buildOrderByClause(this.orderByConditions)
-  }
-
-  /**
-   * Builds the GROUP BY clause from group conditions
-   * @returns {string} SQL GROUP BY clause
-   */
-  protected buildGroupByClause(): string {
-    return this.sqlHelper.buildGroupByClause(this.groupByConditions.map((g) => g.column))
-  }
-
-  /**
-   * Builds the LIMIT and OFFSET clause
-   * @returns {string} SQL LIMIT/OFFSET clause
-   */
-  protected buildLimitOffsetClause(): string {
-    let clause = ''
-    if (this.limitValue !== null) {
-      clause += ` LIMIT ${this.limitValue}`
-    }
-    if (this.offsetValue !== null) {
-      clause += ` OFFSET ${this.offsetValue}`
-    }
-    return clause
-  }
-
-  /**
-   * Builds the DISTINCT clause
-   * @returns {string} SQL DISTINCT clause
-   */
-  protected buildDistinctClause(): string {
-    return this.distinctFlag ? 'DISTINCT ' : ''
   }
 
   /**

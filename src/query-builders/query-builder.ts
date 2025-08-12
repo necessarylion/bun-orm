@@ -2,18 +2,21 @@ import { BaseQueryBuilder } from './base-query-builder'
 import type { FullWhereOperators, OrderDirection, SelectColumn, WhereCallback } from '../types'
 import { ALLOWED_WHERE_OPERATORS } from '../utils/sql-constants'
 import type { Transaction } from '../core/transaction'
+import type { DatabaseQueryBuilder } from './database-query-builder'
+import { PostgresQueryBuilder } from './postgres-query-builder'
 
 export class QueryBuilder<M> extends BaseQueryBuilder {
   private alreadyRemovedStar: boolean = false
-  private selectColumns: string[] = ['*']
-  private fromTable: string = ''
-  private fromAlias: string = ''
-  private insertData: Record<string, any>[] = []
-  private updateData: Record<string, any> = {}
-  private returningColumns: string[] = ['*']
-  private queryMode: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select'
-  private upsertData: Record<string, any> = {}
-  private conflictColumns: string[] = []
+  public selectColumns: string[] = ['*']
+  public fromTable: string = ''
+  public fromAlias: string = ''
+  public insertData: Record<string, any>[] = []
+  public updateData: Record<string, any> = {}
+  public returningColumns: string[] = ['*']
+  public queryMode: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select'
+  public upsertData: Record<string, any> = {}
+  public conflictColumns: string[] = []
+  public databaseQueryBuilder: DatabaseQueryBuilder = PostgresQueryBuilder.getInstance()
 
   /**
    * Sets the transaction context
@@ -531,6 +534,11 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
     return this
   }
 
+  /**
+   * Executes an AVG query
+   * @param {string} column - Column to average
+   * @returns {Promise<number>} Average result
+   */
   public async avg(column: string): Promise<number> {
     const originalSelect = this.selectColumns
     this.selectColumns = [`AVG(${column}) as avg`]
@@ -644,238 +652,17 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
   private buildQuery(): { sql: string; params: any[] } {
     switch (this.queryMode) {
       case 'select':
-        return this.buildSelectQuery()
+        return this.databaseQueryBuilder.buildSelectQuery(this)
       case 'insert':
-        return this.buildInsertQuery()
+        return this.databaseQueryBuilder.buildInsertQuery(this)
       case 'update':
-        return this.buildUpdateQuery()
+        return this.databaseQueryBuilder.buildUpdateQuery(this)
       case 'delete':
-        return this.buildDeleteQuery()
+        return this.databaseQueryBuilder.buildDeleteQuery(this)
       case 'upsert':
-        return this.buildUpsertQuery()
+        return this.databaseQueryBuilder.buildUpsertQuery(this)
       default:
         throw new Error('Invalid query mode')
     }
-  }
-
-  /**
-   * Builds a SELECT query
-   * @returns {{ sql: string; params: any[] }} SQL query and parameters
-   */
-  private buildSelectQuery(): { sql: string; params: any[] } {
-    if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.')
-    }
-
-    const distinctClause = this.buildDistinctClause()
-    const selectClause = this.selectColumns.join(', ')
-    const fromClause = this.fromAlias
-      ? `${this.sqlHelper.safeEscapeIdentifier(this.fromTable)} AS ${this.sqlHelper.safeEscapeIdentifier(this.fromAlias)}`
-      : this.sqlHelper.safeEscapeIdentifier(this.fromTable)
-
-    const joinClause = this.buildJoinClause()
-    const whereClause = this.buildWhereClause()
-    const groupByClause = this.buildGroupByClause()
-    const havingClause = this.havingCondition ? ` HAVING ${this.havingCondition}` : ''
-    const orderByClause = this.buildOrderByClause()
-    const limitOffsetClause = this.buildLimitOffsetClause()
-
-    let sql = `SELECT ${distinctClause}${selectClause} FROM ${fromClause}`
-
-    if (joinClause) {
-      sql += ` ${joinClause}`
-    }
-
-    if (whereClause.sql) {
-      sql += ` WHERE ${whereClause.sql}`
-    }
-
-    if (groupByClause) {
-      sql += ` GROUP BY ${groupByClause}`
-    }
-
-    sql += havingClause
-
-    if (orderByClause) {
-      sql += ` ORDER BY ${orderByClause}`
-    }
-
-    sql += limitOffsetClause
-
-    return {
-      sql,
-      params: whereClause.params,
-    }
-  }
-
-  /**
-   * Builds an INSERT query
-   * @returns {{ sql: string; params: any[] }} SQL query and parameters
-   */
-  private buildInsertQuery(): { sql: string; params: any[] } {
-    if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.')
-    }
-
-    if (this.insertData.length === 0) {
-      throw new Error('No data provided for insert. Use .insert() method.')
-    }
-
-    const { columns, placeholders, params } = this.sqlHelper.buildInsertValues(this.insertData)
-    const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
-    const returningClause =
-      this.returningColumns.length > 0
-        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
-        : ''
-
-    const sql = `INSERT INTO ${tableClause} (${columns}) VALUES ${placeholders}${returningClause}`
-
-    return { sql, params }
-  }
-
-  /**
-   * Builds an UPDATE query
-   * @returns {{ sql: string; params: any[] }} SQL query and parameters
-   */
-  private buildUpdateQuery(): { sql: string; params: any[] } {
-    if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.')
-    }
-
-    if (Object.keys(this.updateData).length === 0) {
-      throw new Error('No data provided for update. Use .update() method.')
-    }
-
-    const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
-    const { sql: setClause, params: setParams } = this.sqlHelper.buildSetClause(this.updateData)
-    const whereClause = this.buildWhereClause()
-    const returningClause =
-      this.returningColumns.length > 0
-        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
-        : ''
-
-    let sql = `UPDATE ${tableClause} SET ${setClause}`
-
-    if (whereClause.sql) {
-      sql += ` WHERE ${whereClause.sql}`
-    }
-
-    sql += returningClause
-
-    // Need to adjust the parameter numbers in the WHERE clause
-    let finalSql = sql
-    const finalParams = [...setParams]
-
-    if (whereClause.sql) {
-      // Replace parameter placeholders in WHERE clause to account for SET parameters
-      let whereSql = whereClause.sql
-      const whereParams = [...whereClause.params]
-
-      // Sort the replacements by parameter number (descending) to avoid conflicts
-      const replacements: Array<{ old: string; new: string; index: number }> = []
-      for (let i = 0; i < whereParams.length; i++) {
-        const oldPlaceholder = `$${i + 1}`
-        const newPlaceholder = `$${setParams.length + i + 1}`
-        replacements.push({
-          old: oldPlaceholder,
-          new: newPlaceholder,
-          index: i,
-        })
-      }
-
-      // Sort by index descending to replace from highest to lowest
-      replacements.sort((a, b) => b.index - a.index)
-
-      for (const replacement of replacements) {
-        whereSql = whereSql.replace(new RegExp(`\\${replacement.old}(?!\\d)`, 'g'), replacement.new)
-      }
-
-      finalSql = finalSql.replace(whereClause.sql, whereSql)
-      finalParams.push(...whereParams)
-    }
-
-    return {
-      sql: finalSql,
-      params: finalParams,
-    }
-  }
-
-  /**
-   * Builds a DELETE query
-   * @returns {{ sql: string; params: any[] }} SQL query and parameters
-   */
-  private buildDeleteQuery(): { sql: string; params: any[] } {
-    if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.')
-    }
-
-    const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
-    const whereClause = this.buildWhereClause()
-    const returningClause =
-      this.returningColumns.length > 0
-        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
-        : ''
-
-    let sql = `DELETE FROM ${tableClause}`
-
-    if (whereClause.sql) {
-      sql += ` WHERE ${whereClause.sql}`
-    }
-
-    sql += returningClause
-
-    return {
-      sql,
-      params: whereClause.params,
-    }
-  }
-
-  /**
-   * Builds an UPSERT query
-   * @returns {{ sql: string; params: any[] }} SQL query and parameters
-   */
-  private buildUpsertQuery(): { sql: string; params: any[] } {
-    if (!this.fromTable) {
-      throw new Error('Table name is required. Use .table() method.')
-    }
-
-    if (Object.keys(this.upsertData).length === 0) {
-      throw new Error('No data provided for upsert. Use .upsert() method.')
-    }
-
-    if (this.conflictColumns.length === 0) {
-      throw new Error('Conflict columns are required for upsert. Use .onConflict() method.')
-    }
-
-    const tableClause = this.sqlHelper.safeEscapeIdentifier(this.fromTable)
-    const columns = Object.keys(this.upsertData)
-    const escapedColumns = this.sqlHelper.buildColumnList(columns)
-    const placeholders = this.sqlHelper.buildValuePlaceholders(columns.length)
-    const conflictClause = ` ON CONFLICT (${this.sqlHelper.buildColumnList(this.conflictColumns)})`
-
-    // Build the UPDATE SET clause with proper parameter numbering
-    const { sql: setClause, params: setParams } = this.sqlHelper.buildSetClause(this.upsertData)
-
-    // Adjust parameter numbers in SET clause to account for INSERT parameters
-    let adjustedSetClause = setClause
-    for (let i = 0; i < setParams.length; i++) {
-      const oldPlaceholder = `$${i + 1}`
-      const newPlaceholder = `$${columns.length + i + 1}`
-      adjustedSetClause = adjustedSetClause.replace(new RegExp(`\\${oldPlaceholder}(?!\\d)`, 'g'), newPlaceholder)
-    }
-
-    const updateClause = ` DO UPDATE SET ${adjustedSetClause}`
-    const returningClause =
-      this.returningColumns.length > 0
-        ? ` RETURNING ${this.returningColumns.includes('*') ? '*' : this.sqlHelper.buildColumnList(this.returningColumns)}`
-        : ''
-
-    const sql = `INSERT INTO ${tableClause} (${escapedColumns}) VALUES (${placeholders})${conflictClause}${updateClause}${returningClause}`
-
-    // Combine parameters: INSERT values first, then UPDATE values
-    const insertParams = Object.values(this.upsertData)
-    const allParams = [...insertParams, ...setParams]
-
-    return { sql, params: allParams }
   }
 }
