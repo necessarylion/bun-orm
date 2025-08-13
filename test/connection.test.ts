@@ -6,6 +6,7 @@ describe('Database Connection', () => {
 
   beforeAll(() => {
     const config: ConnectionConfig = {
+      driver: 'postgres',
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5433'),
       database: process.env.DB_NAME || 'bun_orm',

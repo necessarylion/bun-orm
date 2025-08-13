@@ -1,17 +1,14 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
-import { db, setupTestTables, cleanupTestData } from './setup'
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
+import { db, setupTestTables, cleanupTestData, insertTestData } from './setup'
 
 describe('UPSERT Query Builder', () => {
-  beforeAll(async () => {
-    await setupTestTables()
-  })
-
   beforeEach(async () => {
-    await cleanupTestData()
+    await setupTestTables()
+    await insertTestData()
   })
 
-  afterAll(async () => {
-    // Connection is shared across tests, don't close here
+  afterEach(async () => {
+    await cleanupTestData()
   })
 
   it('should insert a new record when no conflict exists', async () => {
@@ -64,7 +61,7 @@ describe('UPSERT Query Builder', () => {
     expect(result[0].name).toBe('Updated User') // Updated name
     expect(result[0].email).toBe('test@example.com') // Same email
     expect(result[0].age).toBe(30) // Updated age
-    expect(result[0].active).toBe(false) // Updated active status
+    expect(result[0].active).toBeFalsy() // Updated active status
 
     // Verify only one record exists with this email
     const allUsers = await db.table('users').where('email', '=', 'test@example.com').get()
@@ -72,6 +69,6 @@ describe('UPSERT Query Builder', () => {
     expect(allUsers[0].name).toBe('Updated User')
     expect(allUsers[0].email).toBe('test@example.com')
     expect(allUsers[0].age).toBe(30)
-    expect(allUsers[0].active).toBe(false)
+    expect(allUsers[0].active).toBeFalsy()
   })
 })

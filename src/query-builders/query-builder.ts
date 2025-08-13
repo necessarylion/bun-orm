@@ -4,6 +4,8 @@ import { ALLOWED_WHERE_OPERATORS } from '../utils/sql-constants'
 import type { Transaction } from '../core/transaction'
 import type { DatabaseQueryBuilder } from './database-query-builder'
 import { PostgresQueryBuilder } from './postgres-query-builder'
+import { SQLiteQueryBuilder } from './sqlite-query-builder'
+import { getConnection } from '../core/connection'
 
 export class QueryBuilder<M> extends BaseQueryBuilder {
   private alreadyRemovedStar: boolean = false
@@ -12,11 +14,34 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
   public fromAlias: string = ''
   public insertData: Record<string, any>[] = []
   public updateData: Record<string, any> = {}
-  public returningColumns: string[] = ['*']
   public queryMode: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select'
   public upsertData: Record<string, any> = {}
   public conflictColumns: string[] = []
-  public databaseQueryBuilder: DatabaseQueryBuilder = PostgresQueryBuilder.getInstance()
+  public databaseQueryBuilder: DatabaseQueryBuilder
+
+  constructor(transactionContext?: any) {
+    super(transactionContext)
+    // Initialize the appropriate database query builder based on the current driver
+    this.databaseQueryBuilder = this.getDatabaseQueryBuilder()
+  }
+
+  /**
+   * Gets the appropriate database query builder based on the current driver
+   * @returns {DatabaseQueryBuilder} The appropriate query builder instance
+   */
+  private getDatabaseQueryBuilder(): DatabaseQueryBuilder {
+    const connection = getConnection()
+    const driver = connection.getDriver()
+
+    if (driver === 'sqlite') {
+      return SQLiteQueryBuilder.getInstance()
+    } else if (driver === 'postgres') {
+      return PostgresQueryBuilder.getInstance()
+    } else {
+      // Default to PostgreSQL for backward compatibility
+      return PostgresQueryBuilder.getInstance()
+    }
+  }
 
   /**
    * Sets the transaction context
@@ -24,7 +49,7 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    * @returns {QueryBuilder} Query builder instance
    */
   useTransaction(trx: Transaction): QueryBuilder<M> {
-    this.sql = trx.getTransactionContext()
+    this.setTransactionContext(trx.getTransactionContext())
     return this
   }
 

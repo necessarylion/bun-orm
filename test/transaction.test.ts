@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { spark, type Transaction, type Spark } from '../index'
+import { getAutoIncrementSQL } from './setup'
 
 describe('Transaction Tests', () => {
   let db: Spark
@@ -7,6 +8,7 @@ describe('Transaction Tests', () => {
   beforeAll(async () => {
     // Initialize database connection
     db = spark({
+      driver: 'postgres',
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5433'),
       database: process.env.DB_NAME || 'bun_orm',
@@ -21,7 +23,7 @@ describe('Transaction Tests', () => {
     // Create test table
     await db.raw(`
       CREATE TABLE IF NOT EXISTS transaction_test (
-        id SERIAL PRIMARY KEY,
+        id ${getAutoIncrementSQL()},
         name VARCHAR(255) NOT NULL,
         balance DECIMAL(10,2) DEFAULT 0
       )

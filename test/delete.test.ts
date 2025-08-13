@@ -1,18 +1,14 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { db, setupTestTables, cleanupTestData, insertTestData } from './setup'
 
 describe('DELETE Query Builder', () => {
-  beforeAll(async () => {
-    await setupTestTables()
-  })
-
   beforeEach(async () => {
-    await cleanupTestData()
+    await setupTestTables()
     await insertTestData()
   })
 
-  afterAll(async () => {
-    // Connection is shared across tests, don't close here
+  afterEach(async () => {
+    await cleanupTestData()
   })
 
   it('should delete a single record', async () => {
@@ -43,9 +39,11 @@ describe('DELETE Query Builder', () => {
 
     const result = await db.table('users').where('active', '=', false).delete()
 
+    console.log(result)
+
     expect(result).toBeDefined()
     expect(result.length).toBe(1) // Only Bob Johnson is inactive
-    expect(result[0].active).toBe(false)
+    expect(result[0].active).toBeFalsy()
 
     // Verify inactive users were deleted
     const inactiveUsers = await db.table('users').where('active', '=', false).get()
@@ -182,7 +180,7 @@ describe('DELETE Query Builder', () => {
 
     expect(result).toBeDefined()
     expect(result.length).toBe(2) // 2 users that are active and age > 25
-    expect(result.every((user) => user.active === true && user.age > 25)).toBe(true)
+    expect(result.every((user) => user.active && user.age > 25)).toBe(true)
 
     // Verify the records were deleted
     const deletedUsers = await db.table('users').where('active', '=', true).where('age', '>', 25).get()

@@ -107,7 +107,15 @@ export class Spark {
    */
   public raw(sql: string, params: any[] = []): Promise<any[]> {
     const connection = getConnection()
-    return connection.getSQL().unsafe(sql, params)
+    const driver = connection.getDriver()
+
+    if (driver === 'sqlite') {
+      const sqlite = connection.getSQLite()
+      const query = sqlite.query(sql)
+      return Promise.resolve(query.all(params as any))
+    } else {
+      return connection.getSQL().unsafe(sql, params)
+    }
   }
 
   /**
@@ -117,7 +125,14 @@ export class Spark {
    */
   public async dropTable(tableName: string, options: { cascade: boolean } = { cascade: false }): Promise<void> {
     const connection = getConnection()
-    await connection.getSQL().unsafe(`DROP TABLE IF EXISTS "${tableName}" ${options.cascade ? 'CASCADE' : ''}`)
+    const driver = connection.getDriver()
+
+    if (driver === 'sqlite') {
+      const sqlite = connection.getSQLite()
+      sqlite.run(`DROP TABLE IF EXISTS "${tableName}"`)
+    } else {
+      await connection.getSQL().unsafe(`DROP TABLE IF EXISTS "${tableName}" ${options.cascade ? 'CASCADE' : ''}`)
+    }
   }
 
   /**
@@ -125,9 +140,18 @@ export class Spark {
    * @param {string} tableName - Name of the table to truncate
    * @returns {Promise<void>}
    */
-  public async truncate(tableName: string): Promise<void> {
+  public async truncate(tableName: string, options: { cascade: boolean } = { cascade: false }): Promise<void> {
     const connection = getConnection()
-    await connection.getSQL().unsafe(`TRUNCATE TABLE "${tableName}"`)
+    const driver = connection.getDriver()
+
+    const cascade = options.cascade ? 'CASCADE' : ''
+
+    if (driver === 'sqlite') {
+      const sqlite = connection.getSQLite()
+      sqlite.run(`DELETE FROM "${tableName}" ${cascade}`)
+    } else {
+      await connection.getSQL().unsafe(`TRUNCATE TABLE "${tableName}" ${cascade}`)
+    }
   }
 
   /**
@@ -137,17 +161,29 @@ export class Spark {
    */
   public async hasTable(tableName: string): Promise<boolean> {
     const connection = getConnection()
-    const result = await connection.getSQL().unsafe(
-      `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = $1
-      ) as exists
-    `,
-      [tableName]
-    )
-    return result[0]?.exists || false
+    const driver = connection.getDriver()
+
+    if (driver === 'sqlite') {
+      const sqlite = connection.getSQLite()
+      const query = sqlite.query(`
+        SELECT name FROM sqlite_master 
+        WHERE type='table' AND name=?
+      `)
+      const result = query.get(tableName)
+      return !!result
+    } else {
+      const result = await connection.getSQL().unsafe(
+        `
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = $1
+        ) as exists
+      `,
+        [tableName]
+      )
+      return result[0]?.exists || false
+    }
   }
 
   // Connection management
@@ -177,26 +213,54 @@ export class Spark {
    */
   public async transaction<T = any>(callback: TransactionCallback<T>): Promise<T> {
     const connection = getConnection()
-    const sql = connection.getSQL()
+    const driver = connection.getDriver()
 
-    // Use Bun's callback-based transaction API
-    return await sql.begin(async (tx: any) => {
-      // Create transaction instance with the transaction context
-      const trx = new Transaction<any>(tx)
+    if (driver === 'sqlite') {
+      const sqlite = connection.getSQLite()
 
-      // Execute the callback with transaction context
-      return await callback(trx)
-    })
+      // SQLite transactions are handled differently
+      return await new Promise<T>((resolve, reject) => {
+        try {
+          sqlite.transaction(() => {
+            // Create transaction instance with the transaction context
+            const trx = new Transaction<any>(sqlite)
+
+            // Execute the callback with transaction context
+            return callback(trx)
+          })()
+          resolve(undefined as any)
+        } catch (error) {
+          reject(error)
+        }
+      })
+    } else {
+      const sql = connection.getSQL()
+
+      // Use Bun's callback-based transaction API
+      return await sql.begin(async (tx: any) => {
+        // Create transaction instance with the transaction context
+        const trx = new Transaction<any>(tx)
+
+        // Execute the callback with transaction context
+        return await callback(trx)
+      })
+    }
   }
 
   /**
    * Begins a manual transaction
    * @returns {Promise<Transaction>} Transaction instance
-   * @throws {Error} Manual transaction control is not supported
+   * @throws {Error} Manual transaction control is not supported for SQLite
    */
   public async beginTransaction(): Promise<Transaction<any>> {
-    // get bun sql connection
     const connection = getConnection()
+    const driver = connection.getDriver()
+
+    if (driver === 'sqlite') {
+      throw new Error('Manual transaction control is not supported for SQLite driver')
+    }
+
+    // get bun sql connection
     const sql = connection.getSQL()
     const reservedSql = await sql.reserve()
     await reservedSql`BEGIN`
