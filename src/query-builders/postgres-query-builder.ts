@@ -1,18 +1,135 @@
 import type { DatabaseQueryBuilder } from './database-query-builder'
 import { SQLHelper } from '../utils/sql-helper'
 import type { QueryBuilder } from './query-builder'
+import { SQL } from 'bun'
+import { getConnection } from '../core/connection'
+import { Transaction } from '../core/transaction'
 
 export class PostgresQueryBuilder implements DatabaseQueryBuilder {
   private sqlHelper: SQLHelper = SQLHelper.getInstance()
 
-  // singleton
-  private static instance: PostgresQueryBuilder
-  private constructor() {}
-  public static getInstance(): PostgresQueryBuilder {
-    if (!PostgresQueryBuilder.instance) {
-      PostgresQueryBuilder.instance = new PostgresQueryBuilder()
+  private sqlInstance: Bun.SQL
+
+  public constructor(sqlInstance?: Bun.SQL) {
+    const config = getConnection().getConfig()
+    this.sqlInstance = sqlInstance ?? new SQL(config as any)
+  }
+
+  /**
+   * Tests the connection to the database
+   * @returns {Promise<boolean>} True if connection is successful, false otherwise
+   */
+  public async testConnection(): Promise<boolean> {
+    await this.sqlInstance.unsafe('SELECT 1 as test')
+    return true
+  }
+
+  /**
+   * Closes the connection to the database
+   */
+  public close(): void {
+    this.sqlInstance.close()
+  }
+
+  /**
+   * Commits the transaction
+   * @returns {Promise<void>}
+   */
+  public async commit(): Promise<void> {
+    await this.sqlInstance`COMMIT`
+    if (typeof (this.sqlInstance as any).release === 'function') {
+      ;(this.sqlInstance as any).release()
     }
-    return PostgresQueryBuilder.instance
+  }
+
+  /**
+   * Rolls back the transaction
+   * @returns {Promise<void>}
+   */
+  public async rollback(): Promise<void> {
+    await this.sqlInstance`ROLLBACK`
+    if (typeof (this.sqlInstance as any).release === 'function') {
+      ;(this.sqlInstance as any).release()
+    }
+  }
+
+  /**
+   * Checks if a table exists
+   * @param {string} tableName - Name of the table to check
+   * @returns {Promise<boolean>} True if table exists, false otherwise
+   */
+  public async hasTable(tableName: string): Promise<boolean> {
+    const result = await this.sqlInstance.unsafe(
+      `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = $1
+      ) as exists
+    `,
+      [tableName]
+    )
+    return result[0]?.exists || false
+  }
+
+  /**
+   * Drops a table
+   * @param {string} tableName - Name of the table to drop
+   * @param {Object} options - Options for the drop operation
+   * @param {boolean} options.cascade - Whether to cascade the drop operation
+   * @returns {Promise<void>}
+   */
+  public async dropTable(tableName: string, options?: { cascade: boolean }): Promise<void> {
+    await this.sqlInstance.unsafe(`DROP TABLE IF EXISTS ${tableName} ${options?.cascade ? 'CASCADE' : ''}`)
+  }
+
+  /**
+   * Truncates a table
+   * @param {string} tableName - Name of the table to truncate
+   * @param {Object} options - Options for the truncate operation
+   * @param {boolean} options.cascade - Whether to cascade the truncate operation
+   * @returns {Promise<void>}
+   */
+  public async truncateTable(tableName: string, options?: { cascade: boolean }): Promise<void> {
+    await this.sqlInstance.unsafe(`TRUNCATE TABLE ${tableName} ${options?.cascade ? 'CASCADE' : ''}`)
+  }
+
+  /**
+   * Runs a transaction
+   * @param {function} callback - The callback function to execute within the transaction
+   * @returns {Promise<any>} The result of the transaction
+   */
+  public async transaction(callback: (trx: Transaction) => Promise<any>): Promise<any> {
+    // Use Bun's callback-based transaction API
+    return await this.sqlInstance.begin(async (sql: Bun.SQL) => {
+      // Create transaction instance with the transaction context
+      const trx = new Transaction<any>(new PostgresQueryBuilder(sql))
+      // Execute the callback with transaction context
+      return await callback(trx)
+    })
+  }
+
+  /**
+   * Begins a manual transaction
+   * @returns {Promise<Transaction>} Transaction instance
+   */
+  public async beginTransaction(): Promise<Transaction<any>> {
+    const reservedSql = await this.sqlInstance.reserve()
+    await reservedSql`BEGIN`
+    // create transaction
+    const transaction = new Transaction()
+    transaction.setDriver(new PostgresQueryBuilder(reservedSql))
+    return transaction
+  }
+
+  /**
+   * Runs a query
+   * @param {string} query - The query to run
+   * @param {any[]} params - The parameters to pass to the query
+   * @returns {Promise<any[]>} The result of the query
+   */
+  public async runQuery(query: string, params: any[]): Promise<any[]> {
+    return await this.sqlInstance.unsafe(query, params)
   }
 
   /**

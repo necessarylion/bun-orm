@@ -1,18 +1,144 @@
 import type { DatabaseQueryBuilder } from './database-query-builder'
 import { SQLHelper } from '../utils/sql-helper'
 import type { QueryBuilder } from './query-builder'
+import { Database } from 'bun:sqlite'
+import { getConnection } from '../core/connection'
+import { Transaction } from '../core/transaction'
 
 export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
   private sqlHelper: SQLHelper = SQLHelper.getInstance()
 
-  // singleton
-  private static instance: SQLiteQueryBuilder
-  private constructor() {}
-  public static getInstance(): SQLiteQueryBuilder {
-    if (!SQLiteQueryBuilder.instance) {
-      SQLiteQueryBuilder.instance = new SQLiteQueryBuilder()
+  private sqlInstance: Database
+
+  public constructor(sqlInstance?: Database) {
+    this.sqlInstance = sqlInstance ?? this.getSQLiteDatabase()
+  }
+
+  /**
+   * Gets the SQLite database instance
+   * @returns {Database} The SQLite database instance
+   */
+  private getSQLiteDatabase(): Database {
+    const config = getConnection().getConfig()
+    // Extract SQLite-specific options
+    const { ...sqliteOptions } = config as any
+    const filename = sqliteOptions.filename || ':memory:'
+
+    // Set default options for SQLite
+    const options = {
+      readonly: false,
+      create: true,
+      ...sqliteOptions,
     }
-    return SQLiteQueryBuilder.instance
+    return new Database(filename, options)
+  }
+
+  /**
+   * Tests the connection to the database
+   * @returns {Promise<boolean>} True if connection is successful, false otherwise
+   */
+  public async testConnection(): Promise<boolean> {
+    const query = this.sqlInstance.query('SELECT 1 as test')
+    query.get()
+    return true
+  }
+
+  /**
+   * Closes the connection to the database
+   */
+  public close(): void {
+    this.sqlInstance.close()
+  }
+
+  /**
+   * Commits the transaction
+   * @returns {Promise<void>}
+   */
+  public async commit(): Promise<void> {
+    this.sqlInstance.run('COMMIT')
+  }
+
+  /**
+   * Rolls back the transaction
+   * @returns {Promise<void>}
+   */
+  public async rollback(): Promise<void> {
+    this.sqlInstance.run('ROLLBACK')
+  }
+
+  /**
+   * Checks if a table exists
+   * @param {string} tableName - Name of the table to check
+   * @returns {Promise<boolean>} True if table exists, false otherwise
+   */
+  public async hasTable(tableName: string): Promise<boolean> {
+    const query = this.sqlInstance.query(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' AND name=?
+    `)
+    const result = query.get(tableName)
+    return !!result
+  }
+
+  /**
+   * Drops a table
+   * @param {string} tableName - Name of the table to drop
+   * @param {Object} options - Options for the drop operation
+   * @param {boolean} options.cascade - Whether to cascade the drop operation
+   * @returns {Promise<void>}
+   */
+  public async dropTable(tableName: string, _?: { cascade: boolean }): Promise<void> {
+    this.sqlInstance.run(`DROP TABLE IF EXISTS ${tableName}`)
+  }
+
+  /**
+   * Truncates a table
+   * @param {string} tableName - Name of the table to truncate
+   * @param {Object} options - Options for the truncate operation
+   * @param {boolean} options.cascade - Whether to cascade the truncate operation
+   * @returns {Promise<void>}
+   */
+  public async truncateTable(tableName: string, _?: { cascade: boolean }): Promise<void> {
+    this.sqlInstance.run(`DELETE FROM ${tableName}`)
+  }
+
+  /**
+   * Runs a transaction
+   * @param {function} callback - The callback function to execute within the transaction
+   * @returns {Promise<any>} The result of the transaction
+   */
+  public async transaction(callback: (trx: Transaction) => Promise<any>): Promise<any> {
+    const transaction = new Transaction<any>(new SQLiteQueryBuilder(this.sqlInstance))
+    this.sqlInstance.run('BEGIN')
+    try {
+      const result = await callback(transaction)
+      await transaction.commit()
+      return result
+    } catch (error) {
+      await transaction.rollback()
+      throw error
+    }
+  }
+
+  /**
+   * Begins a manual transaction
+   * @returns {Promise<Transaction>} Transaction instance
+   */
+  public async beginTransaction(): Promise<Transaction<any>> {
+    this.sqlInstance.run('BEGIN')
+    const transaction = new Transaction(new SQLiteQueryBuilder(this.sqlInstance))
+    return transaction
+  }
+
+  /**
+   * Runs a query
+   * @param {string} query - The query to run
+   * @param {any[]} params - The parameters to pass to the query
+   * @returns {Promise<any[]>} The result of the query
+   */
+  public async runQuery(query: string, params: any[]): Promise<any[]> {
+    const sqliteQuery = this.sqlInstance.query(query)
+    return sqliteQuery.all(...params)
   }
 
   /**

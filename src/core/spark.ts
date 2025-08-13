@@ -1,12 +1,12 @@
 import { createConnection, getConnection } from './connection'
 import { QueryBuilder } from '../query-builders/query-builder'
-import { Transaction } from './transaction'
+import type { Transaction } from './transaction'
 import type { ConnectionConfig, TransactionCallback } from '../types'
+import type { DatabaseQueryBuilder } from '../query-builders/database-query-builder'
 
 export class Spark {
   private static instance: Spark
-
-  private constructor() {}
+  private driver: DatabaseQueryBuilder
 
   /**
    * Gets the singleton instance of Spark
@@ -15,6 +15,7 @@ export class Spark {
   public static getInstance(): Spark {
     if (!Spark.instance) {
       Spark.instance = new Spark()
+      Spark.instance.driver = getConnection().getDriver()
     }
     return Spark.instance
   }
@@ -35,7 +36,7 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public useTransaction(trx: Transaction): QueryBuilder<any> {
-    return new QueryBuilder(trx.getTransactionContext())
+    return new QueryBuilder(trx.getDriver())
   }
 
   /**
@@ -106,16 +107,7 @@ export class Spark {
    * @returns {Promise<any[]>} Query results
    */
   public raw(sql: string, params: any[] = []): Promise<any[]> {
-    const connection = getConnection()
-    const driver = connection.getDriver()
-
-    if (driver === 'sqlite') {
-      const sqlite = connection.getSQLite()
-      const query = sqlite.query(sql)
-      return Promise.resolve(query.all(params as any))
-    } else {
-      return connection.getSQL().unsafe(sql, params)
-    }
+    return this.driver.runQuery(sql, params)
   }
 
   /**
@@ -124,15 +116,16 @@ export class Spark {
    * @returns {Promise<void>}
    */
   public async dropTable(tableName: string, options: { cascade: boolean } = { cascade: false }): Promise<void> {
-    const connection = getConnection()
-    const driver = connection.getDriver()
+    await this.driver.dropTable(tableName, options)
+  }
 
-    if (driver === 'sqlite') {
-      const sqlite = connection.getSQLite()
-      sqlite.run(`DROP TABLE IF EXISTS "${tableName}"`)
-    } else {
-      await connection.getSQL().unsafe(`DROP TABLE IF EXISTS "${tableName}" ${options.cascade ? 'CASCADE' : ''}`)
-    }
+  /**
+   * Checks if a table exists
+   * @param {string} tableName - Name of the table to check
+   * @returns {Promise<boolean>} True if table exists, false otherwise
+   */
+  public async hasTable(tableName: string): Promise<boolean> {
+    return await this.driver.hasTable(tableName)
   }
 
   /**
@@ -141,49 +134,7 @@ export class Spark {
    * @returns {Promise<void>}
    */
   public async truncate(tableName: string, options: { cascade: boolean } = { cascade: false }): Promise<void> {
-    const connection = getConnection()
-    const driver = connection.getDriver()
-
-    const cascade = options.cascade ? 'CASCADE' : ''
-
-    if (driver === 'sqlite') {
-      const sqlite = connection.getSQLite()
-      sqlite.run(`DELETE FROM "${tableName}" ${cascade}`)
-    } else {
-      await connection.getSQL().unsafe(`TRUNCATE TABLE "${tableName}" ${cascade}`)
-    }
-  }
-
-  /**
-   * Checks if a table exists in the database
-   * @param {string} tableName - Name of the table to check
-   * @returns {Promise<boolean>} True if table exists, false otherwise
-   */
-  public async hasTable(tableName: string): Promise<boolean> {
-    const connection = getConnection()
-    const driver = connection.getDriver()
-
-    if (driver === 'sqlite') {
-      const sqlite = connection.getSQLite()
-      const query = sqlite.query(`
-        SELECT name FROM sqlite_master 
-        WHERE type='table' AND name=?
-      `)
-      const result = query.get(tableName)
-      return !!result
-    } else {
-      const result = await connection.getSQL().unsafe(
-        `
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = $1
-        ) as exists
-      `,
-        [tableName]
-      )
-      return result[0]?.exists || false
-    }
+    await this.driver.truncateTable(tableName, options)
   }
 
   // Connection management
@@ -192,8 +143,7 @@ export class Spark {
    * @returns {Promise<boolean>} True if connection is successful, false otherwise
    */
   public async testConnection(): Promise<boolean> {
-    const connection = getConnection()
-    return await connection.testConnection()
+    return await this.driver.testConnection()
   }
 
   /**
@@ -212,34 +162,7 @@ export class Spark {
    * @returns {Promise<T>} Result of the transaction callback
    */
   public async transaction<T = any>(callback: TransactionCallback<T>): Promise<T> {
-    const connection = getConnection()
-    const driver = connection.getDriver()
-
-    if (driver === 'sqlite') {
-      const sqlite = connection.getSQLite()
-      const trx = new Transaction<any>()
-      sqlite.run('BEGIN')
-      trx.setReservedSql(sqlite)
-      try {
-        const result = await callback(trx)
-        await trx.commit()
-        return result
-      } catch (error) {
-        await trx.rollback()
-        throw error
-      }
-    } else {
-      const sql = connection.getSQL()
-
-      // Use Bun's callback-based transaction API
-      return await sql.begin(async (tx: any) => {
-        // Create transaction instance with the transaction context
-        const trx = new Transaction<any>(tx)
-
-        // Execute the callback with transaction context
-        return await callback(trx)
-      })
-    }
+    return await this.driver.transaction(callback)
   }
 
   /**
@@ -248,25 +171,7 @@ export class Spark {
    * @throws {Error} Manual transaction control is not supported for SQLite
    */
   public async beginTransaction(): Promise<Transaction<any>> {
-    const connection = getConnection()
-    const driver = connection.getDriver()
-
-    if (driver === 'sqlite') {
-      const sqlite = connection.getSQLite()
-      sqlite.run('BEGIN')
-      const transaction = new Transaction()
-      transaction.setReservedSql(sqlite)
-      return transaction
-    }
-
-    // get bun sql connection
-    const sql = connection.getSQL()
-    const reservedSql = await sql.reserve()
-    await reservedSql`BEGIN`
-    // create transaction
-    const transaction = new Transaction()
-    transaction.setReservedSql(reservedSql)
-    return transaction
+    return await this.driver.beginTransaction()
   }
 }
 

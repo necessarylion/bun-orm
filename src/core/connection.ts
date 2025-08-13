@@ -1,13 +1,12 @@
-import { SQL } from 'bun'
-import { Database } from 'bun:sqlite'
-import type { ConnectionConfig, DatabaseDriver } from '../types'
+import type { ConnectionConfig } from '../types'
+import type { DatabaseQueryBuilder } from '../query-builders/database-query-builder'
+import { SQLiteQueryBuilder } from '../query-builders/sqlite-query-builder'
+import { PostgresQueryBuilder } from '../query-builders/postgres-query-builder'
 
 export class DatabaseConnection {
   private static instance: DatabaseConnection
-  private sqlInstance?: Bun.SQL
-  private sqliteInstance?: Database
   private config: ConnectionConfig
-  private driver: DatabaseDriver
+  private driver: DatabaseQueryBuilder
 
   /**
    * Private constructor for DatabaseConnection
@@ -15,36 +14,6 @@ export class DatabaseConnection {
    */
   private constructor(config: ConnectionConfig) {
     this.config = config
-    this.driver = config.driver
-    if (this.driver === 'sqlite') {
-      this.sqliteInstance = this.getSQLiteDatabase()
-    } else if (this.driver === 'postgres') {
-      this.sqlInstance = new SQL(config as any)
-    } else {
-      throw new Error(`Unsupported database driver: ${this.driver}`)
-    }
-  }
-
-  /**
-   * Gets the SQLite database instance
-   * @returns {Database} The SQLite database instance
-   */
-  public getSQLiteDatabase(): Database {
-    if (this.driver === 'sqlite') {
-      // Extract SQLite-specific options
-      const { ...sqliteOptions } = this.config as any
-      const filename = sqliteOptions.filename || ':memory:'
-
-      // Set default options for SQLite
-      const options = {
-        readonly: false,
-        create: true,
-        ...sqliteOptions,
-      }
-
-      return new Database(filename, options)
-    }
-    throw new Error(`Unsupported database driver: ${this.driver}`)
   }
 
   /**
@@ -59,38 +28,15 @@ export class DatabaseConnection {
         throw new Error('Database configuration is required for first initialization')
       }
       DatabaseConnection.instance = new DatabaseConnection(config)
+      if (config.driver === 'sqlite') {
+        DatabaseConnection.instance.driver = new SQLiteQueryBuilder()
+      } else if (config.driver === 'postgres') {
+        DatabaseConnection.instance.driver = new PostgresQueryBuilder()
+      } else {
+        throw new Error(`Unsupported database driver: ${config.driver}`)
+      }
     }
     return DatabaseConnection.instance
-  }
-
-  /**
-   * Gets the underlying SQL instance (for PostgreSQL)
-   * @returns {Bun.SQL} The SQL instance for database operations
-   * @throws {Error} When using SQLite driver
-   */
-  public getSQL(): Bun.SQL {
-    if (this.driver !== 'postgres') {
-      throw new Error('getSQL() is only available for PostgreSQL driver')
-    }
-    if (!this.sqlInstance) {
-      throw new Error('SQL instance not initialized')
-    }
-    return this.sqlInstance
-  }
-
-  /**
-   * Gets the underlying SQLite Database instance (for SQLite)
-   * @returns {Database} The SQLite Database instance for database operations
-   * @throws {Error} When using PostgreSQL driver
-   */
-  public getSQLite(): Database {
-    if (this.driver !== 'sqlite') {
-      throw new Error('getSQLite() is only available for SQLite driver')
-    }
-    if (!this.sqliteInstance) {
-      throw new Error('SQLite instance not initialized')
-    }
-    return this.sqliteInstance
   }
 
   /**
@@ -103,9 +49,9 @@ export class DatabaseConnection {
 
   /**
    * Gets the current database driver
-   * @returns {DatabaseDriver} The current database driver
+   * @returns {DatabaseQueryBuilder} The current database driver
    */
-  public getDriver(): DatabaseDriver {
+  public getDriver(): DatabaseQueryBuilder {
     return this.driver
   }
 
@@ -115,14 +61,8 @@ export class DatabaseConnection {
    */
   public async testConnection(): Promise<boolean> {
     try {
-      if (this.driver === 'sqlite') {
-        const query = this.sqliteInstance?.query('SELECT 1 as test')
-        query?.get()
-        return true
-      } else {
-        await this.sqlInstance?.unsafe('SELECT 1 as test')
-        return true
-      }
+      await this.driver.testConnection()
+      return true
     } catch (error) {
       console.error('Database connection test failed:', error)
       return false
@@ -135,11 +75,7 @@ export class DatabaseConnection {
    */
   public async close(): Promise<void> {
     try {
-      if (this.driver === 'sqlite') {
-        this.sqliteInstance?.close()
-      } else {
-        await this.sqlInstance?.close()
-      }
+      this.driver.close()
     } catch (error) {
       console.error('Error closing database connection:', error)
     }

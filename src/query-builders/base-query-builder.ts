@@ -14,11 +14,11 @@ import type {
 } from '../types'
 import type { Model } from '../core/model'
 import { cloneInstance } from '../utils/model-helper'
-import type { Database } from 'bun:sqlite'
+import type { DatabaseQueryBuilder } from './database-query-builder'
 
 export abstract class BaseQueryBuilder {
   public connection: DatabaseConnection
-  public sql: Bun.SQL | Database
+  public driver: DatabaseQueryBuilder
   public returningColumns: string[] = ['*']
   public whereConditions: WhereCondition[] = []
   public whereGroupConditions: WhereGroupCondition[] = []
@@ -44,22 +44,9 @@ export abstract class BaseQueryBuilder {
    * Creates a new BaseQueryBuilder instance
    * @param {Bun.SQL | Database} [transactionContext] - Optional transaction context
    */
-  constructor(transactionContext?: Bun.SQL | Database) {
+  constructor(driver?: DatabaseQueryBuilder) {
     this.connection = getConnection()
-    this.sql = transactionContext ?? this.getDefaultSQL()
-  }
-
-  /**
-   * Gets the default SQL instance based on the current driver
-   * @returns {Bun.SQL | Database} The default SQL instance
-   */
-  private getDefaultSQL(): Bun.SQL | Database {
-    const driver = this.connection.getDriver()
-    if (driver === 'sqlite') {
-      return this.connection.getSQLite()
-    } else {
-      return this.connection.getSQL()
-    }
+    this.driver = driver ?? this.connection.getDriver()
   }
 
   /**
@@ -139,17 +126,7 @@ export abstract class BaseQueryBuilder {
         console.log('-----------------------------------------------------')
         console.log(`\x1b[33m${query.replace(/\s+/g, ' ')}\x1b[0m`)
       }
-
-      let result: any[]
-      if ('query' in this.sql && typeof this.sql.query === 'function') {
-        // SQLite
-        const sqliteQuery = (this.sql as Database).query(query)
-        result = sqliteQuery.all(...params)
-      } else {
-        // PostgreSQL
-        result = await (this.sql as Bun.SQL).unsafe(query, params)
-      }
-
+      const result = await this.driver.runQuery(query, params)
       if (this.modelInstance !== undefined) {
         return result.map((d: any, index: number) => {
           if (index === 0) return this.hydrate(this.modelInstance, d)
@@ -184,10 +161,10 @@ export abstract class BaseQueryBuilder {
   }
 
   /**
-   * Sets the transaction context (used internally)
-   * @param {any} context - Transaction context
+   * Sets driver
+   * @param {DatabaseQueryBuilder} driver
    */
-  public setTransactionContext(context: Bun.SQL | Database): void {
-    this.sql = context
+  public setDriver(driver: DatabaseQueryBuilder): void {
+    this.driver = driver
   }
 }
