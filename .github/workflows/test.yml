@@ -45,21 +45,17 @@ jobs:
         done
         echo "PostgreSQL is ready!"
 
-    - name: Run tests
+    - name: Run tests for postgres
       run: bun test
       env:
+        DB_DRIVER: postgres
         DB_HOST: localhost
         DB_PORT: 5432
         DB_NAME: bun_orm
         DB_USER: postgres
         DB_PASSWORD: postgres
 
-    - name: Run tests with coverage (if available)
+    - name: Run tests for sqlite
       run: bun run test:coverage
       env:
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: bun_orm
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-      continue-on-error: true 
+        DB_DRIVER: sqlite
