@@ -24,6 +24,10 @@
     "orm",
     "typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/necessarylion/bun-spark"
+  },
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
