@@ -217,22 +217,17 @@ export class Spark {
 
     if (driver === 'sqlite') {
       const sqlite = connection.getSQLite()
-
-      // SQLite transactions are handled differently
-      return await new Promise<T>((resolve, reject) => {
-        try {
-          sqlite.transaction(() => {
-            // Create transaction instance with the transaction context
-            const trx = new Transaction<any>(sqlite)
-
-            // Execute the callback with transaction context
-            return callback(trx)
-          })()
-          resolve(undefined as any)
-        } catch (error) {
-          reject(error)
-        }
-      })
+      const trx = new Transaction<any>()
+      sqlite.run('BEGIN')
+      trx.setReservedSql(sqlite)
+      try {
+        const result = await callback(trx)
+        await trx.commit()
+        return result
+      } catch (error) {
+        await trx.rollback()
+        throw error
+      }
     } else {
       const sql = connection.getSQL()
 
@@ -257,7 +252,11 @@ export class Spark {
     const driver = connection.getDriver()
 
     if (driver === 'sqlite') {
-      throw new Error('Manual transaction control is not supported for SQLite driver')
+      const sqlite = connection.getSQLite()
+      sqlite.run('BEGIN')
+      const transaction = new Transaction()
+      transaction.setReservedSql(sqlite)
+      return transaction
     }
 
     // get bun sql connection

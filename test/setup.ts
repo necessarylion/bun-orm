@@ -4,7 +4,7 @@ import type { DatabaseDriver } from '../src/types'
 
 // Test database configuration
 export const testConfig: ConnectionConfig = {
-  driver: (env.DB_DRIVER ?? 'postgres') as DatabaseDriver,
+  driver: (env.DB_DRIVER ?? 'sqlite') as DatabaseDriver,
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5433'),
   database: process.env.DB_NAME || 'bun_orm',
@@ -31,7 +31,7 @@ db.testConnection()
   })
 
 export function getAutoIncrementSQL() {
-  const driver = (env.DB_DRIVER ?? 'postgres') as DatabaseDriver
+  const driver = testConfig.driver
   if (driver === 'sqlite') {
     return `INTEGER PRIMARY KEY AUTOINCREMENT`
   }

@@ -39,8 +39,6 @@ describe('DELETE Query Builder', () => {
 
     const result = await db.table('users').where('active', '=', false).delete()
 
-    console.log(result)
-
     expect(result).toBeDefined()
     expect(result.length).toBe(1) // Only Bob Johnson is inactive
     expect(result[0].active).toBeFalsy()

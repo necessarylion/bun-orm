@@ -1,20 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { spark, type Transaction, type Spark } from '../index'
-import { getAutoIncrementSQL } from './setup'
+import { getAutoIncrementSQL, testConfig } from './setup'
 
 describe('Transaction Tests', () => {
   let db: Spark
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     // Initialize database connection
-    db = spark({
-      driver: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5433'),
-      database: process.env.DB_NAME || 'bun_orm',
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-    })
+    db = spark(testConfig)
 
     // Test connection
     const isConnected = await db.testConnection()
@@ -33,9 +26,9 @@ describe('Transaction Tests', () => {
     await db.raw('DELETE FROM transaction_test')
   })
 
-  afterAll(async () => {
+  afterEach(async () => {
     // Clean up
-    await db.raw('DROP TABLE IF EXISTS transaction_test')
+    // await db.raw('DROP TABLE IF EXISTS transaction_test')
     // Don't close the connection here as it's shared across tests
   })
 
@@ -85,7 +78,7 @@ describe('Transaction Tests', () => {
 
     // Verify that the transaction failed
     expect(transactionFailed).toBe(true)
-    expect(errorMessage).toContain('null value')
+    expect(errorMessage.toLowerCase()).toContain('null')
   })
 
   it('should support raw SQL in transactions', async () => {
@@ -183,11 +176,13 @@ describe('Transaction Tests', () => {
     } catch (error: any) {
       transactionFailed = true
       errorMessage = error.message
+
+      console.log(error.message)
     }
 
     // Verify that the transaction failed
     expect(transactionFailed).toBe(true)
-    expect(errorMessage).toContain('null value')
+    expect(errorMessage.toLowerCase()).toContain('null')
 
     // 4. Check if query is rolled back - the balance should be back to original value
     const afterTransaction = await db.table('transaction_test').where('id', '=', userId).first()
@@ -204,7 +199,6 @@ describe('Transaction Tests', () => {
   })
 
   it('manual transaction with rollback', async () => {
-    await db.truncate('transaction_test')
     await db.table('transaction_test').insert({ name: 'John', balance: 100.0 })
     const trx = await db.beginTransaction()
     try {

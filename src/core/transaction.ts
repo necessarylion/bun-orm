@@ -1,15 +1,16 @@
 import { QueryBuilder } from '../query-builders/query-builder'
 import type { ReservedSQL } from 'bun'
+import { Database } from 'bun:sqlite'
 
 export class Transaction<M = any> {
   private transactionContext?: Bun.SQL
-  private reservedSql?: ReservedSQL
+  private reservedSql?: ReservedSQL | Database
 
   /**
    * Creates a new Transaction instance
    * @param {any} [transactionContext] - Optional transaction context from Bun SQL
    */
-  constructor(transactionContext?: any) {
+  constructor(transactionContext?: Bun.SQL) {
     this.transactionContext = transactionContext
   }
 
@@ -17,7 +18,7 @@ export class Transaction<M = any> {
    * Gets the SQL context
    * @returns {Bun.SQL | ReservedSQL | undefined} SQL context
    */
-  get sql(): Bun.SQL | ReservedSQL | undefined {
+  get sql(): Bun.SQL | ReservedSQL | Database | undefined {
     return this.transactionContext ?? this.reservedSql
   }
 
@@ -69,6 +70,10 @@ export class Transaction<M = any> {
    */
   public async raw(sql: string, params: any[] = []): Promise<any[]> {
     if (!this.sql) throw new Error('Transaction context is required to execute raw SQL')
+    if (this.sql instanceof Database) {
+      const sqliteQuery = (this.sql as Database).query(sql)
+      return sqliteQuery.all(...params)
+    }
     return this.sql.unsafe(sql, params)
   }
 
@@ -84,7 +89,7 @@ export class Transaction<M = any> {
    * Sets the reserved SQL (used internally)
    * @param {ReservedSQL} reservedSql - Reserved SQL from Bun SQL
    */
-  public setReservedSql(reservedSql: ReservedSQL): void {
+  public setReservedSql(reservedSql: ReservedSQL | Database): void {
     this.reservedSql = reservedSql
   }
 
@@ -92,7 +97,7 @@ export class Transaction<M = any> {
    * Gets the transaction context
    * @returns {Bun.SQL} Transaction context
    */
-  public getTransactionContext(): Bun.SQL {
+  public getTransactionContext(): Bun.SQL | Database {
     if (!this.sql) throw new Error('Transaction context is required')
     return this.sql
   }
@@ -101,7 +106,7 @@ export class Transaction<M = any> {
    * Gets the reserved SQL (used internally)
    * @returns {ReservedSQL} Reserved SQL
    */
-  public getReservedSql(): ReservedSQL | undefined {
+  public getReservedSql(): ReservedSQL | Database | undefined {
     return this.reservedSql
   }
 
@@ -111,8 +116,12 @@ export class Transaction<M = any> {
    */
   public async commit(): Promise<void> {
     if (!this.reservedSql) throw new Error('Transaction context is required to commit')
-    await this.reservedSql`COMMIT`
-    this.reservedSql.release()
+    if (this.reservedSql instanceof Database) {
+      this.reservedSql.run('COMMIT')
+    } else {
+      await this.reservedSql`COMMIT`
+      this.reservedSql.release()
+    }
   }
 
   /**
@@ -121,7 +130,11 @@ export class Transaction<M = any> {
    */
   public async rollback(): Promise<void> {
     if (!this.reservedSql) throw new Error('Transaction context is required to rollback')
-    await this.reservedSql`ROLLBACK`
-    this.reservedSql.release()
+    if (this.reservedSql instanceof Database) {
+      this.reservedSql.run('ROLLBACK')
+    } else {
+      await this.reservedSql`ROLLBACK`
+      this.reservedSql.release()
+    }
   }
 }

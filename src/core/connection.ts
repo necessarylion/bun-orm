@@ -16,10 +16,23 @@ export class DatabaseConnection {
   private constructor(config: ConnectionConfig) {
     this.config = config
     this.driver = config.driver
+    if (this.driver === 'sqlite') {
+      this.sqliteInstance = this.getSQLiteDatabase()
+    } else if (this.driver === 'postgres') {
+      this.sqlInstance = new SQL(config as any)
+    } else {
+      throw new Error(`Unsupported database driver: ${this.driver}`)
+    }
+  }
 
+  /**
+   * Gets the SQLite database instance
+   * @returns {Database} The SQLite database instance
+   */
+  public getSQLiteDatabase(): Database {
     if (this.driver === 'sqlite') {
       // Extract SQLite-specific options
-      const { ...sqliteOptions } = config as any
+      const { ...sqliteOptions } = this.config as any
       const filename = sqliteOptions.filename || ':memory:'
 
       // Set default options for SQLite
@@ -29,14 +42,9 @@ export class DatabaseConnection {
         ...sqliteOptions,
       }
 
-      this.sqliteInstance = new Database(filename, options)
-    } else if (this.driver === 'postgres') {
-      // Extract PostgreSQL-specific options
-      const { ...postgresOptions } = config as any
-      this.sqlInstance = new SQL(postgresOptions)
-    } else {
-      throw new Error(`Unsupported database driver: ${this.driver}`)
+      return new Database(filename, options)
     }
+    throw new Error(`Unsupported database driver: ${this.driver}`)
   }
 
   /**
