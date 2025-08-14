@@ -756,4 +756,6 @@ MIT
 - [ ] Advanced JOIN support
 - [x] Query logging/debugging
 - [ ] Multiple database support (MySQL, SQLite)
+  - [ ] MySQL
+  - [x] SQLite
 - [ ] Advance Having
