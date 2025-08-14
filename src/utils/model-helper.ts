@@ -9,7 +9,7 @@ export function cloneInstance<T>(instance: T): T {
   return Object.assign(Object.create(Object.getPrototypeOf(instance)), instance)
 }
 
-export function toSnakeCase(
+export function sanitizeInsertData(
   insertData: Record<string, any>,
   columnMap: Map<unknown, unknown>,
   typeMap: Map<unknown, unknown>
