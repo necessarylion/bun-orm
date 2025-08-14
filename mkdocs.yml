@@ -1,0 +1,64 @@
+site_name: "Bun Spark"
+repo_url: https://github.com/necessarylion/bun-spark
+extra_css:
+  - assets/style.css
+extra_javascript:
+  - assets/script.js
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      name: Github
+      link: https://github.com/necessarylion/bun-spark
+theme:
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - content.code.select
+    - content.code.copy
+  font:
+    text: Inclusive Sans
+  favicon: assets/favicon.icon
+  logo: assets/logo.svg
+  icon:
+    repo: fontawesome/brands/github
+  name: material
+  palette:
+   # Palette toggle for dark mode
+  - scheme: default
+    primary: custom
+    toggle:
+      icon: material/brightness-4
+      name: Switch to dark mode
+  
+  # Palette toggle for light mode
+  - scheme: slate
+    primary: custom
+    toggle:
+      icon: material/brightness-7 
+      name: Switch to light mode
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Getting Started: 
+    - index.md
+  - Query Builder:
+    - query-builder/index.md
+  - Model:
+    - model/index.md

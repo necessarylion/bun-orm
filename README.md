@@ -40,7 +40,6 @@ A lightweight, type-safe query builder for Bun with PostgreSQL support. Built wi
 - 🔒 **Type-safe**: Full TypeScript support with comprehensive type definitions and compile-time null/undefined prevention
 - 🎯 **Simple**: Intuitive query builder API
 - 🔄 **Transactions**: Full transaction support with automatic rollback
-- 📊 **PostgreSQL**: Optimized for PostgreSQL with native features
 - 🧪 **Tested**: Comprehensive test suite with real database integration
 
 ## Installation
