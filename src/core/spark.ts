@@ -2,11 +2,11 @@ import { createConnection, getConnection } from './connection'
 import { QueryBuilder } from '../query-builders/query-builder'
 import type { Transaction } from './transaction'
 import type { ConnectionConfig, TransactionCallback } from '../types'
-import type { DatabaseQueryBuilder } from '../query-builders/database-query-builder'
+import type { DatabaseDriver } from '../drivers/database-driver'
 
 export class Spark {
   private static instance: Spark
-  private driver: DatabaseQueryBuilder
+  private driver: DatabaseDriver
 
   /**
    * Gets the singleton instance of Spark

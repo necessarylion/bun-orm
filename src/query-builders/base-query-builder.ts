@@ -14,11 +14,11 @@ import type {
 } from '../types'
 import type { Model } from '../core/model'
 import { cloneInstance } from '../utils/model-helper'
-import type { DatabaseQueryBuilder } from './database-query-builder'
+import type { DatabaseDriver } from '../drivers/database-driver'
 
 export abstract class BaseQueryBuilder {
   public connection: DatabaseConnection
-  public driver: DatabaseQueryBuilder
+  public driver: DatabaseDriver
   public returningColumns: string[] = ['*']
   public whereConditions: WhereCondition[] = []
   public whereGroupConditions: WhereGroupCondition[] = []
@@ -44,7 +44,7 @@ export abstract class BaseQueryBuilder {
    * Creates a new BaseQueryBuilder instance
    * @param {Bun.SQL | Database} [transactionContext] - Optional transaction context
    */
-  constructor(driver?: DatabaseQueryBuilder) {
+  constructor(driver?: DatabaseDriver) {
     this.connection = getConnection()
     this.driver = driver ?? this.connection.getDriver()
   }
@@ -162,9 +162,9 @@ export abstract class BaseQueryBuilder {
 
   /**
    * Sets driver
-   * @param {DatabaseQueryBuilder} driver
+   * @param {DatabaseDriver} driver
    */
-  public setDriver(driver: DatabaseQueryBuilder): void {
+  public setDriver(driver: DatabaseDriver): void {
     this.driver = driver
   }
 }

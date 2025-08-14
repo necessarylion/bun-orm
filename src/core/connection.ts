@@ -1,12 +1,12 @@
 import type { ConnectionConfig } from '../types'
-import type { DatabaseQueryBuilder } from '../query-builders/database-query-builder'
-import { SQLiteQueryBuilder } from '../query-builders/sqlite-query-builder'
-import { PostgresQueryBuilder } from '../query-builders/postgres-query-builder'
+import type { DatabaseDriver } from '../drivers/database-driver'
+import { SQLiteDriver } from '../drivers/sqlite-driver'
+import { PostgresDriver } from '../drivers/postgres-driver'
 
 export class DatabaseConnection {
   private static instance: DatabaseConnection
   private config: ConnectionConfig
-  private driver: DatabaseQueryBuilder
+  private driver: DatabaseDriver
 
   /**
    * Private constructor for DatabaseConnection
@@ -29,9 +29,9 @@ export class DatabaseConnection {
       }
       DatabaseConnection.instance = new DatabaseConnection(config)
       if (config.driver === 'sqlite') {
-        DatabaseConnection.instance.driver = new SQLiteQueryBuilder()
+        DatabaseConnection.instance.driver = new SQLiteDriver()
       } else if (config.driver === 'postgres') {
-        DatabaseConnection.instance.driver = new PostgresQueryBuilder()
+        DatabaseConnection.instance.driver = new PostgresDriver()
       } else {
         throw new Error(`Unsupported database driver: ${config.driver}`)
       }
@@ -49,9 +49,9 @@ export class DatabaseConnection {
 
   /**
    * Gets the current database driver
-   * @returns {DatabaseQueryBuilder} The current database driver
+   * @returns {DatabaseDriver} The current database driver
    */
-  public getDriver(): DatabaseQueryBuilder {
+  public getDriver(): DatabaseDriver {
     return this.driver
   }
 

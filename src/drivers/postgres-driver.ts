@@ -1,36 +1,18 @@
-import type { DatabaseQueryBuilder } from './database-query-builder'
+import type { DatabaseDriver } from './database-driver'
 import { SQLHelper } from '../utils/sql-helper'
-import type { QueryBuilder } from './query-builder'
-import { Database } from 'bun:sqlite'
+import type { QueryBuilder } from '../query-builders/query-builder'
+import { SQL } from 'bun'
 import { getConnection } from '../core/connection'
 import { Transaction } from '../core/transaction'
 
-export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
+export class PostgresDriver implements DatabaseDriver {
   private sqlHelper: SQLHelper = SQLHelper.getInstance()
 
-  private sqlInstance: Database
+  private sqlInstance: Bun.SQL
 
-  public constructor(sqlInstance?: Database) {
-    this.sqlInstance = sqlInstance ?? this.getSQLiteDatabase()
-  }
-
-  /**
-   * Gets the SQLite database instance
-   * @returns {Database} The SQLite database instance
-   */
-  private getSQLiteDatabase(): Database {
+  public constructor(sqlInstance?: Bun.SQL) {
     const config = getConnection().getConfig()
-    // Extract SQLite-specific options
-    const { ...sqliteOptions } = config as any
-    const filename = sqliteOptions.filename || ':memory:'
-
-    // Set default options for SQLite
-    const options = {
-      readonly: false,
-      create: true,
-      ...sqliteOptions,
-    }
-    return new Database(filename, options)
+    this.sqlInstance = sqlInstance ?? new SQL(config as any)
   }
 
   /**
@@ -38,8 +20,7 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @returns {Promise<boolean>} True if connection is successful, false otherwise
    */
   public async testConnection(): Promise<boolean> {
-    const query = this.sqlInstance.query('SELECT 1 as test')
-    query.get()
+    await this.sqlInstance.unsafe('SELECT 1 as test')
     return true
   }
 
@@ -55,7 +36,10 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @returns {Promise<void>}
    */
   public async commit(): Promise<void> {
-    this.sqlInstance.run('COMMIT')
+    await this.sqlInstance`COMMIT`
+    if (typeof (this.sqlInstance as any).release === 'function') {
+      ;(this.sqlInstance as any).release()
+    }
   }
 
   /**
@@ -63,7 +47,10 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @returns {Promise<void>}
    */
   public async rollback(): Promise<void> {
-    this.sqlInstance.run('ROLLBACK')
+    await this.sqlInstance`ROLLBACK`
+    if (typeof (this.sqlInstance as any).release === 'function') {
+      ;(this.sqlInstance as any).release()
+    }
   }
 
   /**
@@ -72,12 +59,17 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @returns {Promise<boolean>} True if table exists, false otherwise
    */
   public async hasTable(tableName: string): Promise<boolean> {
-    const query = this.sqlInstance.query(`
-      SELECT name FROM sqlite_master 
-      WHERE type='table' AND name=?
-    `)
-    const result = query.get(tableName)
-    return !!result
+    const result = await this.sqlInstance.unsafe(
+      `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = $1
+      ) as exists
+    `,
+      [tableName]
+    )
+    return result[0]?.exists || false
   }
 
   /**
@@ -87,8 +79,8 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @param {boolean} options.cascade - Whether to cascade the drop operation
    * @returns {Promise<void>}
    */
-  public async dropTable(tableName: string, _?: { cascade: boolean }): Promise<void> {
-    this.sqlInstance.run(`DROP TABLE IF EXISTS ${tableName}`)
+  public async dropTable(tableName: string, options?: { cascade: boolean }): Promise<void> {
+    await this.sqlInstance.unsafe(`DROP TABLE IF EXISTS ${tableName} ${options?.cascade ? 'CASCADE' : ''}`)
   }
 
   /**
@@ -98,8 +90,8 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @param {boolean} options.cascade - Whether to cascade the truncate operation
    * @returns {Promise<void>}
    */
-  public async truncateTable(tableName: string, _?: { cascade: boolean }): Promise<void> {
-    this.sqlInstance.run(`DELETE FROM ${tableName}`)
+  public async truncateTable(tableName: string, options?: { cascade: boolean }): Promise<void> {
+    await this.sqlInstance.unsafe(`TRUNCATE TABLE ${tableName} ${options?.cascade ? 'CASCADE' : ''}`)
   }
 
   /**
@@ -108,16 +100,13 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @returns {Promise<any>} The result of the transaction
    */
   public async transaction(callback: (trx: Transaction) => Promise<any>): Promise<any> {
-    const transaction = new Transaction<any>(new SQLiteQueryBuilder(this.sqlInstance))
-    this.sqlInstance.run('BEGIN')
-    try {
-      const result = await callback(transaction)
-      await transaction.commit()
-      return result
-    } catch (error) {
-      await transaction.rollback()
-      throw error
-    }
+    // Use Bun's callback-based transaction API
+    return await this.sqlInstance.begin(async (sql: Bun.SQL) => {
+      // Create transaction instance with the transaction context
+      const trx = new Transaction<any>(new PostgresDriver(sql))
+      // Execute the callback with transaction context
+      return await callback(trx)
+    })
   }
 
   /**
@@ -125,8 +114,11 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @returns {Promise<Transaction>} Transaction instance
    */
   public async beginTransaction(): Promise<Transaction<any>> {
-    this.sqlInstance.run('BEGIN')
-    const transaction = new Transaction(new SQLiteQueryBuilder(this.sqlInstance))
+    const reservedSql = await this.sqlInstance.reserve()
+    await reservedSql`BEGIN`
+    // create transaction
+    const transaction = new Transaction()
+    transaction.setDriver(new PostgresDriver(reservedSql))
     return transaction
   }
 
@@ -137,8 +129,7 @@ export class SQLiteQueryBuilder implements DatabaseQueryBuilder {
    * @returns {Promise<any[]>} The result of the query
    */
   public async runQuery(query: string, params: any[]): Promise<any[]> {
-    const sqliteQuery = this.sqlInstance.query(query)
-    return sqliteQuery.all(...params)
+    return await this.sqlInstance.unsafe(query, params)
   }
 
   /**

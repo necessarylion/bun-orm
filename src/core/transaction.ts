@@ -1,14 +1,14 @@
 import { QueryBuilder } from '../query-builders/query-builder'
-import type { DatabaseQueryBuilder } from '../query-builders/database-query-builder'
+import type { DatabaseDriver } from '../drivers/database-driver'
 
 export class Transaction<M = any> {
-  private driver?: DatabaseQueryBuilder
+  private driver?: DatabaseDriver
 
   /**
    * Creates a new Transaction instance
-   * @param {DatabaseQueryBuilder} [driver]
+   * @param {DatabaseDriver} [driver]
    */
-  constructor(driver?: DatabaseQueryBuilder) {
+  constructor(driver?: DatabaseDriver) {
     this.driver = driver
   }
 
@@ -64,9 +64,9 @@ export class Transaction<M = any> {
 
   /**
    * Sets the transaction context (used internally)
-   * @param {DatabaseQueryBuilder} driver
+   * @param {DatabaseDriver} driver
    */
-  public setDriver(driver: DatabaseQueryBuilder): void {
+  public setDriver(driver: DatabaseDriver): void {
     this.driver = driver
   }
 
@@ -74,7 +74,7 @@ export class Transaction<M = any> {
    * Gets the transaction context
    * @returns {Bun.SQL} Transaction context
    */
-  public getDriver(): DatabaseQueryBuilder {
+  public getDriver(): DatabaseDriver {
     if (!this.driver) throw new Error('Driver is required')
     return this.driver
   }

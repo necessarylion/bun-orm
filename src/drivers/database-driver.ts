@@ -1,7 +1,7 @@
 import type { Transaction } from '../core/transaction'
-import type { QueryBuilder } from './query-builder'
+import type { QueryBuilder } from '../query-builders/query-builder'
 
-export interface DatabaseQueryBuilder {
+export interface DatabaseDriver {
   close(): void
   hasTable(tableName: string): Promise<boolean>
   dropTable(tableName: string, options?: { cascade: boolean }): Promise<void>
