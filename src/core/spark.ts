@@ -186,6 +186,3 @@ export function spark(config?: ConnectionConfig): Spark {
   }
   return Spark.getInstance()
 }
-
-// Export the unified QueryBuilder for direct use
-export { QueryBuilder } from '../query-builders/query-builder'
