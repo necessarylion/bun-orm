@@ -117,7 +117,8 @@ export abstract class Model implements Serializable<Record<string, any>> {
   ): Promise<InstanceType<T>[]> {
     const columns = getColumns(this)
     const columnMap = new Map(columns.map((col: any) => [col.propertyKey, col.name]))
-    return this.db().insert(toSnakeCase(data, columnMap))
+    const typeMap = new Map(columns.map((col: any) => [col.propertyKey, col.type]))
+    return this.db().insert(toSnakeCase(data, columnMap, typeMap))
   }
 
   /**

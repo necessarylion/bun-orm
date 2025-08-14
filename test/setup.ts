@@ -47,6 +47,7 @@ export async function setupTestTables() {
       email VARCHAR(255) UNIQUE NOT NULL,
       age INTEGER,
       active BOOLEAN DEFAULT true,
+      metadata TEXT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `)

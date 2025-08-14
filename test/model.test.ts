@@ -21,6 +21,9 @@ class User extends Model {
   @column()
   public email: string
 
+  @column()
+  public metadata: { address: string }
+
   @column({ name: 'created_at', serializeAs: 'created_time' })
   public createdTime: Date
 
@@ -43,15 +46,22 @@ describe('Model', () => {
     const user = await User.create({
       name: 'John Doe',
       email: 'john.doe@example.com',
+      active: false,
       age: 20,
+      metadata: {
+        address: '123 Main St',
+      },
       createdTime: new Date(),
     })
     const data = user.serialize()
     expect(data.id).toBeDefined()
     expect(data).toBeDefined()
+    expect(data.active).toBe(false)
     expect(data.full_name).toBe('My name is John Doe')
     expect(data.email).toBe('john.doe@example.com')
-    expect(data.created_at).toBeDefined
+    expect(data.created_time).toBeDefined()
+    expect(data.metadata).toBeDefined()
+    expect(data.metadata.address).toBe('123 Main St')
   })
 
   it('should include avg in select', async () => {
