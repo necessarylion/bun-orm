@@ -1,8 +1,9 @@
 import { getColumns } from '../decorators/column'
-import { type QueryBuilder, spark } from './spark'
+import { spark } from './spark'
 import { parseTableName, toSnakeCase } from '../utils/model-helper'
 import ModelQueryBuilder from '../query-builders/model-query-builder'
 import type { Transaction } from './transaction'
+import type { QueryBuilder } from '../query-builders/query-builder'
 
 /**
  * Interface for objects that can be serialized to a specific type

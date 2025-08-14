@@ -1,18 +1,14 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { db, setupTestTables, cleanupTestData, insertTestData } from './setup'
 
 describe('UPDATE Query Builder', () => {
-  beforeAll(async () => {
-    await setupTestTables()
-  })
-
   beforeEach(async () => {
-    await cleanupTestData()
+    await setupTestTables()
     await insertTestData()
   })
 
-  afterAll(async () => {
-    // Connection is shared across tests, don't close here
+  afterEach(async () => {
+    await cleanupTestData()
   })
 
   it('should update a single record', async () => {
@@ -49,11 +45,11 @@ describe('UPDATE Query Builder', () => {
 
     expect(result).toBeDefined()
     expect(result.length).toBe(3) // 3 users with age > 25
-    expect(result.every((user) => user.active === false)).toBe(true)
+    expect(result.every((user) => !user.active)).toBe(true)
 
     // Verify all matching records were updated
     const updatedUsers = await db.table('users').where('age', '>', 25).get()
-    expect(updatedUsers.every((user) => user.active === false)).toBe(true)
+    expect(updatedUsers.every((user) => !user.active)).toBe(true)
   })
 
   it('should update with WHERE IN clause', async () => {
@@ -192,7 +188,7 @@ describe('UPDATE Query Builder', () => {
 
     expect(result).toBeDefined()
     expect(result.length).toBe(2) // 2 users that are active and age > 25
-    expect(result.every((user) => user.active === false)).toBe(true)
+    expect(result.every((user) => !user.active)).toBe(true)
   })
 
   it('should not update when no records match', async () => {

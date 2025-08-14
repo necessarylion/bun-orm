@@ -1,10 +1,12 @@
-import { SQL } from 'bun'
 import type { ConnectionConfig } from '../types'
+import type { DatabaseDriver } from '../drivers/database-driver'
+import { SQLiteDriver } from '../drivers/sqlite-driver'
+import { PostgresDriver } from '../drivers/postgres-driver'
 
 export class DatabaseConnection {
   private static instance: DatabaseConnection
-  private sqlInstance: Bun.SQL
   private config: ConnectionConfig
+  private driver: DatabaseDriver
 
   /**
    * Private constructor for DatabaseConnection
@@ -12,7 +14,6 @@ export class DatabaseConnection {
    */
   private constructor(config: ConnectionConfig) {
     this.config = config
-    this.sqlInstance = new SQL(config)
   }
 
   /**
@@ -27,16 +28,15 @@ export class DatabaseConnection {
         throw new Error('Database configuration is required for first initialization')
       }
       DatabaseConnection.instance = new DatabaseConnection(config)
+      if (config.driver === 'sqlite') {
+        DatabaseConnection.instance.driver = new SQLiteDriver()
+      } else if (config.driver === 'postgres') {
+        DatabaseConnection.instance.driver = new PostgresDriver()
+      } else {
+        throw new Error(`Unsupported database driver`)
+      }
     }
     return DatabaseConnection.instance
-  }
-
-  /**
-   * Gets the underlying SQL instance
-   * @returns {Bun.SQL} The SQL instance for database operations
-   */
-  public getSQL(): Bun.SQL {
-    return this.sqlInstance
   }
 
   /**
@@ -48,12 +48,20 @@ export class DatabaseConnection {
   }
 
   /**
+   * Gets the current database driver
+   * @returns {DatabaseDriver} The current database driver
+   */
+  public getDriver(): DatabaseDriver {
+    return this.driver
+  }
+
+  /**
    * Tests the database connection by executing a simple query
    * @returns {Promise<boolean>} True if connection is successful, false otherwise
    */
   public async testConnection(): Promise<boolean> {
     try {
-      await this.sqlInstance`SELECT 1 as test`
+      await this.driver.testConnection()
       return true
     } catch (error) {
       console.error('Database connection test failed:', error)
@@ -67,7 +75,7 @@ export class DatabaseConnection {
    */
   public async close(): Promise<void> {
     try {
-      await this.sqlInstance.close()
+      this.driver.close()
     } catch (error) {
       console.error('Error closing database connection:', error)
     }

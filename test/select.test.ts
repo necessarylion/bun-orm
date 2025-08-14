@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
+import { describe, it, expect, afterAll, beforeEach, afterEach } from 'bun:test'
 import { db, setupTestTables, cleanupTestData, insertTestData } from './setup'
 import { avg, count, sum } from '../index'
 
 describe('SELECT Query Builder', () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
     await setupTestTables()
+    await insertTestData()
   })
 
-  beforeEach(async () => {
+  afterEach(async () => {
     await cleanupTestData()
-    await insertTestData()
   })
 
   afterAll(async () => {
@@ -53,7 +53,7 @@ describe('SELECT Query Builder', () => {
 
     expect(activeUsers).toBeDefined()
     expect(activeUsers.length).toBe(3)
-    expect(activeUsers.every((user) => user.active === true)).toBe(true)
+    expect(activeUsers.every((user) => user.active)).toBe(true)
   })
 
   it('should filter with multiple WHERE conditions', async () => {
@@ -61,7 +61,7 @@ describe('SELECT Query Builder', () => {
 
     expect(users).toBeDefined()
     expect(users.length).toBe(2)
-    expect(users.every((user) => user.active === true && user.age > 25)).toBe(true)
+    expect(users.every((user) => user.active && user.age > 25)).toBe(true)
   })
 
   it('should filter with WHERE IN clause', async () => {
@@ -293,7 +293,7 @@ describe('SELECT Query Builder', () => {
     expect(user.name).toBe('Alice Brown')
     expect(user.email).toBe('alice@example.com')
     expect(user.age).toBe(28)
-    expect(user.active).toBe(true)
+    expect(user.active).toBeTruthy()
   })
 
   it('should sum column', async () => {
@@ -320,9 +320,9 @@ describe('SELECT Query Builder', () => {
 
     expect(user).toBeDefined()
     expect(user.length).toBe(2)
-    expect(user[0].active).toBe(false)
+    expect(user[0].active).toBeFalsy()
     expect(user[0].active_count).toBe(1)
-    expect(user[1].active).toBe(true)
+    expect(user[1].active).toBeTruthy()
     expect(user[1].active_count).toBe(3)
   })
 

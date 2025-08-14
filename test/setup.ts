@@ -1,7 +1,9 @@
+import { env } from 'bun'
 import { spark, type ConnectionConfig } from '../index'
 
 // Test database configuration
 export const testConfig: ConnectionConfig = {
+  driver: (env.DB_DRIVER ?? 'postgres') as 'postgres' | 'sqlite',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5433'),
   database: process.env.DB_NAME || 'bun_orm',
@@ -27,12 +29,20 @@ db.testConnection()
     process.exit(1)
   })
 
+export function getAutoIncrementSQL() {
+  const driver = testConfig.driver
+  if (driver === 'sqlite') {
+    return `INTEGER PRIMARY KEY AUTOINCREMENT`
+  }
+  return `SERIAL PRIMARY KEY`
+}
+
 // Test tables setup
 export async function setupTestTables() {
   // Create users table
   await db.raw(`
     CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
+      id ${getAutoIncrementSQL()},
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       age INTEGER,
@@ -44,7 +54,7 @@ export async function setupTestTables() {
   // Create posts table
   await db.raw(`
     CREATE TABLE IF NOT EXISTS posts (
-      id SERIAL PRIMARY KEY,
+      id ${getAutoIncrementSQL()},
       user_id INTEGER REFERENCES users(id),
       title VARCHAR(255) NOT NULL,
       content TEXT,
@@ -56,7 +66,7 @@ export async function setupTestTables() {
   // Create categories table
   await db.raw(`
     CREATE TABLE IF NOT EXISTS categories (
-      id SERIAL PRIMARY KEY,
+      id ${getAutoIncrementSQL()},
       name VARCHAR(255) NOT NULL,
       description TEXT
     )
@@ -74,13 +84,10 @@ export async function setupTestTables() {
 
 // Clean up test data
 export async function cleanupTestData() {
-  await db.raw('DELETE FROM post_categories')
-  await db.raw('DELETE FROM posts')
-  await db.raw('DELETE FROM categories')
-  await db.raw('DELETE FROM users')
-  await db.raw(`ALTER SEQUENCE users_id_seq RESTART WITH 1`)
-  await db.raw('ALTER SEQUENCE posts_id_seq RESTART WITH 1')
-  await db.raw('ALTER SEQUENCE categories_id_seq RESTART WITH 1')
+  await db.dropTable('post_categories', { cascade: true })
+  await db.dropTable('posts', { cascade: true })
+  await db.dropTable('categories', { cascade: true })
+  await db.dropTable('users', { cascade: true })
 }
 
 // Insert test data

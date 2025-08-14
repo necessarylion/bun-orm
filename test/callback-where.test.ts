@@ -4,7 +4,6 @@ import { db, setupTestTables, cleanupTestData, insertTestData } from './setup'
 describe('Callback-based WHERE conditions', () => {
   beforeAll(async () => {
     await setupTestTables()
-    await cleanupTestData()
     await insertTestData()
   })
 
@@ -27,7 +26,7 @@ describe('Callback-based WHERE conditions', () => {
     expect(users.some((u) => u.name === 'Jane Smith')).toBe(true)
   })
 
-  it('should support callback-based where with simple conditions', async () => {
+  it('should support callback-based where with simple conditions query', async () => {
     const query = db
       .table('users')
       .where((q) => {

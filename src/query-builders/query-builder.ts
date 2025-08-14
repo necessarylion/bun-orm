@@ -2,8 +2,6 @@ import { BaseQueryBuilder } from './base-query-builder'
 import type { FullWhereOperators, OrderDirection, SelectColumn, WhereCallback } from '../types'
 import { ALLOWED_WHERE_OPERATORS } from '../utils/sql-constants'
 import type { Transaction } from '../core/transaction'
-import type { DatabaseQueryBuilder } from './database-query-builder'
-import { PostgresQueryBuilder } from './postgres-query-builder'
 
 export class QueryBuilder<M> extends BaseQueryBuilder {
   private alreadyRemovedStar: boolean = false
@@ -12,11 +10,9 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
   public fromAlias: string = ''
   public insertData: Record<string, any>[] = []
   public updateData: Record<string, any> = {}
-  public returningColumns: string[] = ['*']
   public queryMode: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select'
   public upsertData: Record<string, any> = {}
   public conflictColumns: string[] = []
-  public databaseQueryBuilder: DatabaseQueryBuilder = PostgresQueryBuilder.getInstance()
 
   /**
    * Sets the transaction context
@@ -24,7 +20,7 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    * @returns {QueryBuilder} Query builder instance
    */
   useTransaction(trx: Transaction): QueryBuilder<M> {
-    this.sql = trx.getTransactionContext()
+    this.setDriver(trx.getDriver())
     return this
   }
 
@@ -652,15 +648,15 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
   private buildQuery(): { sql: string; params: any[] } {
     switch (this.queryMode) {
       case 'select':
-        return this.databaseQueryBuilder.buildSelectQuery(this)
+        return this.driver.buildSelectQuery(this)
       case 'insert':
-        return this.databaseQueryBuilder.buildInsertQuery(this)
+        return this.driver.buildInsertQuery(this)
       case 'update':
-        return this.databaseQueryBuilder.buildUpdateQuery(this)
+        return this.driver.buildUpdateQuery(this)
       case 'delete':
-        return this.databaseQueryBuilder.buildDeleteQuery(this)
+        return this.driver.buildDeleteQuery(this)
       case 'upsert':
-        return this.databaseQueryBuilder.buildUpsertQuery(this)
+        return this.driver.buildUpsertQuery(this)
       default:
         throw new Error('Invalid query mode')
     }

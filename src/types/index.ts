@@ -1,9 +1,18 @@
 import type { Transaction } from '../core/transaction'
 import type { NestedQueryBuilder } from '../query-builders/nested-query-builder'
 
-export type ConnectionConfig = Bun.SQL.Options & {
-  debug?: boolean
-}
+export type ConnectionConfig =
+  | ({ driver: 'postgres' } & Bun.SQL.Options & { debug?: boolean })
+  | {
+      driver: 'sqlite'
+      filename?: string
+      readonly?: boolean
+      create?: boolean
+      readwrite?: boolean
+      strict?: boolean
+      safeIntegers?: boolean
+      debug?: boolean
+    }
 
 export type WhereOperator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN'
 

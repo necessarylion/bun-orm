@@ -1,17 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { db, setupTestTables, cleanupTestData } from './setup'
 
 describe('INSERT Query Builder', () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
     await setupTestTables()
   })
 
-  beforeEach(async () => {
+  afterEach(async () => {
     await cleanupTestData()
-  })
-
-  afterAll(async () => {
-    // Connection is shared across tests, don't close here
   })
 
   it('should insert a single record', async () => {

@@ -96,7 +96,11 @@ export class SQLHelper {
     for (let i = 0; i < entries.length; i++) {
       const [key, value] = entries[i] as [string, any]
       setParts.push(`${this.safeEscapeIdentifier(key)} = $${i + 1}`)
-      params.push(value)
+      if (value instanceof Date) {
+        params.push(value.toISOString())
+      } else {
+        params.push(value)
+      }
     }
 
     return {
@@ -272,7 +276,15 @@ export class SQLHelper {
     for (const row of data) {
       const rowPlaceholders = columns.map((_, i) => `$${params.length + i + 1}`).join(', ')
       placeholders.push(`(${rowPlaceholders})`)
-      params.push(...columns.map((col) => row[col]))
+      params.push(
+        ...columns.map((col) => {
+          const value = row[col]
+          if (value instanceof Date) {
+            return value.toISOString()
+          }
+          return value
+        })
+      )
     }
 
     return {

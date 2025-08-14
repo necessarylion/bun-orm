@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'bun:test'
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { cleanupTestData, db, insertTestData, setupTestTables } from './setup'
 import { Model, column } from '../index'
 
@@ -29,13 +29,13 @@ class Customer extends Model {
 }
 
 describe('Model with custom table name', () => {
-  beforeAll(async () => {
+  beforeEach(async () => {
     await setupTestTables()
+    await insertTestData()
   })
 
-  beforeEach(async () => {
+  afterEach(async () => {
     await cleanupTestData()
-    await insertTestData()
   })
 
   it('should create a new user with custom serialize', async () => {
