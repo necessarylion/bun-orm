@@ -46,7 +46,7 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public from(table: string, alias?: string): QueryBuilder<any> {
-    return new QueryBuilder().from(table, alias)
+    return new QueryBuilder(this.driver).from(table, alias)
   }
 
   /**
@@ -56,7 +56,7 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public table(table: string, alias?: string): QueryBuilder<any> {
-    return new QueryBuilder().table(table, alias)
+    return new QueryBuilder(this.driver).table(table, alias)
   }
 
   // INSERT queries
@@ -66,7 +66,7 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public insert(data?: Record<string, any> | Record<string, any>[]): QueryBuilder<any> {
-    const queryBuilder = new QueryBuilder()
+    const queryBuilder = new QueryBuilder(this.driver)
     if (data) {
       queryBuilder.insert(data)
     }
@@ -80,7 +80,7 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public update(data?: Record<string, any>): QueryBuilder<any> {
-    const queryBuilder = new QueryBuilder()
+    const queryBuilder = new QueryBuilder(this.driver)
     if (data) {
       queryBuilder.update(data)
     }
@@ -93,7 +93,7 @@ export class Spark {
    * @returns {QueryBuilder} Query builder instance
    */
   public delete(): QueryBuilder<any> {
-    const queryBuilder = new QueryBuilder()
+    const queryBuilder = new QueryBuilder(this.driver)
     // Set the query mode to delete so it works with the unified API
     ;(queryBuilder as any).queryMode = 'delete'
     return queryBuilder

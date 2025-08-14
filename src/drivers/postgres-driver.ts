@@ -117,8 +117,7 @@ export class PostgresDriver implements DatabaseDriver {
     const reservedSql = await this.sqlInstance.reserve()
     await reservedSql`BEGIN`
     // create transaction
-    const transaction = new Transaction()
-    transaction.setDriver(new PostgresDriver(reservedSql))
+    const transaction = new Transaction(new PostgresDriver(reservedSql))
     return transaction
   }
 

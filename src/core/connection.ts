@@ -33,7 +33,7 @@ export class DatabaseConnection {
       } else if (config.driver === 'postgres') {
         DatabaseConnection.instance.driver = new PostgresDriver()
       } else {
-        throw new Error(`Unsupported database driver: ${config.driver}`)
+        throw new Error(`Unsupported database driver`)
       }
     }
     return DatabaseConnection.instance

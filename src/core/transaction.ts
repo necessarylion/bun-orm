@@ -2,13 +2,13 @@ import { QueryBuilder } from '../query-builders/query-builder'
 import type { DatabaseDriver } from '../drivers/database-driver'
 
 export class Transaction<M = any> {
-  private driver?: DatabaseDriver
+  private driver: DatabaseDriver
 
   /**
    * Creates a new Transaction instance
    * @param {DatabaseDriver} [driver]
    */
-  constructor(driver?: DatabaseDriver) {
+  constructor(driver: DatabaseDriver) {
     this.driver = driver
   }
 
@@ -60,14 +60,6 @@ export class Transaction<M = any> {
    */
   public async raw(sql: string, params: any[] = []): Promise<any[]> {
     return await this.getDriver().runQuery(sql, params)
-  }
-
-  /**
-   * Sets the transaction context (used internally)
-   * @param {DatabaseDriver} driver
-   */
-  public setDriver(driver: DatabaseDriver): void {
-    this.driver = driver
   }
 
   /**

@@ -1,10 +1,8 @@
 import type { Transaction } from '../core/transaction'
 import type { NestedQueryBuilder } from '../query-builders/nested-query-builder'
 
-export type DatabaseDriver = 'sqlite' | 'postgres'
-
-export type ConnectionConfig = (
-  | Bun.SQL.Options
+export type ConnectionConfig =
+  | ({ driver: 'postgres' } & Bun.SQL.Options & { debug?: boolean })
   | {
       driver: 'sqlite'
       filename?: string
@@ -13,11 +11,8 @@ export type ConnectionConfig = (
       readwrite?: boolean
       strict?: boolean
       safeIntegers?: boolean
+      debug?: boolean
     }
-) & {
-  driver: DatabaseDriver
-  debug?: boolean
-}
 
 export type WhereOperator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN'
 
