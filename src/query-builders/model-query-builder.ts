@@ -21,7 +21,18 @@ export default class ModelQueryBuilder<M> extends QueryBuilder<M> {
     for (const [dbColumn, value] of Object.entries(data)) {
       const propertyName = columnMap.get(dbColumn) ?? camelCase(dbColumn)
       const propertyType = typeMap.get(dbColumn)
-      mappedData[propertyName as string] = propertyType === 'Date' ? new Date(value) : value
+
+      let parsedValue = value
+      if (propertyType === 'Date') {
+        parsedValue = new Date(value)
+      } else if (propertyType === 'Boolean') {
+        parsedValue = Boolean(value)
+      } else if (propertyType === 'Number') {
+        parsedValue = Number(value)
+      } else if (propertyType === 'String') {
+        parsedValue = String(value)
+      }
+      mappedData[propertyName as string] = parsedValue
     }
     Object.assign(instance, mappedData)
     return instance

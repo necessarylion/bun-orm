@@ -16,6 +16,9 @@ class User extends Model {
   public age: number
 
   @column()
+  public active: boolean
+
+  @column()
   public email: string
 
   @column({ name: 'created_at', serializeAs: 'created_time' })
