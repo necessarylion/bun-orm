@@ -2,6 +2,13 @@
 
 A lightweight, type-safe query builder for Bun with PostgreSQL support. Built with performance and developer experience in mind.
 
+## [Documentation](https://necessarylion.github.io/bun-spark)
+
+## Supported Drivers
+
+- PostgreSQL
+- SQLite
+
 ## Table of Contents
 
 - [Features](#features)
@@ -56,6 +63,7 @@ bun add bun-spark
 import { spark } from 'bun-spark'
 
 const db = spark({
+  driver: 'postgresql',
   host: 'localhost',
   port: 5432,
   database: 'my_database',
@@ -73,70 +81,14 @@ console.log('Connected:', isConnected)
 #### SELECT Queries
 
 ```typescript
-// Select all users
-const users = await db.table('users').get()
-
-// Select specific columns
 const userNames = await db.table('users').select(['name', 'email']).get()
 
-// Select with column aliases
-const usersWithAliases = await db
-  .table('users')
-  .select({ user_name: 'name', user_email: 'email' })
-  .get()
-
-// Filter with WHERE clause (explicit operator)
-const activeUsers = await db
-  .table('users')
-  .where('active', '=', true)
-  .get()
-
-// Filter with WHERE clause (implicit equals operator)
-const user = await db
-  .table('users')
-  .where('id', 1) // Type-safe: null/undefined values are prevented at compile time
-  .first()
-
-// Multiple WHERE conditions
 const users = await db
   .table('users')
   .where('active', '=', true)
   .where('age', '>', 25)
   .get()
 
-// WHERE IN clause
-const specificUsers = await db
-  .table('users')
-  .whereIn('id', [1, 2, 3])
-  .get()
-
-// WHERE NULL clause
-const usersWithoutAge = await db
-  .table('users')
-  .whereNull('age')
-  .get()
-
-// WHERE NOT NULL clause
-const usersWithAge = await db
-  .table('users')
-  .whereNotNull('age')
-  .get()
-
-// WHERE NOT IN clause
-const excludedUsers = await db
-  .table('users')
-  .whereNotIn('id', [1, 2, 3])
-  .get()
-
-// ORDER BY, LIMIT, and OFFSET
-const sortedAndPaginatedUsers = await db
-  .table('users')
-  .orderBy('name', 'DESC')
-  .limit(10)
-  .offset(5)
-  .get()
-
-// Get first result
 const firstUser = await db
   .table('users')
   .where('id', '=', 1)
@@ -165,13 +117,6 @@ const newUsers = await db
     { name: 'Jane Smith', email: 'jane@example.com', age: 25 },
     { name: 'Bob Johnson', email: 'bob@example.com', age: 35 }
   ])
-
-// Insert without returning data
-await db.table('users').insert({
-  name: 'Alice Brown',
-  email: 'alice@example.com',
-  age: 28,
-})
 ```
 
 #### UPDATE Queries
@@ -181,25 +126,10 @@ await db.table('users').insert({
 const updatedUser = await db
   .table('users')
   .where('id', '=', 1)
-  .returning(['id', 'name', 'age'])
   .update({
     name: 'Updated Name',
     age: 31
   })
-
-// Update multiple records
-const updatedUsers = await db
-  .table('users')
-  .where('age', '>', 25)
-  .returning(['id', 'name', 'active'])
-  .update({ active: false })
-
-// Update with WHERE IN
-const users = await db
-  .table('users')
-  .whereIn('id', [1, 2, 3])
-  .returning(['id', 'name', 'age'])
-  .update({ age: 40 })
 ```
 
 #### UPSERT Queries
@@ -230,16 +160,6 @@ const user = await db
     age: 30,
     active: true
   })
-
-// Upsert without returning data
-await db
-  .table('users')
-  .onConflict('email')
-  .upsert({
-    name: 'John Doe',
-    email: 'john@example.com',
-    age: 30
-  })
 ```
 
 **Note:** The table must have a unique constraint on the conflict column(s) for upsert to work properly.
@@ -251,18 +171,6 @@ await db
 const deletedUser = await db
   .table('users')
   .where('id', '=', 1)
-  .delete()
-
-// Delete multiple records
-const deletedUsers = await db
-  .table('users')
-  .where('active', '=', false)
-  .delete()
-
-// Delete with WHERE IN
-const users = await db
-  .table('users')
-  .whereIn('id', [1, 2, 3])
   .delete()
 ```
 
@@ -285,7 +193,6 @@ const count = await db.table('users')
   .get<{age_count: number}()
 console.log(count.age_count)
 ```
-
 
 ### 3. Models (ORM)
 
