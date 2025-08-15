@@ -1,5 +1,9 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.1.3/schema.json",
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**/*.ts", "**/*.test.ts"]
+  },
   "linter": {
     "enabled": true,
     "rules": {

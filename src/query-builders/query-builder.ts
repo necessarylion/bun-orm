@@ -180,7 +180,14 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    * Supports both syntaxes:
    * - where('id', '=', 2) - with explicit operator
    * - where('id', 2) - defaults to '=' operator
+   * - where((query) => {
+   *    query.where('id', 1)
+   *    query.orWhere('name', 'Jane Smith')
+   *  })
    */
+  public where(callback: WhereCallback): QueryBuilder<M>
+  public where(column: string, value: any): QueryBuilder<M>
+  public where(column: string, operator: FullWhereOperators, value: any): QueryBuilder<M>
   public where(columnOrCallback: string | WhereCallback, operatorOrValue?: any, value?: any): QueryBuilder<M> {
     // Handle callback-based where
     if (typeof columnOrCallback === 'function') {
