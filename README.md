@@ -758,3 +758,12 @@ MIT
   - [ ] MySQL
   - [x] SQLite
 - [ ] Advance Having
+- [ ] More Query Builder Methods
+  - [ ] whereLike
+  - [ ] whereILike
+  - [ ] whereNotLike
+  - [ ] whereNotILike
+  - [ ] whereBetween
+  - [ ] whereNotBetween
+  - [ ] whereExists
+  - [ ] whereNotExists

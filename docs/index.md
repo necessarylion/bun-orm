@@ -2,6 +2,11 @@
 
 A lightweight, type-safe query builder for Bun. Built with performance and developer experience in mind.
 
+## Supported Drivers
+
+- PostgreSQL
+- SQLite
+
 ## Installation
 
 ```
