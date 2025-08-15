@@ -253,4 +253,91 @@ The offset method is used to skip a number of results in the query.
 const users = await db.table('users')
   .offset(5)
   .get()
+
+# Transactions
+
+Bun ORM supports both automatic and manual transaction management.
+
+## Callback (Automatic) Transactions
+
+The `transaction` method provides an easy way to run database transactions. It accepts a callback function, and if the callback throws an exception, the transaction is automatically rolled back. Otherwise, the transaction is committed if the callback runs successfully.
+
+```ts
+// Successful transaction
+const result = await db.transaction(async (trx) => {
+  // Insert data
+  await trx
+    .table('users')
+    .insert({ name: 'John Doe', email: 'john@example.com' })
+
+  // Update data
+  await trx
+    .table('users')
+    .where('name', '=', 'John Doe')
+    .update({ age: 30 })
+
+  // Return final result
+  return await trx
+    .table('users')
+    .where('name', '=', 'John Doe')
+    .first()
+})
+```
+
+If an error is thrown inside the transaction callback, the transaction will be automatically rolled back.
+
+```ts
+// Failed transaction (automatic rollback)
+try {
+  await db.transaction(async (trx) => {
+    await trx
+      .table('users')
+      .insert({ name: 'Jane Smith', email: 'jane@example.com' })
+
+    // This will fail and cause rollback
+    await trx.raw('INSERT INTO users (name) VALUES (NULL)')
+  })
+} catch (error) {
+  console.log('Transaction rolled back:', error.message)
+}
+```
+
+## Manual Transactions
+
+For more control over the transaction lifecycle, you can use manual transactions. The `beginTransaction` method starts a new transaction, and you can use the `commit` and `rollback` methods to control the outcome.
+
+```ts
+// Manual transaction with commit
+const trx = await db.beginTransaction()
+try {
+  await trx
+    .table('users')
+    .where('name', 'John')
+    .update({ age: 30 })
+
+  await trx.commit()
+} catch (error) {
+  await trx.rollback()
+  console.log('Transaction rolled back:', error.message)
+}
+```
+
+```ts
+// Manual transaction with rollback
+const trx = await db.beginTransaction()
+try {
+  await trx
+    .table('users')
+    .where('name', 'John')
+    .update({ age: 25 })
+
+  // Some operation that might fail
+  throw new Error('Something went wrong')
+
+  await trx.commit()
+} catch (error) {
+  await trx.rollback()
+  console.log('Transaction rolled back:', error.message)
+}
+```
 ```
