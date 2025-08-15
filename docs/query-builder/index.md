@@ -253,12 +253,13 @@ The offset method is used to skip a number of results in the query.
 const users = await db.table('users')
   .offset(5)
   .get()
+```
 
-# Transactions
+## Transactions
 
 Bun ORM supports both automatic and manual transaction management.
 
-## Callback (Automatic) Transactions
+### Callback (Automatic) Transactions
 
 The `transaction` method provides an easy way to run database transactions. It accepts a callback function, and if the callback throws an exception, the transaction is automatically rolled back. Otherwise, the transaction is committed if the callback runs successfully.
 
@@ -302,11 +303,11 @@ try {
 }
 ```
 
-## Manual Transactions
+### Manual Transactions
 
 For more control over the transaction lifecycle, you can use manual transactions. The `beginTransaction` method starts a new transaction, and you can use the `commit` and `rollback` methods to control the outcome.
 
-```ts
+```ts hl_lines="2 9 11"
 // Manual transaction with commit
 const trx = await db.beginTransaction()
 try {
@@ -322,7 +323,7 @@ try {
 }
 ```
 
-```ts
+```ts hl_lines="2 12 14"
 // Manual transaction with rollback
 const trx = await db.beginTransaction()
 try {
@@ -339,5 +340,4 @@ try {
   await trx.rollback()
   console.log('Transaction rolled back:', error.message)
 }
-```
 ```

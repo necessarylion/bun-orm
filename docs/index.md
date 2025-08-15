@@ -1,4 +1,4 @@
-# Bun Spark
+# Introduction
 
 A lightweight, type-safe query builder for Bun. Built with performance and developer experience in mind.
 
