@@ -54,6 +54,9 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
 
 nav:
   - Getting Started: 
@@ -62,3 +65,5 @@ nav:
     - query-builder/index.md
   - Model:
     - model/index.md
+  - Roadmap:
+    - roadmap/index.md

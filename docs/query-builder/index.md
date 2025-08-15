@@ -1,5 +1,54 @@
 # Basic Queries
 
+## insert
+
+Single record
+
+```ts
+const users = await db.table('users')
+  .insert({ name: 'John Doe', email: 'john.doe@example.com' })
+```
+
+Multiple records
+
+```ts
+const users = await db.table('users')
+  .insert([
+    { name: 'John Doe', email: 'john.doe@example.com' },
+    { name: 'Jane Doe', email: 'jane.doe@example.com' }
+  ])
+```
+
+## update
+
+```ts
+const user = await db.table('users')
+  .where('id', 1)
+  .update({ name: 'John Doe', email: 'john.doe@example.com' })
+```
+
+## delete
+
+```ts
+const user = await db.table('users')
+  .where('id', 1)
+  .delete()
+```
+
+## upsert
+
+Note: The table must have a unique constraint on the conflict column(s) for upsert to work properly.
+
+```ts
+const user = await db.table('users')
+  .onConflict('id')
+  .upsert({ id: 1, name: 'John Doe', email: 'john.doe@example.com' })
+
+const user = await db.table('users')
+  .onConflict(['email', 'name'])
+  .upsert({ name: 'John Doe', email: 'john.doe@example.com' })
+```
+
 ## all
 
 ```ts hl_lines="2 5"

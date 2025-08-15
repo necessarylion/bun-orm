@@ -97,27 +97,3 @@ DB_PASSWORD=postgres
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## Roadmap
-
-- [x] Manual transaction support
-- [ ] Aggregation functions (COUNT, SUM, AVG, etc.)
-  - [x] COUNT
-  - [x] SUM
-  - [x] AVG
-  - [ ] MIN
-  - [ ] MAX
-- [ ] Advanced JOIN support
-- [x] Query logging/debugging
-- [ ] Multiple database support (MySQL, SQLite)
-  - [ ] MySQL
-  - [x] SQLite
-- [ ] Advance Having
-- [ ] More Query Builder Methods
-  - [ ] whereLike
-  - [ ] whereILike
-  - [ ] whereNotLike
-  - [ ] whereNotILike
-  - [ ] whereBetween
-  - [ ] whereNotBetween
-  - [ ] whereExists
-  - [ ] whereNotExists
