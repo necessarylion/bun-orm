@@ -1,6 +1,6 @@
 {
   "name": "bun-spark",
-  "version": "0.0.1-alpha.10",
+  "version": "0.0.1-alpha.11",
   "description": "(Spark) A postgres query builder for Bun",
   "module": "index.ts",
   "type": "module",
@@ -16,8 +16,8 @@
     "type-check": "tsc --noEmit",
     "build": "tsc",
     "check": "bun run test && bun run lint && bun run type-check && bun run format",
-    "doc:deploy": "mkdocs gh-deploy --force",
-    "doc:serve": "mkdocs serve"
+    "docs:deploy": "mkdocs gh-deploy --force",
+    "docs:serve": "mkdocs serve"
   },
   "keywords": [
     "bun",
