@@ -36,8 +36,8 @@
     * [ ] whereILike
     * [ ] whereNotLike
     * [ ] whereNotILike
-    * [ ] whereBetween
-    * [ ] whereNotBetween
+    * [x] whereBetween
+    * [x] whereNotBetween
     * [ ] whereExists
     * [ ] whereNotExists
     * [ ] whereHas
