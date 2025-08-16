@@ -71,6 +71,22 @@ export class WhereQueryBuilder<Q = any> {
     return this.where(column, '!=', null)
   }
 
+  public whereBetween(column: string, [start, end]: [any, any]): Q {
+    return this.whereRaw(`${column} BETWEEN ? AND ?`, [start, end])
+  }
+
+  public whereNotBetween(column: string, [start, end]: [any, any]): Q {
+    return this.whereRaw(`${column} NOT BETWEEN ? AND ?`, [start, end])
+  }
+
+  public orWhereBetween(column: string, [start, end]: [any, any]): Q {
+    return this.orWhereRaw(`${column} BETWEEN ? AND ?`, [start, end])
+  }
+
+  public orWhereNotBetween(column: string, [start, end]: [any, any]): Q {
+    return this.orWhereRaw(`${column} NOT BETWEEN ? AND ?`, [start, end])
+  }
+
   /**
    * Adds an OR WHERE condition to the query
    */
@@ -130,6 +146,14 @@ export class WhereQueryBuilder<Q = any> {
     return this.orWhere(column, '!=', null)
   }
 
+  /**
+   * Adds a WHERE condition to the query
+   * @param type - The type of condition to add (AND or OR)
+   * @param columnOrCallback - The column name or callback function
+   * @param operatorOrValue - The operator or value
+   * @param value - The value
+   * @returns void
+   */
   protected addWhere(
     type: 'AND' | 'OR',
     columnOrCallback: string | WhereCallback,

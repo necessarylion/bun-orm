@@ -351,4 +351,13 @@ describe('SELECT Query Builder', () => {
     expect(user[0].age_avg).toBe(35)
     expect(parseFloat(user[1].age_avg.toFixed(2))).toBe(27.67)
   })
+
+  it('between', async () => {
+    const users = await db
+      .table('users')
+      .where('active', true)
+      .whereBetween('age', [25, 30]).get()
+    
+    expect(users.length).toBe(3)
+  })
 })

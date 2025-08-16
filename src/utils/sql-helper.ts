@@ -241,8 +241,7 @@ export class SQLHelper {
       }
     }
     if (operator === 'RAW' && Array.isArray(value)) {
-      const placeholders = value.map((_, j) => `$${paramOffset + j + 1}`).join(', ')
-      const sql = column.replace(/\?/g, placeholders)
+      const sql = this.replacePlaceholders(column, paramOffset)
       return {
         type: condition.type,
         wherePart: sql,
@@ -335,6 +334,14 @@ export class SQLHelper {
       placeholders: placeholders.join(', '),
       params,
     }
+  }
+
+  replacePlaceholders(sql: string, offset: number): string {
+    let counter = offset;
+    return sql.replace(/\?/g, () => {
+      counter++;
+      return `$${counter}`;
+    });
   }
 
   toSql(sql: string, params: any[]): string {

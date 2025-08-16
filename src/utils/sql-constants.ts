@@ -105,6 +105,7 @@ export const FULL_WHERE_OPERATORS = [
   'LIKE',
   'ILIKE',
   'IN',
+  'BETWEEN',
   'NOT IN',
   'IS NULL',
   'IS NOT NULL',
