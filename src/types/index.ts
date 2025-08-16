@@ -1,5 +1,5 @@
 import type { Transaction } from '../core/transaction'
-import type { NestedQueryBuilder } from '../query-builders/nested-query-builder'
+import type { WhereQueryBuilder } from '../query-builders/where-query-builder'
 
 export type ConnectionConfig =
   | ({ driver: 'postgres' } & Bun.SQL.Options & { debug?: boolean })
@@ -14,17 +14,18 @@ export type ConnectionConfig =
       debug?: boolean
     }
 
-export type WhereOperator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN'
+export type WhereOperator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN' | 'BETWEEN'
 
 export type FullWhereOperators = WhereOperator | 'IS NULL' | 'IS NOT NULL' | 'RAW'
 
 export type WhereCondition = {
+  type: 'AND' | 'OR'
   column: string
   operator: FullWhereOperators
   value?: any
 }
 
-export type WhereCallback = (query: NestedQueryBuilder) => void
+export type WhereCallback = (query: WhereQueryBuilder<WhereQueryBuilder>) => void
 
 export type WhereGroupCondition = {
   type: 'AND' | 'OR'

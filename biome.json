@@ -9,7 +9,8 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noUnsafeDeclarationMerging": "off"
       },
       "complexity": {
         "noThisInStatic": "off"

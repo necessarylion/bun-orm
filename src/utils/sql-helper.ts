@@ -118,31 +118,50 @@ export class SQLHelper {
    */
   buildWhereConditions(
     conditions: WhereCondition[],
-    groupConditions: WhereGroupCondition[] = []
+    groupConditions: WhereGroupCondition[] = [],
+    offset: number = 0
   ): { sql: string; params: any[] } {
     if (conditions.length === 0 && groupConditions.length === 0) {
       return { sql: '', params: [] }
     }
 
-    const whereParts: string[] = []
+    const whereParts: {
+      type: 'AND' | 'OR'
+      wherePart: string
+    }[] = []
     const params: any[] = []
 
-    for (let i = 0; i < conditions.length; i++) {
+    for (let i = offset; i < conditions.length; i++) {
       const condition = conditions[i] as WhereCondition
       const regularResult = this.#getRegularWhereCondition(condition, params.length)
-      whereParts.push(regularResult.wherePart)
+      whereParts.push({
+        type: condition.type,
+        wherePart: regularResult.wherePart,
+      })
       params.push(...regularResult.params)
     }
 
     // handle group conditions
     for (const group of groupConditions) {
       const groupResult = this.buildGroupCondition(group, params.length)
-      whereParts.push(groupResult.sql)
+      whereParts.push({
+        type: group.type,
+        wherePart: groupResult.sql,
+      })
       params.push(...groupResult.params)
     }
 
+    const andParts = whereParts.filter((part) => part.type === 'AND').map((part) => part.wherePart)
+    const orParts = whereParts.filter((part) => part.type === 'OR').map((part) => part.wherePart)
+
+    let sql = andParts.join(' AND ')
+
+    if (orParts.length > 0) {
+      sql += ` OR ${orParts.join(' OR ')}`
+    }
+
     return {
-      sql: whereParts.join(' AND '),
+      sql,
       params,
     }
   }
@@ -154,25 +173,43 @@ export class SQLHelper {
    * @returns {{ sql: string; params: any[] }} Group condition SQL and parameters
    */
   private buildGroupCondition(group: WhereGroupCondition, paramOffset: number): { sql: string; params: any[] } {
-    const groupParts: string[] = []
+    const groupParts: {
+      type: 'AND' | 'OR'
+      wherePart: string
+    }[] = []
     const params: any[] = []
 
     for (const condition of group.conditions) {
-      if ('type' in condition) {
+      if ('conditions' in condition) {
         // Nested group
         const nestedResult = this.buildGroupCondition(condition, paramOffset + params.length)
-        groupParts.push(`(${nestedResult.sql})`)
+        groupParts.push({
+          type: condition.type,
+          wherePart: `${nestedResult.sql}`,
+        })
         params.push(...nestedResult.params)
       } else {
         // Regular condition
         const regularResult = this.#getRegularWhereCondition(condition, paramOffset + params.length)
-        groupParts.push(regularResult.wherePart)
+        groupParts.push({
+          type: condition.type,
+          wherePart: regularResult.wherePart,
+        })
         params.push(...regularResult.params)
       }
     }
 
+    const orParts = groupParts.filter((part) => part.type === 'OR').map((part) => part.wherePart)
+    const andParts = groupParts.filter((part) => part.type === 'AND').map((part) => part.wherePart)
+
+    let sql = andParts.join(' AND ')
+
+    if (orParts.length > 0) {
+      sql += ` OR ${orParts.join(' OR ')}`
+    }
+
     return {
-      sql: groupParts.length > 0 ? `(${groupParts.join(` ${group.type} `)})` : '',
+      sql: groupParts.length > 0 ? `(${sql})` : '',
       params,
     }
   }
@@ -181,6 +218,7 @@ export class SQLHelper {
     condition: WhereCondition,
     paramOffset: number
   ): {
+    type: 'AND' | 'OR'
     wherePart: string
     params: any[]
   } {
@@ -189,6 +227,7 @@ export class SQLHelper {
 
     if (operator === 'IS NULL' || operator === 'IS NOT NULL') {
       return {
+        type: condition.type,
         wherePart: `${this.safeEscapeIdentifier(column)} ${operator}`,
         params: [],
       }
@@ -196,25 +235,28 @@ export class SQLHelper {
     if ((operator === 'IN' || operator === 'NOT IN') && Array.isArray(value)) {
       const placeholders = value.map((_, j) => `$${paramOffset + j + 1}`).join(', ')
       return {
+        type: condition.type,
         wherePart: `${this.safeEscapeIdentifier(column)} ${operator} (${placeholders})`,
         params: value,
       }
     }
     if (operator === 'RAW' && Array.isArray(value)) {
-      const placeholders = value.map((_, j) => `$${paramOffset + j + 1}`).join(', ')
-      const sql = column.replace(/\?/g, placeholders)
+      const sql = this.replacePlaceholders(column, paramOffset)
       return {
+        type: condition.type,
         wherePart: sql,
         params: value,
       }
     }
     if (operator === 'RAW' && !value) {
       return {
+        type: condition.type,
         wherePart: column,
         params: [],
       }
     }
     return {
+      type: condition.type,
       wherePart: `${this.safeEscapeIdentifier(column)} ${operator} $${paramOffset + 1}`,
       params: [value],
     }
@@ -292,6 +334,14 @@ export class SQLHelper {
       placeholders: placeholders.join(', '),
       params,
     }
+  }
+
+  replacePlaceholders(sql: string, offset: number): string {
+    let counter = offset
+    return sql.replace(/\?/g, () => {
+      counter++
+      return `$${counter}`
+    })
   }
 
   toSql(sql: string, params: any[]): string {

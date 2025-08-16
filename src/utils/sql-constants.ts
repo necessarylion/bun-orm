@@ -1,10 +1,4 @@
 /**
- * SQL security constants for validation and escaping
- */
-
-import type { FullWhereOperators } from '../types'
-
-/**
  * Dangerous SQL patterns that could indicate SQL injection attempts
  * These patterns are checked against table names, column names, and other identifiers
  */
@@ -101,7 +95,6 @@ export const MAX_IDENTIFIER_LENGTH = 128
 /**
  * Allowed WHERE operators
  */
-export const ALLOWED_WHERE_OPERATORS = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'ILIKE', 'IN', 'NOT IN'] as string[]
 export const FULL_WHERE_OPERATORS = [
   '=',
   '!=',
@@ -112,7 +105,9 @@ export const FULL_WHERE_OPERATORS = [
   'LIKE',
   'ILIKE',
   'IN',
+  'BETWEEN',
   'NOT IN',
   'IS NULL',
   'IS NOT NULL',
-] as FullWhereOperators[]
+  'RAW',
+] as string[]
