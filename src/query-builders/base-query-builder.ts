@@ -1,14 +1,11 @@
 import { type DatabaseConnection, getConnection } from '../core/connection'
 import { SQLHelper } from '../utils/sql-helper'
-import { NestedQueryBuilder } from './nested-query-builder'
 import type {
   WhereCondition,
   WhereGroupCondition,
-  WhereCallback,
   JoinCondition,
   OrderByCondition,
   GroupByCondition,
-  FullWhereOperators,
   JoinType,
   OrderDirection,
 } from '../types'
@@ -47,37 +44,6 @@ export abstract class BaseQueryBuilder {
   constructor(driver?: DatabaseDriver) {
     this.connection = getConnection()
     this.driver = driver ?? this.connection.getDriver()
-  }
-
-  /**
-   * Adds a WHERE condition to the query
-   * @param {string} column - Column name
-   * @param {FullWhereOperators} operator - Comparison operator
-   * @param {any} [value] - Value to compare against
-   */
-  protected addWhereCondition(column: string, operator: FullWhereOperators, value?: any): void {
-    this.whereConditions.push({ column, operator, value })
-  }
-
-  /**
-   * Adds a callback-based WHERE condition to the query
-   * @param {WhereCallback} callback - Callback function that receives a NestedQueryBuilder
-   */
-  protected addWhereCallback(callback: WhereCallback): void {
-    const nestedBuilder = new NestedQueryBuilder()
-    callback(nestedBuilder)
-    const conditions = nestedBuilder.getConditions()
-
-    if (conditions.length === 1 && conditions[0] && 'type' in conditions[0]) {
-      // Single group condition
-      this.whereGroupConditions.push(conditions[0] as WhereGroupCondition)
-    } else {
-      // Multiple conditions - wrap in AND group
-      this.whereGroupConditions.push({
-        type: 'AND',
-        conditions: conditions as WhereCondition[],
-      })
-    }
   }
 
   /**

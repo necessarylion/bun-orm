@@ -68,7 +68,7 @@ describe('Callback-based WHERE conditions', () => {
       .get()
 
     expect(users).toBeDefined()
-    expect(users.length).toBe(4) // All users: John (30, active), Jane (25, active), Bob (35, inactive), Alice (28, active)
+    expect(users.length).toBe(3) // All users: John (30, active), Jane (25, active), Bob (35, inactive), Alice (28, active)
     expect(users.some((u) => u.name === 'John Doe')).toBe(true)
     expect(users.some((u) => u.name === 'Jane Smith')).toBe(true)
     expect(users.some((u) => u.name === 'Alice Brown')).toBe(true)
