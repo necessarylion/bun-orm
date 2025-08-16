@@ -353,11 +353,8 @@ describe('SELECT Query Builder', () => {
   })
 
   it('between', async () => {
-    const users = await db
-      .table('users')
-      .where('active', true)
-      .whereBetween('age', [25, 30]).get()
-    
+    const users = await db.table('users').where('active', true).whereBetween('age', [25, 30]).get()
+
     expect(users.length).toBe(3)
   })
 })

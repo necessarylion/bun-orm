@@ -337,11 +337,11 @@ export class SQLHelper {
   }
 
   replacePlaceholders(sql: string, offset: number): string {
-    let counter = offset;
+    let counter = offset
     return sql.replace(/\?/g, () => {
-      counter++;
-      return `$${counter}`;
-    });
+      counter++
+      return `$${counter}`
+    })
   }
 
   toSql(sql: string, params: any[]): string {
