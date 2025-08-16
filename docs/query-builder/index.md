@@ -253,6 +253,26 @@ const users = await db.table('users')
   .get()
 ```
 
+## whereBetween
+
+The whereBetween method adds a where between clause to the query.
+
+```ts hl_lines="3"
+const users = await db.table('users')
+  .where('active', '=', true)
+  .whereBetween('age', [25, 30])
+  .get()
+```
+
+`whereBetween` method variants
+
+| Method | Description |
+|--------|-------------|
+| `whereBetween` | Adds a where between clause to the query. |
+| `orWhereBetween` | Adds a where between clause to the query. |
+| `whereNotBetween` | Adds a where not between clause to the query. |
+| `orWhereNotBetween` | Adds a where not between clause to the query. |
+
 ## whereRaw
 
 You can use the whereRaw method to express conditions not covered by the existing query builder methods. Always make sure to use bind parameters to define query values.
