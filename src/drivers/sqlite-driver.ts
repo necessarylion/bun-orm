@@ -375,7 +375,11 @@ export class SQLiteDriver implements DatabaseDriver {
    * @returns {{ sql: string; params: any[] }} SQL fragment and parameters
    */
   protected buildWhereClause(queryBuilder: QueryBuilder<any>): { sql: string; params: any[] } {
-    return this.sqlHelper.buildWhereConditions(queryBuilder.whereConditions, queryBuilder.whereGroupConditions)
+    return this.sqlHelper.buildWhereConditions(
+      queryBuilder.whereConditions,
+      queryBuilder.whereGroupConditions,
+      'sqlite'
+    )
   }
 
   /**

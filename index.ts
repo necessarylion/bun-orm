@@ -30,6 +30,7 @@ export type {
   SelectColumn,
   QueryResult,
   TransactionCallback,
+  Driver,
 } from './src/types'
 
 export { count, sum, avg } from './src/utils/aggregation'

@@ -273,6 +273,44 @@ const users = await db.table('users')
 | `whereNotBetween` | Adds a where not between clause to the query. |
 | `orWhereNotBetween` | Adds a where not between clause to the query. |
 
+## whereLike
+
+The whereLike method adds a where like clause to the query.
+
+```ts hl_lines="2"
+const users = await db.table('users')
+  .whereLike('name', '%John%')
+  .get()
+```
+
+`whereLike` method variants
+
+| Method | Description |
+|--------|-------------|
+| `whereLike` | Adds a where like clause to the query. |
+| `orWhereLike` | Adds a or where like clause to the query. |
+| `whereNotLike` | Adds a where not like clause to the query. |
+| `orWhereNotLike` | Adds a or where not like clause to the query. |
+
+## whereILike
+
+The whereILike method adds a where ilike clause to the query.
+
+```ts hl_lines="2"
+const users = await db.table('users')
+  .whereILike('name', '%johnson')
+  .get()
+```
+
+`whereILike` method variants
+
+| Method | Description |
+|--------|-------------|
+| `whereILike` | Adds a where ilike clause to the query. |
+| `orWhereILike` | Adds a or where ilike clause to the query. |
+| `whereNotILike` | Adds a where not ilike clause to the query. |
+| `orWhereNotILike` | Adds a or where not ilike clause to the query. |
+
 ## whereRaw
 
 You can use the whereRaw method to express conditions not covered by the existing query builder methods. Always make sure to use bind parameters to define query values.

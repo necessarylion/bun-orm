@@ -1,9 +1,9 @@
 import { env } from 'bun'
-import { spark, type ConnectionConfig } from '../index'
+import { spark, type ConnectionConfig, type Driver } from '../index'
 
 // Test database configuration
 export const testConfig: ConnectionConfig = {
-  driver: (env.DB_DRIVER ?? 'postgres') as 'postgres' | 'sqlite',
+  driver: (env.DB_DRIVER ?? 'postgres') as Driver,
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5433'),
   database: process.env.DB_NAME || 'bun_orm',

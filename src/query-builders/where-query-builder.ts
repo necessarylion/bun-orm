@@ -1,4 +1,4 @@
-import type { FullWhereOperators, WhereCallback, WhereCondition, WhereGroupCondition } from '../types'
+import type { WhereCallback, WhereCondition, WhereGroupCondition, WhereOperator } from '../types'
 import { FULL_WHERE_OPERATORS } from '../utils/sql-constants'
 
 export class WhereQueryBuilder<Q = any> {
@@ -17,7 +17,7 @@ export class WhereQueryBuilder<Q = any> {
    */
   public where(callback: WhereCallback): Q
   public where(column: string, value: any): Q
-  public where(column: string, operator: FullWhereOperators, value: any): Q
+  public where(column: string, operator: WhereOperator, value: any): Q
   public where(columnOrCallback: string | WhereCallback, operatorOrValue?: any, value?: any): Q {
     this.addWhere('AND', columnOrCallback, operatorOrValue, value)
     return this as any as Q
@@ -87,12 +87,44 @@ export class WhereQueryBuilder<Q = any> {
     return this.orWhereRaw(`${column} NOT BETWEEN ? AND ?`, [start, end])
   }
 
+  public whereLike(column: string, value: string): Q {
+    return this.where(column, 'LIKE', value)
+  }
+
+  public orWhereLike(column: string, value: string): Q {
+    return this.orWhere(column, 'LIKE', value)
+  }
+
+  public whereILike(column: string, value: string): Q {
+    return this.where(column, 'ILIKE', value)
+  }
+
+  public orWhereILike(column: string, value: string): Q {
+    return this.orWhere(column, 'ILIKE', value)
+  }
+
+  public whereNotLike(column: string, value: string): Q {
+    return this.where(column, 'NOT LIKE', value)
+  }
+
+  public orWhereNotLike(column: string, value: string): Q {
+    return this.orWhere(column, 'NOT LIKE', value)
+  }
+
+  public whereNotILike(column: string, value: string): Q {
+    return this.where(column, 'NOT ILIKE', value)
+  }
+
+  public orWhereNotILike(column: string, value: string): Q {
+    return this.orWhere(column, 'NOT ILIKE', value)
+  }
+
   /**
    * Adds an OR WHERE condition to the query
    */
   public orWhere(callback: WhereCallback): Q
   public orWhere(column: string, value: any): Q
-  public orWhere(column: string, operator: FullWhereOperators, value: any): Q
+  public orWhere(column: string, operator: WhereOperator, value: any): Q
   public orWhere(columnOrCallback: string | WhereCallback, operatorOrValue?: any, value?: any): Q {
     this.addWhere('OR', columnOrCallback, operatorOrValue, value)
     return this as any as Q
@@ -168,12 +200,12 @@ export class WhereQueryBuilder<Q = any> {
 
     // Handle regular where conditions
     const column = columnOrCallback as string
-    let operator: FullWhereOperators = '='
+    let operator: WhereOperator = '='
     let conditionValue: any
 
     if (typeof operatorOrValue === 'string' && FULL_WHERE_OPERATORS.includes(operatorOrValue)) {
       // where('id', '=', 2) syntax
-      operator = operatorOrValue as FullWhereOperators
+      operator = operatorOrValue as WhereOperator
       conditionValue = value
     } else {
       // where('id', 2) syntax - default to '=' operator
@@ -202,7 +234,7 @@ export class WhereQueryBuilder<Q = any> {
    * @param {FullWhereOperators} operator - Comparison operator
    * @param {any} [value] - Value to compare against
    */
-  protected addWhereCondition(column: string, operator: FullWhereOperators, value?: any): void {
+  protected addWhereCondition(column: string, operator: WhereOperator, value?: any): void {
     this.whereConditions.push({ column, operator, value, type: 'AND' })
   }
 
@@ -212,7 +244,7 @@ export class WhereQueryBuilder<Q = any> {
    * @param {FullWhereOperators} operator - Comparison operator
    * @param {any} [value] - Value to compare against
    */
-  protected addOrWhereCondition(column: string, operator: FullWhereOperators, value?: any): void {
+  protected addOrWhereCondition(column: string, operator: WhereOperator, value?: any): void {
     this.whereConditions.push({ column, operator, value, type: 'OR' })
   }
 

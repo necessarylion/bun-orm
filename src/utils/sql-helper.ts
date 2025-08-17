@@ -1,4 +1,4 @@
-import type { WhereCondition, WhereGroupCondition } from '../types'
+import type { Driver, WhereCondition, WhereGroupCondition } from '../types'
 import { DANGEROUS_SQL_PATTERNS, MAX_IDENTIFIER_LENGTH, SQL_RESERVED_KEYWORDS } from './sql-constants'
 
 /**
@@ -119,7 +119,7 @@ export class SQLHelper {
   buildWhereConditions(
     conditions: WhereCondition[],
     groupConditions: WhereGroupCondition[] = [],
-    offset: number = 0
+    driver: Driver
   ): { sql: string; params: any[] } {
     if (conditions.length === 0 && groupConditions.length === 0) {
       return { sql: '', params: [] }
@@ -131,9 +131,9 @@ export class SQLHelper {
     }[] = []
     const params: any[] = []
 
-    for (let i = offset; i < conditions.length; i++) {
+    for (let i = 0; i < conditions.length; i++) {
       const condition = conditions[i] as WhereCondition
-      const regularResult = this.#getRegularWhereCondition(condition, params.length)
+      const regularResult = this.#getRegularWhereCondition(condition, params.length, driver)
       whereParts.push({
         type: condition.type,
         wherePart: regularResult.wherePart,
@@ -143,7 +143,7 @@ export class SQLHelper {
 
     // handle group conditions
     for (const group of groupConditions) {
-      const groupResult = this.buildGroupCondition(group, params.length)
+      const groupResult = this.buildGroupCondition(group, params.length, driver)
       whereParts.push({
         type: group.type,
         wherePart: groupResult.sql,
@@ -172,7 +172,11 @@ export class SQLHelper {
    * @param {number} paramOffset - Parameter offset for placeholders
    * @returns {{ sql: string; params: any[] }} Group condition SQL and parameters
    */
-  private buildGroupCondition(group: WhereGroupCondition, paramOffset: number): { sql: string; params: any[] } {
+  private buildGroupCondition(
+    group: WhereGroupCondition,
+    paramOffset: number,
+    driver: Driver
+  ): { sql: string; params: any[] } {
     const groupParts: {
       type: 'AND' | 'OR'
       wherePart: string
@@ -182,7 +186,7 @@ export class SQLHelper {
     for (const condition of group.conditions) {
       if ('conditions' in condition) {
         // Nested group
-        const nestedResult = this.buildGroupCondition(condition, paramOffset + params.length)
+        const nestedResult = this.buildGroupCondition(condition, paramOffset + params.length, driver)
         groupParts.push({
           type: condition.type,
           wherePart: `${nestedResult.sql}`,
@@ -190,7 +194,7 @@ export class SQLHelper {
         params.push(...nestedResult.params)
       } else {
         // Regular condition
-        const regularResult = this.#getRegularWhereCondition(condition, paramOffset + params.length)
+        const regularResult = this.#getRegularWhereCondition(condition, paramOffset + params.length, driver)
         groupParts.push({
           type: condition.type,
           wherePart: regularResult.wherePart,
@@ -216,7 +220,8 @@ export class SQLHelper {
 
   #getRegularWhereCondition(
     condition: WhereCondition,
-    paramOffset: number
+    paramOffset: number,
+    driver: Driver
   ): {
     type: 'AND' | 'OR'
     wherePart: string
@@ -224,6 +229,16 @@ export class SQLHelper {
   } {
     // Regular condition
     const { column, operator, value } = condition
+
+    if (driver === 'sqlite') {
+      if (operator.includes('ILIKE')) {
+        return {
+          type: condition.type,
+          wherePart: `LOWER(${this.safeEscapeIdentifier(column)}) ${operator.replace('ILIKE', 'LIKE')} LOWER(?)`,
+          params: [value],
+        }
+      }
+    }
 
     if (operator === 'IS NULL' || operator === 'IS NOT NULL') {
       return {
