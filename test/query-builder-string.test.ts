@@ -22,62 +22,62 @@ describe('QueryBuilder string generation', () => {
   })
 
   it('should generate a basic SELECT query', () => {
-    const query = db.table('users').toSql()
+    const query = db.table('users').toQuery()
     expect(query).toBe('SELECT * FROM "users"')
   })
 
   it('should generate a SELECT query with specific columns', () => {
-    const query = db.table('users').select(['id', 'name']).toSql()
+    const query = db.table('users').select(['id', 'name']).toQuery()
     expect(query).toBe('SELECT id, name FROM "users"')
   })
 
   it('should generate a SELECT query with column aliases', () => {
-    const query = db.table('users').select({ user_id: 'id', user_name: 'name' }).toSql()
+    const query = db.table('users').select({ user_id: 'id', user_name: 'name' }).toQuery()
     expect(query).toBe('SELECT "id" AS "user_id", "name" AS "user_name" FROM "users"')
   })
 
   it('should generate a SELECT query with a WHERE clause', () => {
-    const { sql, params } = db.table('users').where('id', 1).raw()
+    const { sql, params } = db.table('users').where('id', 1).toSql()
     expect(sql).toBe('SELECT * FROM "users" WHERE "id" = $1')
     expect(params).toEqual([1])
   })
 
   it('should generate a SELECT query with multiple WHERE clauses', () => {
-    const { sql, params } = db.table('users').where('id', 1).where('name', 'John').raw()
+    const { sql, params } = db.table('users').where('id', 1).where('name', 'John').toSql()
     expect(sql).toBe('SELECT * FROM "users" WHERE "id" = $1 AND "name" = $2')
     expect(params).toEqual([1, 'John'])
   })
 
   it('should generate a SELECT query with a WHERE IN clause', () => {
-    const { sql, params } = db.table('users').whereIn('id', [1, 2, 3]).raw()
+    const { sql, params } = db.table('users').whereIn('id', [1, 2, 3]).toSql()
     expect(sql).toBe('SELECT * FROM "users" WHERE "id" IN ($1, $2, $3)')
     expect(params).toEqual([1, 2, 3])
   })
 
   it('should generate a SELECT query with a WHERE NULL clause', () => {
-    const { sql, params } = db.table('users').whereNull('deleted_at').raw()
+    const { sql, params } = db.table('users').whereNull('deleted_at').toSql()
     expect(sql).toBe('SELECT * FROM "users" WHERE "deleted_at" IS NULL')
     expect(params).toEqual([])
   })
 
   it('should generate a SELECT query with where(col, null)', () => {
-    const { sql, params } = db.table('users').where('deleted_at', null).raw()
+    const { sql, params } = db.table('users').where('deleted_at', null).toSql()
     expect(sql).toBe('SELECT * FROM "users" WHERE "deleted_at" IS NULL')
     expect(params).toEqual([])
   })
 
   it('should generate a SELECT query with ORDER BY', () => {
-    const query = db.table('users').orderBy('created_at', 'DESC').toSql()
+    const query = db.table('users').orderBy('created_at', 'DESC').toQuery()
     expect(query).toBe('SELECT * FROM "users" ORDER BY "created_at" DESC')
   })
 
   it('should generate a SELECT query with LIMIT and OFFSET', () => {
-    const query = db.table('users').limit(10).offset(20).toSql()
+    const query = db.table('users').limit(10).offset(20).toQuery()
     expect(query).toBe('SELECT * FROM "users" LIMIT 10 OFFSET 20')
   })
 
   it('should generate a SELECT query with an INNER JOIN', () => {
-    const query = db.table('users').join('posts', 'users.id = posts.user_id').toSql()
+    const query = db.table('users').join('posts', 'users.id = posts.user_id').toQuery()
     expect(query).toBe('SELECT * FROM "users" INNER JOIN "posts" ON users.id = posts.user_id')
   })
 

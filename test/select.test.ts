@@ -214,7 +214,7 @@ describe('SELECT Query Builder', () => {
   })
 
   it('should build raw query', async () => {
-    const query = db.table('users').select(['name', 'email']).where('active', '=', true).raw()
+    const query = db.table('users').select(['name', 'email']).where('active', '=', true).toSql()
 
     expect(query).toHaveProperty('sql')
     expect(query).toHaveProperty('params')
@@ -279,8 +279,8 @@ describe('SELECT Query Builder', () => {
       .whereRaw('name = ?', ['Alice Brown'])
 
     const user = await query.first()
-    const sql = query.toSql()
-    const rawSql = query.raw()
+    const sql = query.toQuery()
+    const rawSql = query.toSql()
 
     expect(rawSql.sql).toBe(
       `SELECT * FROM \"users\" WHERE \"active\" = $1 AND \"age\" = $2 AND email = $3 AND name = $4`

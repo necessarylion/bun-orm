@@ -159,7 +159,7 @@ describe('DELETE Query Builder', () => {
   })
 
   it('should build raw query', async () => {
-    const query = db.delete().from('users').where('id', '=', 1).returning(['id', 'name']).raw()
+    const query = db.delete().from('users').where('id', '=', 1).returning(['id', 'name']).toSql()
 
     expect(query).toHaveProperty('sql')
     expect(query).toHaveProperty('params')

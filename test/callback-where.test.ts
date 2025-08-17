@@ -27,18 +27,23 @@ describe('Callback-based WHERE conditions', () => {
   })
 
   it('should support callback-based where with simple conditions query', async () => {
-    const query = db
+    const builder = db
       .table('users')
       .where((q) => {
         q.where('id', 1)
         q.orWhere('name', 'Jane Smith')
       })
       .where('id', 1)
-      .toSql()
+
+    const query = builder.toQuery()
 
     expect(query).toBe(`SELECT * FROM "users" WHERE "id" = '1' AND ("id" = '1' OR "name" = 'Jane Smith')`)
     const res = await db.raw(query)
     expect(res.length).toBe(1)
+
+    const sql = builder.toSql()
+    const res2 = await db.raw(sql.sql, sql.params)
+    expect(res2.length).toBe(1)
   })
 
   it('should support callback-based where with complex conditions', async () => {

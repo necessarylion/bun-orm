@@ -118,15 +118,6 @@ export abstract class BaseQueryBuilder {
   }
 
   /**
-   * Returns the raw SQL query and parameters (must be implemented by subclasses)
-   * @returns {{ sql: string; params: any[] }} SQL query and parameters
-   * @throws {Error} When not implemented by subclass
-   */
-  public raw(): { sql: string; params: any[] } {
-    throw new Error('raw() method must be implemented by subclasses')
-  }
-
-  /**
    * Sets driver
    * @param {DatabaseDriver} driver
    */

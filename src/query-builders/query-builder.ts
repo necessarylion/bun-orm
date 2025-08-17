@@ -397,7 +397,7 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    * Returns the raw SQL query and parameters
    * @returns {{ sql: string; params: any[] }} SQL query and parameters
    */
-  public override raw(): { sql: string; params: any[] } {
+  public toSql(): { sql: string; params: any[] } {
     const query = this.buildQuery()
     return {
       sql: query.sql.replace(/\s+/g, ' '),
@@ -409,7 +409,7 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    * Returns the SQL query as a string
    * @returns {string} SQL query
    */
-  public toSql(): string {
+  public toQuery(): string {
     const { sql, params } = this.buildQuery()
     return this.sqlHelper.toSql(sql, params)
   }
