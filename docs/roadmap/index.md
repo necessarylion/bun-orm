@@ -32,10 +32,10 @@
     * [ ] Morph One
     * [ ] Morph Many
 - [ ] More Query Builder Methods
-    * [ ] whereLike
-    * [ ] whereILike
-    * [ ] whereNotLike
-    * [ ] whereNotILike
+    * [*] whereLike
+    * [*] whereILike
+    * [*] whereNotLike
+    * [*] whereNotILike
     * [x] whereBetween
     * [x] whereNotBetween
     * [ ] whereExists
