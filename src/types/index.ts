@@ -1,6 +1,8 @@
 import type { Transaction } from '../core/transaction'
 import type { WhereQueryBuilder } from '../query-builders/where-query-builder'
 
+export type Driver = 'sqlite' | 'postgres'
+
 export type ConnectionConfig =
   | ({ driver: 'postgres' } & Bun.SQL.Options & { debug?: boolean })
   | {
@@ -14,14 +16,28 @@ export type ConnectionConfig =
       debug?: boolean
     }
 
-export type WhereOperator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'ILIKE' | 'IN' | 'NOT IN' | 'BETWEEN'
-
-export type FullWhereOperators = WhereOperator | 'IS NULL' | 'IS NOT NULL' | 'RAW'
+export type WhereOperator =
+  | '='
+  | '!='
+  | '>'
+  | '<'
+  | '>='
+  | '<='
+  | 'LIKE'
+  | 'ILIKE'
+  | 'IN'
+  | 'NOT IN'
+  | 'BETWEEN'
+  | 'NOT LIKE'
+  | 'NOT ILIKE'
+  | 'IS NULL'
+  | 'IS NOT NULL'
+  | 'RAW'
 
 export type WhereCondition = {
   type: 'AND' | 'OR'
   column: string
-  operator: FullWhereOperators
+  operator: WhereOperator
   value?: any
 }
 
