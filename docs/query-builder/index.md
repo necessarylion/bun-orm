@@ -365,7 +365,7 @@ try {
       .insert({ name: 'Jane Smith', email: 'jane@example.com' })
 
     // This will fail and cause rollback
-    await trx.raw('INSERT INTO users (name) VALUES (NULL)')
+    await trx.rawQuery('INSERT INTO users (name) VALUES (NULL)')
   })
 } catch (error) {
   console.log('Transaction rolled back:', error.message)

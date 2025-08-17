@@ -51,15 +51,6 @@ export abstract class Model implements Serializable<Record<string, any>> {
   }
 
   /**
-   * Gets a query builder instance for this model's table
-   * @returns A QueryBuilder instance configured for this model's table
-   */
-  static db<T extends typeof Model>(this: T): QueryBuilder<InstanceType<T>> {
-    const instance = Object.create(this.prototype)
-    return new ModelQueryBuilder<InstanceType<T>>(instance, this.getTableName())
-  }
-
-  /**
    * Finds a record by its primary key
    * @template T - The model class type
    * @param id - The primary key value to search for
@@ -102,7 +93,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
    * @returns Promise that resolves to an array of model instances
    */
   static async all<T extends typeof Model>(this: T): Promise<InstanceType<T>[]> {
-    return this.db().get()
+    return this.query().get()
   }
 
   /**
@@ -118,7 +109,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
     const columns = getColumns(this)
     const columnMap = new Map(columns.map((col: any) => [col.propertyKey, col.name]))
     const typeMap = new Map(columns.map((col: any) => [col.propertyKey, col.type]))
-    return this.db().insert(sanitizeInsertData(data, columnMap, typeMap))
+    return this.query().insert(sanitizeInsertData(data, columnMap, typeMap))
   }
 
   /**
@@ -142,7 +133,7 @@ export abstract class Model implements Serializable<Record<string, any>> {
    */
   static async find<T extends typeof Model>(this: T, id: number): Promise<InstanceType<T> | null> {
     const pk = getColumns(this).find((c: any) => c.primary)?.name || 'id'
-    const result = await this.db().where(pk, id).first()
+    const result = await this.query().where(pk, id).first()
     return result ? result : null
   }
 }

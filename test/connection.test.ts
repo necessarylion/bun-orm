@@ -19,19 +19,19 @@ describe('Database Connection', () => {
   })
 
   it('should execute raw SQL queries', async () => {
-    const result = await db.raw('SELECT 1 as test_value')
+    const result = await db.rawQuery('SELECT 1 as test_value')
     expect(result).toBeDefined()
     expect(result[0].test_value).toBe(1)
   })
 
   it('should handle parameterized queries', async () => {
-    const result = await db.raw('SELECT $1 as param_value', ['test'])
+    const result = await db.rawQuery('SELECT $1 as param_value', ['test'])
     expect(result[0].param_value).toBe('test')
   })
 
   it('should check if table exists', async () => {
     // First create a test table
-    await db.raw('CREATE TABLE IF NOT EXISTS test_table (id INTEGER)')
+    await db.rawQuery('CREATE TABLE IF NOT EXISTS test_table (id INTEGER)')
 
     const exists = await db.hasTable('test_table')
     expect(exists).toBe(true)
@@ -42,7 +42,7 @@ describe('Database Connection', () => {
 
   it('should drop tables', async () => {
     // Create a test table
-    await db.raw('CREATE TABLE test_drop_table (id INTEGER)')
+    await db.rawQuery('CREATE TABLE test_drop_table (id INTEGER)')
 
     // Verify it exists
     let exists = await db.hasTable('test_drop_table')

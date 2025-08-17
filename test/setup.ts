@@ -40,7 +40,7 @@ export function getAutoIncrementSQL() {
 // Test tables setup
 export async function setupTestTables() {
   // Create users table
-  await db.raw(`
+  await db.rawQuery(`
     CREATE TABLE IF NOT EXISTS users (
       id ${getAutoIncrementSQL()},
       name VARCHAR(255) NOT NULL,
@@ -53,7 +53,7 @@ export async function setupTestTables() {
   `)
 
   // Create posts table
-  await db.raw(`
+  await db.rawQuery(`
     CREATE TABLE IF NOT EXISTS posts (
       id ${getAutoIncrementSQL()},
       user_id INTEGER REFERENCES users(id),
@@ -65,7 +65,7 @@ export async function setupTestTables() {
   `)
 
   // Create categories table
-  await db.raw(`
+  await db.rawQuery(`
     CREATE TABLE IF NOT EXISTS categories (
       id ${getAutoIncrementSQL()},
       name VARCHAR(255) NOT NULL,
@@ -74,7 +74,7 @@ export async function setupTestTables() {
   `)
 
   // Create post_categories junction table
-  await db.raw(`
+  await db.rawQuery(`
     CREATE TABLE IF NOT EXISTS post_categories (
       post_id INTEGER REFERENCES posts(id),
       category_id INTEGER REFERENCES categories(id),

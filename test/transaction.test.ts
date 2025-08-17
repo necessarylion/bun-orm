@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
+import { describe, it, expect, beforeEach } from 'bun:test'
 import { spark, type Transaction, type Spark } from '../index'
 import { getAutoIncrementSQL, testConfig } from './setup'
 
@@ -14,7 +14,7 @@ describe('Transaction Tests', () => {
     expect(isConnected).toBe(true)
 
     // Create test table
-    await db.raw(`
+    await db.rawQuery(`
       CREATE TABLE IF NOT EXISTS transaction_test (
         id ${getAutoIncrementSQL()},
         name VARCHAR(255) NOT NULL,
@@ -23,13 +23,7 @@ describe('Transaction Tests', () => {
     `)
 
     // Clear test data
-    await db.raw('DELETE FROM transaction_test')
-  })
-
-  afterEach(async () => {
-    // Clean up
-    // await db.raw('DROP TABLE IF EXISTS transaction_test')
-    // Don't close the connection here as it's shared across tests
+    await db.rawQuery('DELETE FROM transaction_test')
   })
 
   it('should commit a successful transaction', async () => {
@@ -58,7 +52,7 @@ describe('Transaction Tests', () => {
 
   it('should rollback a failed transaction', async () => {
     // Clear test data first
-    await db.raw('DELETE FROM transaction_test')
+    await db.rawQuery('DELETE FROM transaction_test')
 
     let transactionFailed = false
     let errorMessage = ''
@@ -69,7 +63,7 @@ describe('Transaction Tests', () => {
         await trx.table('transaction_test').insert({ name: 'Jane Smith', balance: 200.0 })
 
         // This should fail and cause rollback - try to insert with null name (violates NOT NULL constraint)
-        await trx.raw('INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)')
+        await trx.rawQuery('INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)')
       })
     } catch (error: any) {
       transactionFailed = true
@@ -84,10 +78,10 @@ describe('Transaction Tests', () => {
   it('should support raw SQL in transactions', async () => {
     const result = await db.transaction(async (trx: Transaction) => {
       // Use raw SQL
-      await trx.raw('INSERT INTO transaction_test (name, balance) VALUES ($1, $2)', ['Charlie Wilson', 300.0])
+      await trx.rawQuery('INSERT INTO transaction_test (name, balance) VALUES ($1, $2)', ['Charlie Wilson', 300.0])
 
       // Use raw SQL for select
-      const results = await trx.raw('SELECT * FROM transaction_test WHERE name = $1', ['Charlie Wilson'])
+      const results = await trx.rawQuery('SELECT * FROM transaction_test WHERE name = $1', ['Charlie Wilson'])
 
       return results[0]
     })
@@ -132,7 +126,7 @@ describe('Transaction Tests', () => {
 
   it('should rollback on failed transaction with get-update-fail pattern', async () => {
     // Clear test data first
-    await db.raw('DELETE FROM transaction_test')
+    await db.rawQuery('DELETE FROM transaction_test')
 
     // 1. Get initial query - insert a test record
     const initialRecord = await db
@@ -171,7 +165,7 @@ describe('Transaction Tests', () => {
 
         // 3. Run another query that fails with error
         // This will cause the entire transaction to rollback
-        await trx.raw('INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)')
+        await trx.rawQuery('INSERT INTO transaction_test (name, balance) VALUES (NULL, 300.00)')
       })
     } catch (error: any) {
       transactionFailed = true

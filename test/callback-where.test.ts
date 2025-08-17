@@ -38,11 +38,11 @@ describe('Callback-based WHERE conditions', () => {
     const query = builder.toQuery()
 
     expect(query).toBe(`SELECT * FROM "users" WHERE "id" = '1' AND ("id" = '1' OR "name" = 'Jane Smith')`)
-    const res = await db.raw(query)
+    const res = await db.rawQuery(query)
     expect(res.length).toBe(1)
 
     const sql = builder.toSql()
-    const res2 = await db.raw(sql.sql, sql.params)
+    const res2 = await db.rawQuery(sql.sql, sql.params)
     expect(res2.length).toBe(1)
   })
 

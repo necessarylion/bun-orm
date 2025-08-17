@@ -106,7 +106,7 @@ export class Spark {
    * @param {any[]} [params=[]] - Query parameters
    * @returns {Promise<any[]>} Query results
    */
-  public raw(sql: string, params: any[] = []): Promise<any[]> {
+  public rawQuery(sql: string, params: any[] = []): Promise<any[]> {
     return this.driver.runQuery(sql, params)
   }
 

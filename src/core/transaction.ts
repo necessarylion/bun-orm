@@ -58,7 +58,7 @@ export class Transaction<M = any> {
    * @returns {Promise<any[]>} Query results
    * @throws {Error} When transaction has already been committed or rolled back
    */
-  public async raw(sql: string, params: any[] = []): Promise<any[]> {
+  public async rawQuery(sql: string, params: any[] = []): Promise<any[]> {
     return await this.getDriver().runQuery(sql, params)
   }
 
