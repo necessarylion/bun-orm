@@ -40,6 +40,6 @@
     * [x] whereNotBetween
     * [ ] whereExists
     * [ ] whereNotExists
-    * [ ] whereHas
-    * [ ] whereNotHas
+    * [*] having
+    * [*] havingRaw
 - [ ] Advanced JOIN builder
