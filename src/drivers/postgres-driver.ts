@@ -149,7 +149,7 @@ export class PostgresDriver implements DatabaseDriver {
     const joinClause = this.buildJoinClause(queryBuilder)
     const whereClause = this.buildWhereClause(queryBuilder)
     const groupByClause = this.buildGroupByClause(queryBuilder)
-    const havingClause = queryBuilder.havingCondition ? ` HAVING ${queryBuilder.havingCondition}` : ''
+    const havingClause = this.buildHavingClause(queryBuilder, whereClause.params.length)
     const orderByClause = this.buildOrderByClause(queryBuilder)
     const limitOffsetClause = this.buildLimitOffsetClause(queryBuilder)
 
@@ -167,7 +167,9 @@ export class PostgresDriver implements DatabaseDriver {
       sql += ` GROUP BY ${groupByClause}`
     }
 
-    sql += havingClause
+    if (havingClause.sql) {
+      sql += ` HAVING ${havingClause.sql}`
+    }
 
     if (orderByClause) {
       sql += ` ORDER BY ${orderByClause}`
@@ -177,7 +179,7 @@ export class PostgresDriver implements DatabaseDriver {
 
     return {
       sql,
-      params: whereClause.params,
+      params: [...whereClause.params, ...havingClause.params],
     }
   }
 
@@ -370,6 +372,14 @@ export class PostgresDriver implements DatabaseDriver {
       queryBuilder.whereGroupConditions,
       'postgres'
     )
+  }
+
+  /**
+   * Builds having clause
+   * @returns {{ sql: string; params: any[] }} SQL fragment and parameters
+   */
+  protected buildHavingClause(queryBuilder: QueryBuilder<any>, paramOffset: number): { sql: string; params: any[] } {
+    return this.sqlHelper.buildWhereConditions(queryBuilder.havingConditions, [], 'postgres', paramOffset)
   }
 
   /**

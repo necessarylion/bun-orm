@@ -18,6 +18,7 @@ export abstract class BaseQueryBuilder {
   public driver: DatabaseDriver
   public returningColumns: string[] = ['*']
   public whereConditions: WhereCondition[] = []
+  public havingConditions: WhereCondition[] = []
   public whereGroupConditions: WhereGroupCondition[] = []
   public joins: JoinCondition[] = []
   public orderByConditions: OrderByCondition[] = []

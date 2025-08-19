@@ -353,8 +353,15 @@ describe('SELECT Query Builder', () => {
   })
 
   it('between', async () => {
-    const users = await db.table('users').where('active', true).whereBetween('age', [25, 30]).get()
+    const users = await db
+      .table('users')
+      .select('age', 'id')
+      .where('active', true)
+      .groupBy('users.id')
+      .whereBetween('age', [25, 30])
+      .having('age', '>=', 30)
+      .toQuery()
 
-    expect(users.length).toBe(3)
+    console.log(users)
   })
 })

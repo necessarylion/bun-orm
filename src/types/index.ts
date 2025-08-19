@@ -16,6 +16,23 @@ export type ConnectionConfig =
       debug?: boolean
     }
 
+export type HavingOperator =
+  | '='
+  | '!='
+  | '>'
+  | '<'
+  | '>='
+  | '<='
+  | 'LIKE'
+  | 'ILIKE'
+  | 'IN'
+  | 'NOT IN'
+  | 'BETWEEN'
+  | 'NOT LIKE'
+  | 'NOT ILIKE'
+  | 'IS NULL'
+  | 'IS NOT NULL'
+
 export type WhereOperator =
   | '='
   | '!='
