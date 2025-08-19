@@ -56,10 +56,12 @@ export class SQLHelper {
     }
 
     // Remove any potentially dangerous characters
-    trimmed = trimmed.replace(/[^a-zA-Z0-9._]/g, '')
+    trimmed = trimmed.replace(/[^a-zA-Z0-9._]/g, '').replace(/"/g, '""')
+
+    const columns = trimmed.split('.')
 
     // escape double quotes
-    return `"${trimmed.replace(/"/g, '""')}"`
+    return `"${columns.join('"."')}"`
   }
 
   /**
