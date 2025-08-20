@@ -342,6 +342,25 @@ const users = await db.table('users')
   .get()
 ```
 
+## having
+
+The having method is used to filter the results of the query after the groupBy method is applied.
+
+```ts hl_lines="3"
+const users = await db.table('users')
+  .groupBy('users.id')
+  .having('age', '>=', 25)
+```
+
+```ts hl_lines="5"
+const users = await db
+  .table('users')
+  .select('age', 'count(*) as count')
+  .groupBy('users.age')
+  .havingRaw('count(*) >= ?', [2])
+  .get()
+```
+
 ## limit
 
 The limit method is used to limit the number of results returned by the query.
