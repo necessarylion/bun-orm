@@ -56,10 +56,12 @@ export class SQLHelper {
     }
 
     // Remove any potentially dangerous characters
-    trimmed = trimmed.replace(/[^a-zA-Z0-9_]/g, '')
+    trimmed = trimmed.replace(/[^a-zA-Z0-9._]/g, '').replace(/"/g, '""')
+
+    const columns = trimmed.split('.')
 
     // escape double quotes
-    return `"${trimmed.replace(/"/g, '""')}"`
+    return `"${columns.join('"."')}"`
   }
 
   /**
@@ -119,7 +121,8 @@ export class SQLHelper {
   buildWhereConditions(
     conditions: WhereCondition[],
     groupConditions: WhereGroupCondition[] = [],
-    driver: Driver
+    driver: Driver,
+    paramOffset: number = 0
   ): { sql: string; params: any[] } {
     if (conditions.length === 0 && groupConditions.length === 0) {
       return { sql: '', params: [] }
@@ -131,9 +134,8 @@ export class SQLHelper {
     }[] = []
     const params: any[] = []
 
-    for (let i = 0; i < conditions.length; i++) {
-      const condition = conditions[i] as WhereCondition
-      const regularResult = this.#getRegularWhereCondition(condition, params.length, driver)
+    for (const condition of conditions) {
+      const regularResult = this.#getRegularWhereCondition(condition, paramOffset + params.length, driver)
       whereParts.push({
         type: condition.type,
         wherePart: regularResult.wherePart,
@@ -143,7 +145,7 @@ export class SQLHelper {
 
     // handle group conditions
     for (const group of groupConditions) {
-      const groupResult = this.buildGroupCondition(group, params.length, driver)
+      const groupResult = this.buildGroupCondition(group, paramOffset + params.length, driver)
       whereParts.push({
         type: group.type,
         wherePart: groupResult.sql,

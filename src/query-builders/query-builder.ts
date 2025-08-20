@@ -3,11 +3,15 @@ import type { OrderDirection, SelectColumn } from '../types'
 import type { Transaction } from '../core/transaction'
 import { WhereQueryBuilder } from './where-query-builder'
 import { use } from 'typescript-mix'
+import { HavingQueryBuilder } from './having-query-builder'
 
-export interface QueryBuilder<M> extends BaseQueryBuilder, WhereQueryBuilder<QueryBuilder<M>> {}
+export interface QueryBuilder<M>
+  extends BaseQueryBuilder,
+    WhereQueryBuilder<QueryBuilder<M>>,
+    HavingQueryBuilder<QueryBuilder<M>> {}
 
 export class QueryBuilder<M> extends BaseQueryBuilder {
-  @use(WhereQueryBuilder) this: any
+  @use(WhereQueryBuilder, HavingQueryBuilder) this: any
 
   private alreadyRemovedStar: boolean = false
   public selectColumns: string[] = ['*']
@@ -246,16 +250,6 @@ export class QueryBuilder<M> extends BaseQueryBuilder {
    */
   public groupBy(column: string): QueryBuilder<M> {
     this.addGroupBy(column)
-    return this
-  }
-
-  /**
-   * Adds a HAVING clause to the query
-   * @param {string} condition - HAVING condition
-   * @returns {QueryBuilder} Query builder chain for method chaining
-   */
-  public having(condition: string): QueryBuilder<M> {
-    this.havingCondition = condition
     return this
   }
 
